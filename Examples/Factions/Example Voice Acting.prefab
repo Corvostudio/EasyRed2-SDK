@@ -1,0 +1,165 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5251972165149283214
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6750273380071282166}
+  - component: {fileID: 3879415982395439967}
+  m_Layer: 0
+  m_Name: Example Voice Acting
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6750273380071282166
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5251972165149283214}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3879415982395439967
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5251972165149283214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43b24abb52b14974f9612d4adf8f987d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  iVeBeenHit:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  medic:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}
+  imReloading:
+  - {fileID: 8300000, guid: c17ec44a948769d468fd22208f73d8bc, type: 3}
+  imUnderFire:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  AAAAAH:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  scream_long:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  yes:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}
+  yesSir:
+  - {fileID: 8300000, guid: c17ec44a948769d468fd22208f73d8bc, type: 3}
+  watchYourFire:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  enemyInfantrySpotted:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  enemyTankSpotted:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  enemyArtillerySpotted:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}
+  enemyDown:
+  - {fileID: 8300000, guid: c17ec44a948769d468fd22208f73d8bc, type: 3}
+  granade:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  thankYou:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  coveringFire:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  imMoving:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}
+  imCharging:
+  - {fileID: 8300000, guid: c17ec44a948769d468fd22208f73d8bc, type: 3}
+  iSurrender:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  imTakingTheLead:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  moveThere:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  attackThere:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}
+  charge:
+  - {fileID: 8300000, guid: c17ec44a948769d468fd22208f73d8bc, type: 3}
+  attackThatTank:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  attackThatVehicle:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  followMe:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  letsSpreadOut:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}
+  lineFormation:
+  - {fileID: 8300000, guid: c17ec44a948769d468fd22208f73d8bc, type: 3}
+  columnFormation:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  timeToRetreat:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  getOut:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  getIn:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}
+  letsMoveTank:
+  - {fileID: 8300000, guid: c17ec44a948769d468fd22208f73d8bc, type: 3}
+  fireTank:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  gunReloadedTank:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  enemyHittedTank:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  enemyDestroyedtank:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}
+  enemyMissedTank:
+  - {fileID: 8300000, guid: c17ec44a948769d468fd22208f73d8bc, type: 3}
+  enemyNotPenetratedTank:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  gotHitTank:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  radiomanIsDead:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  gunnerIsDead:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}
+  commanderIsDead:
+  - {fileID: 8300000, guid: c17ec44a948769d468fd22208f73d8bc, type: 3}
+  driverIsDead:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  illTakeHisSeat:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  getOutTankOnFire:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  getOutTankDestroyed:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}
+  numbers:
+  - {fileID: 8300000, guid: 14cf7c99f56fdb649a7598c65e94e6c1, type: 3}
+  - {fileID: 8300000, guid: 84ab89295461f1e4481c99aec6cba8fd, type: 3}
+  - {fileID: 8300000, guid: c4ddebbb69683c34796fd6a9acdd7316, type: 3}
+  - {fileID: 8300000, guid: 71ea9bab248f17046bb3b555ab3792cf, type: 3}
+  - {fileID: 8300000, guid: 6b92e118e4f30ef42befb0000f3685c0, type: 3}
+  - {fileID: 8300000, guid: 584148a2f27d30d419b36c8509b55083, type: 3}
+  - {fileID: 8300000, guid: a85072525ad1bed4b9f4bae6ba59cf1b, type: 3}
+  - {fileID: 8300000, guid: 253254c42a9778846a7aceef2e7432a0, type: 3}
+  - {fileID: 8300000, guid: b3b44a29a57685b4282029da7d7626b5, type: 3}
+  - {fileID: 8300000, guid: 6d11d3bac342d994ea36718d6183c6cf, type: 3}
+  artillerySupportAt:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  tankSupportRequest:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  artilleryStrikeIncomingAt:
+  - {fileID: 8300000, guid: fa4e014a50e3cb64e82cb658322b0fa0, type: 3}
+  keepYourHeadDown:
+  - {fileID: 8300000, guid: 464b28b5afd02224fb11070cd0843c6b, type: 3}
+  noArtilleryAvailable:
+  - {fileID: 8300000, guid: 2c1f344871175bd45846ff254b840088, type: 3}
+  tankSupportIncoming:
+  - {fileID: 8300000, guid: c17ec44a948769d468fd22208f73d8bc, type: 3}
+  noTankAvailable:
+  - {fileID: 8300000, guid: 14c8561ef70040d4795d0c44bc9d9155, type: 3}

@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0795b60680d8896439e963f744fc9293, type: 3}
+  m_Name: My LUT Test 2
+  m_EditorClassIdentifier: 
+  bundleName: 
+  texture: {fileID: 2800000, guid: 91b14306ef89d5f49be71184d93f1a70, type: 3}
+  textureType: 0

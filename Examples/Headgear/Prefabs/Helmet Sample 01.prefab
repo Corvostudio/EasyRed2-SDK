@@ -1,0 +1,271 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8841165036940068688
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2229472307849579319}
+  - component: {fileID: 8321521606353642042}
+  - component: {fileID: 3594338458217450521}
+  - component: {fileID: 1847508862904324403}
+  - component: {fileID: 1662239855}
+  m_Layer: 0
+  m_Name: Helmet Sample 01
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2229472307849579319
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8841165036940068688}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 900814513019197670}
+  - {fileID: 3625043219211760109}
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &8321521606353642042
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8841165036940068688}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.10340196
+  m_Center: {x: 0, y: -0.0008728504, z: 0}
+--- !u!65 &3594338458217450521
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8841165036940068688}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 0.18762207, y: 0.04085569, z: 0.23511992}
+  m_Center: {x: 0.00030517578, y: -0.034565166, z: 0.0004960969}
+--- !u!205 &1847508862904324403
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8841165036940068688}
+  serializedVersion: 2
+  m_LocalReferencePoint: {x: 0.00012208521, y: 0.0071493536, z: 0.013999939}
+  m_Size: 0.28112704
+  m_FadeMode: 1
+  m_AnimateCrossFading: 1
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.14571008
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 2074887131349214089}
+  - screenRelativeHeight: 0.0033876472
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 2451525304902077058}
+  m_Enabled: 1
+--- !u!114 &1662239855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8841165036940068688}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 054b67425c4c97045abd2b37af4f18b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mass: 3
+  item_id: mod_test_Helmet Sample 01
+  icon: {fileID: 21300000, guid: 9c64d532f59784b45bab200fe48635f7, type: 3}
+  protectionData:
+    penetrationProtection: 10
+    fireProtection: 12
+    sliverProtection: 10
+  camoIndex: 15
+  headgearImpactFX: 4
+--- !u!1001 &795711598424227597
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 2229472307849579319}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.001899004
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.07700001
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.004099185
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.70525163
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.05118723
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.70525163
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.051187266
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 8.303
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_Name
+      value: uploads_files_642451_SovietHelmet
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+--- !u!4 &900814513019197670 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+  m_PrefabInstance: {fileID: 795711598424227597}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &2074887131349214089 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+  m_PrefabInstance: {fileID: 795711598424227597}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &3874226971746719238
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 2229472307849579319}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_RootOrder
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.0019
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.077
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.0041
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.70525163
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.05118723
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.70525163
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.051187266
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 8.303
+      objectReference: {fileID: 0}
+    - target: {fileID: -5754084199372789682, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -1322807699077329461, guid: ad39a01dae9856548a2f83451c49a565, type: 3}
+    - target: {fileID: 919132149155446097, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+      propertyPath: m_Name
+      value: uploads_files_642451_SovietHelmet_lod
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+--- !u!23 &2451525304902077058 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+  m_PrefabInstance: {fileID: 3874226971746719238}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &3625043219211760109 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c3cdc82131b6913438314fd031c63815, type: 3}
+  m_PrefabInstance: {fileID: 3874226971746719238}
+  m_PrefabAsset: {fileID: 0}
