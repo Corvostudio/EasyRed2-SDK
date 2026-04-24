@@ -41,7 +41,7 @@ public class SteeringWheelEditor : Editor
             }
             else
             {
-                checker = Instantiate((GameObject)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Models/HandsPlacement/Prefabs/HandsPlacementChecker_SteeringWheel.prefab", typeof(GameObject))).GetComponent<HandsPlacementCheckerSteeringWheel>();
+                checker = Instantiate(EditorAssetFinder.Find<GameObject>("HandsPlacementChecker_SteeringWheel")).GetComponent<HandsPlacementCheckerSteeringWheel>();
                 checker.attached_sw = myScript;
             }
         }
