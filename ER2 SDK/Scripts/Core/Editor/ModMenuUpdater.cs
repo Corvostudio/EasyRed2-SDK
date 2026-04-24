@@ -6,8 +6,19 @@ using System.IO.Compression;
 
 public class ModMenuUpdater : EditorWindow
 {
-    //current version
-    public static readonly int VERSION = 106;
+    public static int VERSION => GetLocalVersion();
+
+    private static int GetLocalVersion()
+    {
+        try
+        {
+            string path = Path.Combine(Application.dataPath, "version.json");
+            if (!File.Exists(path)) return 0;
+            var data = JsonUtility.FromJson<JSONData>(File.ReadAllText(path));
+            return data != null ? data.version : 0;
+        }
+        catch { return 0; }
+    }
 
     // === CONFIGURE THESE ===
     private const string GITHUB_USER = "Corvostudio";
@@ -266,8 +277,7 @@ public class ModMenuUpdater : EditorWindow
                 name.Equals("README.md", System.StringComparison.OrdinalIgnoreCase) ||
                 name.Equals("README.md.meta", System.StringComparison.OrdinalIgnoreCase) ||
                 name.Equals("LICENSE", System.StringComparison.OrdinalIgnoreCase) ||
-                name.Equals("LICENSE.md", System.StringComparison.OrdinalIgnoreCase) ||
-                name.Equals("version.json", System.StringComparison.OrdinalIgnoreCase))
+                name.Equals("LICENSE.md", System.StringComparison.OrdinalIgnoreCase))
                 continue;
 
             string dest = Path.Combine(destDir, name);
