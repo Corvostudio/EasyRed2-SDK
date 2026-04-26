@@ -1,3 +1,4 @@
+#if UNITY_EDITOR && UNITY_STANDALONE
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -281,3 +282,4 @@ public class SteamworkUpload : MonoBehaviour
 
 
 }
+#endif
