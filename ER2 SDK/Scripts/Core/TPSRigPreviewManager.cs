@@ -8,15 +8,12 @@ using UnityEngine;
 public class TPSRigPreviewManager : MonoBehaviour
 {
     public SkinnedMeshRenderer uniform;
+    public SkinnedMeshRenderer uniform_fps;
     public SkinnedMeshRenderer uniform_lod;
     public SkinnedMeshRenderer vest;
     public SkinnedMeshRenderer vest_lod;
-    public SkinnedMeshRenderer head;
-    public SkinnedMeshRenderer head_lod;
-    public SkinnedMeshRenderer hands;
-    public SkinnedMeshRenderer hands_lod;
-    public SkinnedMeshRenderer uniform_fps;
-    public SkinnedMeshRenderer hands_fps;
+    public SkinnedMeshRenderer body;
+    public SkinnedMeshRenderer body_fps;
     public Transform headgear_pos;
 
 
@@ -45,7 +42,7 @@ public class TPSRigPreviewManager : MonoBehaviour
         return false;
     }
 
-    [MenuItem("Assets/ER2 TOOLS/Tools/RIG Testing/Test rigged mesh", false, 2004)]
+    /*[MenuItem("Assets/ER2 TOOLS/Tools/RIG Testing/Test rigged mesh", false, 2004)]
     public static void SetUpAnimationTesting()
     {
         if (!IsNewActionTime())
@@ -67,10 +64,10 @@ public class TPSRigPreviewManager : MonoBehaviour
             switch (bonecount)
             {
                 case 2:
-                    if (TestBoneOrder(originalMeshRenderer, tester.head, "Head"))
+                    if (TestBoneOrder(originalMeshRenderer, tester.body, "Head"))
                     {
-                        tester.head.sharedMesh = originalMeshRenderer.sharedMesh;
-                        tester.head.sharedMaterials = originalMeshRenderer.sharedMaterials;
+                        tester.body.sharedMesh = originalMeshRenderer.sharedMesh;
+                        tester.body.sharedMaterials = originalMeshRenderer.sharedMaterials;
                     }
                     break;
                 case 3:
@@ -106,7 +103,7 @@ public class TPSRigPreviewManager : MonoBehaviour
                     break;
             }
         }
-    }
+    }*/
 
     public static bool TestBoneOrder(SkinnedMeshRenderer originalSkinnedMeshRenderer, SkinnedMeshRenderer targetSkinnedMeshRenderer, string type)
     {
@@ -270,7 +267,10 @@ public static class TPSRigTesterManager
 
     public static void LinkUniform(ItemClothing c, SleeveMode sleeveMode)
     {
-        if (c == null || GetOrSpawnTester() == null) return;
+        if (c == null) return;
+        var tester = GetOrSpawnTester();
+        if (tester == null) return;
+        PositionAbove(tester, c.transform);
         s_uniformID = c.GetInstanceID();
         s_uniformSleeveMode = sleeveMode;
         s_lastSync = 0;
@@ -281,7 +281,10 @@ public static class TPSRigTesterManager
 
     public static void LinkGear(ItemClothing c)
     {
-        if (c == null || c.mesh == null || GetOrSpawnTester() == null) return;
+        if (c == null || c.mesh == null) return;
+        var tester = GetOrSpawnTester();
+        if (tester == null) return;
+        PositionAbove(tester, c.transform);
         int boneCount = c.mesh.bindposes.Length;
         switch (boneCount)
         {
@@ -300,12 +303,21 @@ public static class TPSRigTesterManager
 
     public static void LinkHelmet(ItemHelmet h)
     {
-        if (h == null || GetOrSpawnTester() == null) return;
+        if (h == null) return;
+        var tester = GetOrSpawnTester();
+        if (tester == null) return;
+        PositionAbove(tester, h.transform);
         s_helmetID = h.GetInstanceID();
         s_lastSync = 0;
         SyncAll();
         SceneView.RepaintAll();
         RepaintRelevantInspectors();
+    }
+    private static void PositionAbove(TPSRigPreviewManager tester, Transform target)
+    {
+        if (tester == null || target == null) return;
+        tester.transform.position = target.position - Vector3.forward * .5f;
+        tester.transform.rotation = Quaternion.identity;
     }
 
     public static bool IsUniformLinked(ItemClothing c)
@@ -346,8 +358,8 @@ public static class TPSRigTesterManager
         int id = c.GetInstanceID();
         var tester = FindTester();
         if (s_vestID == id) { s_vestID = 0; if (tester != null) ClearRendererPair(tester.vest, tester.vest_lod); }
-        if (s_handsID == id) { s_handsID = 0; if (tester != null) ClearRendererPair(tester.hands, tester.hands_lod); }
-        if (s_headGearID == id) { s_headGearID = 0; if (tester != null) ClearRendererPair(tester.head, tester.head_lod); }
+        //if (s_handsID == id) { s_handsID = 0; if (tester != null) ClearRendererPair(tester.hands, tester.hands_lod); }
+        //if (s_headGearID == id) { s_headGearID = 0; if (tester != null) ClearRendererPair(tester.body, tester.head_lod); }
         RepaintRelevantInspectors();
     }
 
@@ -379,8 +391,8 @@ public static class TPSRigTesterManager
         }
         SyncUniform(tester);
         SyncGear(tester, ref s_vestID, tester.vest, tester.vest_lod);
-        SyncGear(tester, ref s_handsID, tester.hands, tester.hands_lod);
-        SyncGear(tester, ref s_headGearID, tester.head, tester.head_lod);
+        //SyncGear(tester, ref s_handsID, tester.hands, tester.hands_lod);
+        //SyncGear(tester, ref s_headGearID, tester.body, tester.head_lod);
         SyncHelmet(tester);
     }
 
@@ -417,13 +429,13 @@ public static class TPSRigTesterManager
 
         var handsMode = useShort ? c.handsModeWithShortSleeveUniform : c.forceHideHands;
         bool hideHands = handsMode == UniformSleeveCoverType.coversSleeveAndHand;
-        SetActiveSafe(tester.hands, !hideHands);
-        SetActiveSafe(tester.hands_lod, !hideHands);
-        SetActiveSafe(tester.hands_fps, !hideHands);
+        //SetActiveSafe(tester.hands, !hideHands);
+        //SetActiveSafe(tester.hands_lod, !hideHands);
+        SetActiveSafe(tester.body_fps, !hideHands);
 
         bool hideHead = c.forceHideHead != UniformHeadCoverType.dontCoverHead;
-        SetActiveSafe(tester.head, !hideHead);
-        SetActiveSafe(tester.head_lod, !hideHead);
+        SetActiveSafe(tester.body, !hideHead);
+        //SetActiveSafe(tester.head_lod, !hideHead);
     }
 
     private static void SyncGear(TPSRigPreviewManager tester, ref int slotID, SkinnedMeshRenderer hp, SkinnedMeshRenderer lod)
