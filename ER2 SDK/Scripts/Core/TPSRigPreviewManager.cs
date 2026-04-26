@@ -45,7 +45,7 @@ public class TPSRigPreviewManager : MonoBehaviour
         return false;
     }
 
-    [MenuItem("Assets/ER2 MODS/Tools/RIG Testing/Test rigged mesh", false, 2004)]
+    [MenuItem("Assets/ER2 TOOLS/Tools/RIG Testing/Test rigged mesh", false, 2004)]
     public static void SetUpAnimationTesting()
     {
         if (!IsNewActionTime())
