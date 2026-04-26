@@ -26,7 +26,7 @@ public class TPSRigPreviewManager : MonoBehaviour
         TPSRigPreviewManager tester = GameObject.FindObjectOfType<TPSRigPreviewManager>();
         if (tester == null)
         {
-            GameObject animRoot = (GameObject)PrefabUtility.InstantiatePrefab((GameObject)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Rigs/tps rig tester.prefab", typeof(GameObject)));
+            GameObject animRoot = (GameObject)PrefabUtility.InstantiatePrefab(EditorAssetFinder.Find<GameObject>("tps rig tester"));
             animRoot.transform.localPosition = animRoot.transform.localEulerAngles = Vector3.zero;
             animRoot.transform.localScale = Vector3.one;
             tester = animRoot.GetComponent<TPSRigPreviewManager>();
@@ -163,7 +163,6 @@ public class TPSRigPreviewManager : MonoBehaviour
 /// </summary>
 public static class TPSRigTesterManager
 {
-    private const string TESTER_PREFAB_PATH = "Assets/ER2 SDK/Rigs/tps rig tester.prefab";
     private const double SYNC_INTERVAL = 0.5;
 
     private static TPSRigPreviewManager s_cachedTester;
@@ -230,10 +229,10 @@ public static class TPSRigTesterManager
             return existing;
         }
 
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(TESTER_PREFAB_PATH);
+        var prefab = EditorAssetFinder.Find<GameObject>("tps rig tester");
         if (prefab == null)
         {
-            Debug.LogError($"[TPS Tester] Prefab not found at '{TESTER_PREFAB_PATH}'.");
+            Debug.LogError($"[TPS Tester] Prefab not found.");
             return null;
         }
 
