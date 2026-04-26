@@ -17,8 +17,6 @@ public partial class VehicleCamoPreset : ScriptableObject
     public CamoRegion region = CamoRegion.Europe | CamoRegion.Mediterranean;
     public CamoSnowData snowData = CamoSnowData.NoSnow;
 
-    public DLC needed_dlc = DLC.None;
-
     [Range(0.1f, 10f)]
     [Tooltip("Spawn weight: Higher = more common. 1.0 = normal, 2.0 = twice as common, 0.5 = half as common")]
     public float spawnWeight = 1f; // ADD THIS
@@ -47,4 +45,21 @@ public partial class VehicleCamoPreset : ScriptableObject
         OnlySnow = 20,
     }
 
+}
+
+
+public enum MonthName
+{
+    january = 1,
+    february = 2,
+    march = 3,
+    april = 4,
+    may = 5,
+    june = 6,
+    july = 7,
+    august = 8,
+    september = 9,
+    october = 10,
+    november = 11,
+    december = 12
 }
