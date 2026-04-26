@@ -17,6 +17,8 @@ using static TextureDetails;
 
 public class ModMenu : EditorWindow
 {
+    public const string MODDING_GUIDE_URL = "https://wiki.easyred2.com/category.php?path=modding-sdk";
+    public const string YT_PLAYLIST = "https://www.youtube.com/watch?v=PLHL02d4bBI&list=PLLo17ahM0Ask7n7g9uppPRPhhrRDB2UBP";
 
     //Main menu variables
     static List<AssetBundleBuild> found_bundles = new List<AssetBundleBuild>();
@@ -56,12 +58,12 @@ public class ModMenu : EditorWindow
     [MenuItem("ER2 Project/Documentation/Tutorial playlist")]
     static void DocumentationTutorialPlaylist()
     {
-        Application.OpenURL("https://www.youtube.com/watch?v=PLHL02d4bBI&list=PLLo17ahM0Ask7n7g9uppPRPhhrRDB2UBP");
+        Application.OpenURL(YT_PLAYLIST);
     }
     [MenuItem("ER2 Project/Documentation/Guides")]
     static void DocumentationStringTables()
     {
-        Application.OpenURL("https://wiki.easyred2.com/category.php?path=guides/modding-sdk");
+        Application.OpenURL(MODDING_GUIDE_URL);
     }
 
 
