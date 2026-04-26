@@ -122,6 +122,8 @@ public partial class GenericGun : Weapon
     public SupportedAttachment[] supportedAttachments;
     public GameObject sight_down;//set down when attache scope
     public GameObject sight_up;
+    [Tooltip("Scope system can also be set to be integrated in the weapon without using an external attachment.")]
+    public GameObject integratedScope = null;
 
     [Header("FPS data")]
     public AnimationData fpsAnimations;
