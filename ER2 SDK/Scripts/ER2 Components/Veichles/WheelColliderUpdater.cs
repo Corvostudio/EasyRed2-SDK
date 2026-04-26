@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Resources;
-using UnityEditor;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [RequireComponent(typeof(WheelCollider))]
 public partial class WheelColliderUpdater : MonoBehaviour
@@ -27,6 +29,7 @@ public partial class WheelColliderUpdater : MonoBehaviour
     [System.NonSerialized] private WheelCollider wheel;
 
 
+#if UNITY_EDITOR
     public static bool IsSceneCameraClose(Vector3 worldPos, float maxDistance)
     {
         SceneView sv = SceneView.lastActiveSceneView;
@@ -37,7 +40,6 @@ public partial class WheelColliderUpdater : MonoBehaviour
         return dist <= maxDistance;
     }
 
-#if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
 

@@ -28,7 +28,7 @@ public partial class GenericGunEditor : Editor
             }
             else
             {
-                checker = Instantiate((GameObject)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Models/HandsPlacement/Prefabs/HandsPlacementChecker.prefab", typeof(GameObject))).GetComponent<HandsPlacementChecker>();
+                checker = Instantiate(EditorAssetFinder.Find<GameObject>("HandsPlacementChecker")).GetComponent<HandsPlacementChecker>();
                 checker.attached_weapon = myScript;
             }
         }

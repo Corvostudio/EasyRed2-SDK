@@ -25,7 +25,7 @@ public partial class ItemHelmetEditor : Editor
             }
             else
             {
-                checker = Instantiate((GameObject)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Models/HeadPlacement/Prefabs/HeadPlacementChecker.prefab", typeof(GameObject))).GetComponent<HeadPlacementChecker>();
+                checker = Instantiate(EditorAssetFinder.Find<GameObject>("HeadPlacementChecker")).GetComponent<HeadPlacementChecker>();
                 checker.attached_headgear = myScript;
             }
         }
