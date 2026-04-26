@@ -4,15 +4,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
 
-
-
 #if UNITY_EDITOR
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 #endif
 
-public partial class ItemClothing : ItemObject
+public partial class ItemClothing : ItemObject, ISerializationCallbackReceiver
 {
     public WearableType type;
     [Tooltip("(ONLY IF TYPE IS UNIFORM) longSleeve: Use short hands model. shortSLeeve: Use long hands model. coversSleeveAndHand: Hide completly hands model")]
@@ -25,7 +23,6 @@ public partial class ItemClothing : ItemObject
     [Tooltip("(ONLY IF TYPE IS UNIFORM) coordinates of the batalion patch on the uniform. (0,0,0) if shouldn't appear.")]
     public Vector3 patch_coords = new Vector3(.5f, 0.2f, .8f);
 
-    public Material material;
     public Material[] materials = new Material[0];
     public Material[] materials_lod = new Material[0];
     public Mesh mesh;
@@ -73,7 +70,7 @@ public partial class ItemClothing : ItemObject
         else if (materials.Length > 0)
             return materials;
         else
-            return new Material[] { material };
+            return new Material[] {  };
     }
     public Material[] GetTpsMaterialsLOD(SleeveMode sleeveMode = SleeveMode.auto)
     {
@@ -158,8 +155,7 @@ public partial class ItemClothing : ItemObject
                     $"• materials           : {Len(clothing.materials)}\n" +
                     $"• materials_lod       : {Len(clothing.materials_lod)}\n" +
                     $"• materials_short     : {Len(clothing.materials_short)}\n" +
-                    $"• materials_short_lod : {Len(clothing.materials_short_lod)}\n" +
-                    $"• single material     : {(clothing.material ? clothing.material.name : "<color=#888888>null</color>")}",
+                    $"• materials_short_lod : {Len(clothing.materials_short_lod)}",
                     clothing
                 );
             }
@@ -220,6 +216,32 @@ public partial class ItemClothing : ItemObject
             }
 
         return null;
+    }
+#endif
+
+    // deserialization fix
+    [SerializeField, HideInInspector] private Material material;
+    public void OnBeforeSerialize() { }
+    public void OnAfterDeserialize()
+    {
+        MigrateLegacyMaterial();
+    }
+    private void MigrateLegacyMaterial()
+    {
+        if (material == null) return;
+
+        if (materials == null || materials.Length == 0)
+            materials = new Material[] { material };
+    }
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        int before = materials == null ? 0 : materials.Length;
+
+        MigrateLegacyMaterial();
+
+        if ((materials == null ? 0 : materials.Length) != before)
+            UnityEditor.EditorUtility.SetDirty(this);
     }
 #endif
 }
