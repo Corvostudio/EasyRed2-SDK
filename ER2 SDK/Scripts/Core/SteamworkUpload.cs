@@ -24,7 +24,7 @@ public class SteamworkUpload : MonoBehaviour
     public Image slider;
     public Text loading_text;
 
-    public static string GetDocumentPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/ER2 Mods/temp.txt"; } }
+    public static string GetDocumentPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/ER2 TOOLS/temp.txt"; } }
 
 
     private void Awake()

@@ -59,7 +59,7 @@ public partial class FactionDetails : ScriptableObject
 
     }
 
-    [MenuItem("Assets/ER2 MODS/Faction/New Faction Data", false, 2001)]
+    [MenuItem("Assets/ER2 TOOLS/Faction/New Faction Data", false, 2001)]
     public static void SetUpFaction()
     {
         FactionDetails sc = ScriptableObject.CreateInstance<FactionDetails>();
@@ -74,7 +74,7 @@ public partial class FactionDetails : ScriptableObject
     }
 
 
-    [MenuItem("Assets/ER2 MODS/Faction/New Voice Acting Data", false, 2001)]
+    [MenuItem("Assets/ER2 TOOLS/Faction/New Voice Acting Data", false, 2001)]
     public static void CreateVoiceActing()
     {
         if (Selection.activeObject && Selection.activeObject is FactionDetails)

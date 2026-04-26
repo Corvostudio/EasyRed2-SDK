@@ -14,11 +14,11 @@ public class ModUtils
     public static readonly int COVER_RESOLUTION = 512;
     
 
-    public static string GetDocumentPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/ER2 Mods/Export"; } }
-    public static string GetModsRootPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/ER2 Mods"; } }
+    public static string GetDocumentPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/ER2 TOOLS/Export"; } }
+    public static string GetModsRootPath { get { return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/ER2 TOOLS"; } }
     
     public static string GetCoverPhotoPath(string bundleName) {
-        return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/ER2 Mods/Export/" + bundleName + "/cover.jpg";
+        return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/ER2 TOOLS/Export/" + bundleName + "/cover.jpg";
     }
 
     public static string GetExportedModPath(string mod_bundle_name)

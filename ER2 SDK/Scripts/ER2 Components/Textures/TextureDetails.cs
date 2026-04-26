@@ -76,7 +76,7 @@ public partial class TextureDetails : ScriptableObject
         }
     }*/
 
-    [MenuItem("Assets/ER2 MODS/Textures/Set up LUT filter", false, 2001)]
+    [MenuItem("Assets/ER2 TOOLS/Textures/Set up LUT filter", false, 2001)]
     public static void SetUpLUT()
     {
         foreach (Object selected in Selection.objects)
@@ -120,7 +120,7 @@ public partial class TextureDetails : ScriptableObject
     }
 
 
-    [MenuItem("Assets/ER2 MODS/Textures/Set up crosshair", false, 2001)]
+    [MenuItem("Assets/ER2 TOOLS/Textures/Set up crosshair", false, 2001)]
     public static void SetUpCrosshair()
     {
         foreach (Object selected in Selection.objects)

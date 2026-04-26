@@ -38,8 +38,8 @@ public class ModTemplates : MonoBehaviour
 
     #region PROP
 
-    [MenuItem("GameObject/ER2 MODS/Prop Template", false, 0)]
-    [MenuItem("Assets/ER2 MODS/Prop Template", false, 0)]
+    [MenuItem("GameObject/ER2 TOOLS/Prop Template", false, 0)]
+    [MenuItem("Assets/ER2 TOOLS/Prop Template", false, 0)]
     private static void OnPropTemplate()
     {
         GameObject root = GenerateBaseRoot("My Prop", Selection.activeObject);
@@ -50,8 +50,8 @@ public class ModTemplates : MonoBehaviour
 
     #region UNIFORM/GEARS
 
-    [MenuItem("GameObject/ER2 MODS/Clothing Template/HeadGear", false, 101)]
-    [MenuItem("Assets/ER2 MODS/Clothing Template/HeadGear", false, 101)]
+    [MenuItem("GameObject/ER2 TOOLS/Clothing Template/HeadGear", false, 101)]
+    [MenuItem("Assets/ER2 TOOLS/Clothing Template/HeadGear", false, 101)]
     private static void OnHeadGearTemplate()
     {
         GameObject headGear = GenerateBaseRoot("My Headgear", Selection.activeObject);
@@ -62,8 +62,8 @@ public class ModTemplates : MonoBehaviour
         box.size = new Vector3(0.1978775f, 0.1014323f, 0.19939f);
     }
 
-    [MenuItem("GameObject/ER2 MODS/Clothing Template/Uniform", false , 100)]
-    [MenuItem("Assets/ER2 MODS/Clothing Template/Uniform", false, 100)]
+    [MenuItem("GameObject/ER2 TOOLS/Clothing Template/Uniform", false , 100)]
+    [MenuItem("Assets/ER2 TOOLS/Clothing Template/Uniform", false, 100)]
     private static void OnUniformTemplate()
     {
         GameObject uni = GenerateClothingTemplate("My Uniform");
@@ -86,8 +86,8 @@ public class ModTemplates : MonoBehaviour
         uni.GetComponent<LODGroup>().SetLODs(new LOD[1] { new LOD(.02f, uni.GetComponentsInChildren<Renderer>()) });
     }
 
-    [MenuItem("GameObject/ER2 MODS/Clothing Template/Gear",false, 102)]
-    [MenuItem("Assets/ER2 MODS/Clothing Template/Gear", false, 102)]
+    [MenuItem("GameObject/ER2 TOOLS/Clothing Template/Gear",false, 102)]
+    [MenuItem("Assets/ER2 TOOLS/Clothing Template/Gear", false, 102)]
     private static void OnGearTemplate()
     {
         GameObject gear = GenerateClothingTemplate("My Gear");
@@ -124,8 +124,8 @@ public class ModTemplates : MonoBehaviour
 
     #region WEAPONS
 
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Small Machine Gun", false, 200)]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/SMG", false, 200)]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Small Machine Gun", false, 200)]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/SMG", false, 200)]
     private static void OnSMGTemplate()
     {
         GenericGun smg = GenerateWeaponTemplate(Selection.activeObject, "Smg"); 
@@ -140,8 +140,8 @@ public class ModTemplates : MonoBehaviour
         smg.fpsAnimations.animationSet = AnimationData.FPSAnimationSet.GenericMagazine;
     }
 
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/HandGun",false, 201)]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/HandGun", false, 201)]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/HandGun",false, 201)]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/HandGun", false, 201)]
     private static void OnHandGunTemplate()
     {
         GenericGun HG = GenerateWeaponTemplate(Selection.activeObject, "Handgun");
@@ -161,8 +161,8 @@ public class ModTemplates : MonoBehaviour
 
     }
 
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Bolt Action", false, 202)]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/Bolt Action", false, 202)]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Bolt Action", false, 202)]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/Bolt Action", false, 202)]
     private static void OnBoltActionTemplate()
     {
         GenericGun gg = GenerateWeaponTemplate(Selection.activeObject, "Bolt Action");
@@ -179,8 +179,8 @@ public class ModTemplates : MonoBehaviour
         gg.fpsAnimations.animationSet = AnimationData.FPSAnimationSet.GenericBoltAction;
     }
 
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Machine Gun", false, 203)]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/Machine Gun", false, 203)]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Machine Gun", false, 203)]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/Machine Gun", false, 203)]
     private static void OnMGTemplate()
     {
         GenericGun gg = GenerateWeaponTemplate(Selection.activeObject, "MG");
@@ -194,8 +194,8 @@ public class ModTemplates : MonoBehaviour
         gg.fpsAnimations.animationSet = AnimationData.FPSAnimationSet.GenericMG;
     }
 
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Pump Action", false, 204)]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/Pump Action", false, 204)]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Pump Action", false, 204)]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/Pump Action", false, 204)]
     private static void OnPumpActionTemplate()
     {
         GenericGun gg = GenerateWeaponTemplate(Selection.activeObject, "Pump Action");
@@ -213,8 +213,8 @@ public class ModTemplates : MonoBehaviour
         gg.fpsAnimations.animationSet = AnimationData.FPSAnimationSet.GenericShotgun;
     }
 
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Rocket Launcher", false, 205)]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/Rocket Launcher", false, 205)]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Rocket Launcher", false, 205)]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/Rocket Launcher", false, 205)]
     private static void OnRocketLauncheTemplate()
     {
         GenericGun gg = GenerateWeaponTemplate(Selection.activeObject, "Rocket Launcher");
@@ -226,8 +226,8 @@ public class ModTemplates : MonoBehaviour
         gg.fpsAnimations.reload_sound_full = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Rocket Launcher/rocket_launcher_reload.ogg", typeof(AudioClip));
         gg.fpsAnimations.animationSet = AnimationData.FPSAnimationSet.GenericRocketLauncher;
     }
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Grenade and Mines", false, 306)]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/Grenade and Mines", false, 306)]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Grenade and Mines", false, 306)]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/Grenade and Mines", false, 306)]
     private static void OnGrenadeTemplate()
     {
         ItemGrenade gg = GenerateBaseRoot("Grenade Template", Selection.activeObject).AddComponent<ItemGrenade>();
@@ -243,8 +243,8 @@ public class ModTemplates : MonoBehaviour
         box.size = new Vector3(0.065f, 0.11f, 0.065f);
     }
 
-    /*[MenuItem("GameObject/ER2 MODS/Items/Weapon Attachments/Bayonet", false, 301)]
-    [MenuItem("Assets/ER2 MODS/Items/Weapon Attachments/Bayonet", false, 301)]
+    /*[MenuItem("GameObject/ER2 TOOLS/Items/Weapon Attachments/Bayonet", false, 301)]
+    [MenuItem("Assets/ER2 TOOLS/Items/Weapon Attachments/Bayonet", false, 301)]
     private static void SetupBayonet()
     {
         GameObject root = new GameObject("My Bayonet");
@@ -258,8 +258,8 @@ public class ModTemplates : MonoBehaviour
 
 
 
-    [MenuItem("GameObject/ER2 MODS/Items/Life Recover Item", false, 301)]
-    [MenuItem("Assets/ER2 MODS/Items/Life Recover Ite", false, 301)]
+    [MenuItem("GameObject/ER2 TOOLS/Items/Life Recover Item", false, 301)]
+    [MenuItem("Assets/ER2 TOOLS/Items/Life Recover Ite", false, 301)]
     private static void LifeRecoverItemTemplate()
     {
         GameObject root = new GameObject("LifeRecoverItemTemplate");
@@ -370,8 +370,8 @@ public class ModTemplates : MonoBehaviour
         return selectedGameObject;
     }
 
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Gun Accessories/Magazine")]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/Gun Accessories/Magazine")]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Gun Accessories/Magazine")]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/Gun Accessories/Magazine")]
     private static void GenerateMagazine()
     {
         if (!IsNewActionTime())
@@ -440,8 +440,8 @@ public class ModTemplates : MonoBehaviour
         magazine.gameObject.AddComponent<LODGroup>();
     }
 
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Gun Accessories/Simple Scope")]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/Gun Accessories/Simple Scope")]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Gun Accessories/Simple Scope")]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/Gun Accessories/Simple Scope")]
     private static void GenerateAttachmentScopeSimple()
     {
         if (!IsNewActionTime()) return;
@@ -455,8 +455,8 @@ public class ModTemplates : MonoBehaviour
         attachment.GetComponent<BoxCollider>().center = new Vector3(0.004863327f, 0.01609762f, 0.006838739f);
         attachment.GetComponent<BoxCollider>().size = new Vector3(0.04015234f, 0.0559434f, 0.1695825f);
     }
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Gun Accessories/Magnification Scope")]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/Gun Accessories/Magnification Scope")]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Gun Accessories/Magnification Scope")]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/Gun Accessories/Magnification Scope")]
     private static void GenerateAttachmentScopeMagnification()
     {
         if (!IsNewActionTime()) return;
@@ -475,8 +475,8 @@ public class ModTemplates : MonoBehaviour
         attachment.aimPos.SetParent(subScope.transform);
         attachment.aimPos.transform.localPosition = new Vector3(0, 0, -.12f);
     }
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Gun Accessories/Bipod")]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/Gun Accessories/Bipod")]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Gun Accessories/Bipod")]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/Gun Accessories/Bipod")]
     private static void GenerateAttachmentBipod()
     {
         if (!IsNewActionTime()) return;
@@ -492,8 +492,8 @@ public class ModTemplates : MonoBehaviour
         attachment.GetComponent<BoxCollider>().center = new Vector3(0.004863327f, 0.01609762f, 0.006838739f);
         attachment.GetComponent<BoxCollider>().size = new Vector3(0.04015234f, 0.0559434f, 0.1695825f);
     }
-    [MenuItem("GameObject/ER2 MODS/Weapon Template/Gun Accessories/Bayonet")]
-    [MenuItem("Assets/ER2 MODS/Weapon Template/Gun Accessories/Bayonet")]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Gun Accessories/Bayonet")]
+    [MenuItem("Assets/ER2 TOOLS/Weapon Template/Gun Accessories/Bayonet")]
     private static void GenerateAttachmentBayonet()
     {
         if (!IsNewActionTime()) return;
@@ -508,13 +508,13 @@ public class ModTemplates : MonoBehaviour
 
 
 
-    [MenuItem("Assets/ER2 MODS/Terrain/Create Terrain Detail 2D")]
+    [MenuItem("Assets/ER2 TOOLS/Terrain/Create Terrain Detail 2D")]
     private static void GenerateTerrainDetail2D()
     {
         if (!IsNewActionTime()) return;
         GenerateTerrainDetail(0);
     }
-    [MenuItem("Assets/ER2 MODS/Terrain/Create Terrain Detail X")]
+    [MenuItem("Assets/ER2 TOOLS/Terrain/Create Terrain Detail X")]
     private static void GenerateTerrainDetailX()
     {
         if (!IsNewActionTime()) return;
@@ -635,8 +635,8 @@ public class ModTemplates : MonoBehaviour
 
     #region BUILDING
 
-    [MenuItem("GameObject/ER2 MODS/Buildings/Building Template", false, 300)]
-    [MenuItem("Assets/ER2 MODS/Building Template", false, 300)]
+    [MenuItem("GameObject/ER2 TOOLS/Buildings/Building Template", false, 300)]
+    [MenuItem("Assets/ER2 TOOLS/Building Template", false, 300)]
     private static void OnBuildingTemplate()
     {
        GameObject building =GenerateBaseRoot("My Building", Selection.activeObject);
@@ -670,9 +670,41 @@ public class ModTemplates : MonoBehaviour
 
     }
 
+    [MenuItem("GameObject/ER2 TOOLS/Buildings/Make Door", false, 0)]
+    private static void OnDoorTemplate()
+    {
+        if (!IsNewActionTime()) return;
+
+        Transform root = new GameObject("Door Pivot").transform;
+        {
+            root.transform.position = Selection.activeGameObject.transform.position;
+            root.transform.rotation = Selection.activeGameObject.transform.root.rotation;
+            root.transform.SetParent(Selection.activeGameObject.transform.parent);
+        }
+        InteragibleDoor id = root.gameObject.AddComponent<InteragibleDoor>();
+        List<DoorPivot> doors = new List<DoorPivot>();
+
+        foreach (GameObject door in Selection.gameObjects)
+        {
+            door.transform.SetParent(root);
+            if (!door.GetComponent<Collider>())
+                door.AddComponent<BoxCollider>();
+            doors.Add(new DoorPivot()
+            {
+                pivot = door.transform,
+                closedRotX = (int)door.transform.localEulerAngles.x,
+                closedRotY = (int)door.transform.localEulerAngles.y,
+                openRotX = (int)door.transform.localEulerAngles.x,
+                openRotY = (int)door.transform.localEulerAngles.y,
+            });
+            door.AddComponent<InteragibleDoorAdditionalInteractor>().connectedDoor = id;
+        }
+        id.doors = doors.ToArray();
+        Selection.activeGameObject = root.gameObject;
+    }
 
 
-    [MenuItem("GameObject/ER2 MODS/Buildings/Add Collisions to damageable part", false, 300)]
+    [MenuItem("GameObject/ER2 TOOLS/Buildings/Add Collisions to damageable part", false, 300)]
     private static void SetUpAsdamageablePart()
     {
         if (!IsNewActionTime())
@@ -683,6 +715,9 @@ public class ModTemplates : MonoBehaviour
             if (selected is GameObject && IsInstance((GameObject)selected))
                 SetUpAsdamageablePart(((GameObject)selected));
         }
+
+        //add building collision managers
+        AddCollisionSystems();
     }
     private static void SetUpAsdamageablePart(GameObject part)
     {
@@ -690,16 +725,34 @@ public class ModTemplates : MonoBehaviour
         {
             if (!part.GetComponent<BuildingImpact>())
                 part.AddComponent<BuildingImpact>();
-            if (!part.GetComponent<MeshCollider>())
-                part.AddComponent<MeshCollider>();
             //layer?
             //cover positions?
             //foot step specifier
         }
     }
 
+    [MenuItem("GameObject/ER2 TOOLS/Add Missing Building Impact Managers", false, 1500)]
+    private static void AddCollisionSystems()
+    {
+        if (!IsNewActionTime())
+            return;
 
-    [MenuItem("GameObject/ER2 MODS/Buildings/Convert Mesh into collision", false, 300)]
+        if (Selection.activeGameObject == null) return;
+
+        foreach (UnityEngine.Object selected in Selection.objects)
+        {
+            foreach (Collision coll in ((GameObject)selected).GetComponentsInChildren<Collision>())
+            {
+                if (!coll.gameObject.GetComponent<BuildingImpact>())
+                    coll.gameObject.AddComponent<BuildingImpact>();
+                if (!coll.gameObject.GetComponent<PathfindingFilter>())
+                    coll.gameObject.AddComponent<PathfindingFilter>();
+                coll.gameObject.GetComponent<PathfindingFilter>().ignoreFlags = PathfindingIgnoreFlags.Vehicles;
+            }
+        }
+    }
+
+    [MenuItem("GameObject/ER2 TOOLS/Buildings/Convert Mesh into collision", false, 300)]
     private static void SetUpCollisionAndRemoveMeshPart()
     {
         if (!IsNewActionTime())
@@ -736,8 +789,8 @@ public class ModTemplates : MonoBehaviour
 
 
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Static", false, 399)]
-    [MenuItem("Assets/ER2 MODS/Vehicle/Static", false, 399)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Static", false, 399)]
+    [MenuItem("Assets/ER2 TOOLS/Vehicle/Static", false, 399)]
     public static void OnStaticVehicleTemplate()
     {
         GameObject root = GenerateBaseRoot("My Static Vehicle", Selection.activeGameObject);
@@ -780,8 +833,8 @@ public class ModTemplates : MonoBehaviour
 
 
     #region LAND VEHICLES
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Wheeled Template", false, 400)]
-    [MenuItem("Assets/ER2 MODS/Vehicle/Wheeled Template", false, 400)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Wheeled Template", false, 400)]
+    [MenuItem("Assets/ER2 TOOLS/Vehicle/Wheeled Template", false, 400)]
     public static void OnWheeledTemplate()
     {
         GameObject root = GenerateBaseRoot("My Wheeled Vehicle", Selection.activeGameObject);
@@ -903,8 +956,8 @@ public class ModTemplates : MonoBehaviour
     }
 
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Tank Template", false, 401)]
-    [MenuItem("Assets/ER2 MODS/Vehicle/Tank Template", false, 401)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Tank Template", false, 401)]
+    [MenuItem("Assets/ER2 TOOLS/Vehicle/Tank Template", false, 401)]
     public static void OnTanktemplate()
     {
         GameObject root = GenerateBaseRoot("My Tank Vehicle", Selection.activeGameObject);
@@ -980,8 +1033,8 @@ public class ModTemplates : MonoBehaviour
 
     #region AUTO TRANSPORT
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Auto Transport Boat Template", false, 402)]
-    [MenuItem("Assets/ER2 MODS/Vehicle/Auto Transport Boat Template", false, 402)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Auto Transport Boat Template", false, 402)]
+    [MenuItem("Assets/ER2 TOOLS/Vehicle/Auto Transport Boat Template", false, 402)]
     public static void OnATBoatTemplate()
     {
         GameObject root = GenerateBaseRoot("My AT Boat", Selection.activeGameObject);
@@ -1019,8 +1072,8 @@ public class ModTemplates : MonoBehaviour
     }
 
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Auto Transport Glider Template", false, 403)]
-    [MenuItem("Assets/ER2 MODS/Vehicle/Auto Transport Glider Template", false, 403)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Auto Transport Glider Template", false, 403)]
+    [MenuItem("Assets/ER2 TOOLS/Vehicle/Auto Transport Glider Template", false, 403)]
     public static void OnATGliderTemplate()
     {
         GameObject root = GenerateBaseRoot("My AT Glider", Selection.activeGameObject);
@@ -1080,8 +1133,8 @@ public class ModTemplates : MonoBehaviour
     }
 
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Auto Transport Cargo Template", false, 404)]
-    [MenuItem("Assets/ER2 MODS/Vehicle/Auto Transport Cargo Template", false, 404)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Auto Transport Cargo Template", false, 404)]
+    [MenuItem("Assets/ER2 TOOLS/Vehicle/Auto Transport Cargo Template", false, 404)]
     public static void OnATCargoTemplate()
     {
         GameObject root = GenerateBaseRoot("My AT Cargo", Selection.activeGameObject);
@@ -1146,8 +1199,8 @@ public class ModTemplates : MonoBehaviour
     #endregion
 
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Planes/Plane Template", false, 405)]
-    [MenuItem("Assets/ER2 MODS/Vehicle/Planes/Plane Template", false, 405)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Plane Template", false, 405)]
+    [MenuItem("Assets/ER2 TOOLS/Vehicle/Planes/Plane Template", false, 405)]
     public static void OnPlaneTemplate()
     {
         GameObject root = GenerateBaseRoot("My Plane", Selection.activeGameObject);
@@ -1224,7 +1277,7 @@ public class ModTemplates : MonoBehaviour
         
     }
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Planes/Make BombBay", false , 1000)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make BombBay", false , 1000)]
     public static void SetUpBombBay()
     {
         if (!IsNewActionTime())
@@ -1257,7 +1310,7 @@ public class ModTemplates : MonoBehaviour
         }
     }
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Planes/Make Detachable part(s)/Tail", false, 1001)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make Detachable part(s)/Tail", false, 1001)]
     public static void SetUpDetachableTail()
     {
         if (!IsNewActionTime())
@@ -1293,12 +1346,12 @@ public class ModTemplates : MonoBehaviour
             }
         }
     }
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Planes/Make Detachable part(s)/Left Wing", false, 1002)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make Detachable part(s)/Left Wing", false, 1002)]
     public static void SetUpDetachableWingLeft()
     {
         SetUpDetachableWing(true);
     }
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Planes/Make Detachable part(s)/Right Wing", false, 1002)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make Detachable part(s)/Right Wing", false, 1002)]
     public static void SetUpDetachableWingRight()
     {
         SetUpDetachableWing(false);
@@ -1338,7 +1391,7 @@ public class ModTemplates : MonoBehaviour
         }
     }
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Planes/Make Detachable part(s)/Propellers", false, 1003)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make Detachable part(s)/Propellers", false, 1003)]
     public static void SetUpDetachablePropellers()
     {
         if (!IsNewActionTime())
@@ -1396,7 +1449,7 @@ public class ModTemplates : MonoBehaviour
             }
         }
     }
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Planes/Make Flap", false, 1003)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make Flap", false, 1003)]
     public static void SetUpPlaneFlap()
     {
         if (!IsNewActionTime())
@@ -1433,7 +1486,7 @@ public class ModTemplates : MonoBehaviour
         return parts;
     }
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Turret/Gun", false, 800)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Turret/Gun", false, 800)]
     public static void SetUpTurretGun()
     {
         TurretGun tg = (TurretGun)InitTurrets(typeof(TurretGun));
@@ -1442,7 +1495,7 @@ public class ModTemplates : MonoBehaviour
             AddGunToTurret(tg);
         }
     }
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Turret/MG", false, 801)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Turret/MG", false, 801)]
     public static void SetUpTurretMG()
     {
         TurretMG tm = (TurretMG)InitTurrets(typeof(TurretMG));
@@ -1452,7 +1505,7 @@ public class ModTemplates : MonoBehaviour
         }
     }
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Turret/Gun and MG", false, 802)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Turret/Gun and MG", false, 802)]
     public static void SetUpTurretGunNMG()
     {
         TurretGun tg = (TurretGun)InitTurrets(typeof(TurretGun));
@@ -1463,7 +1516,7 @@ public class ModTemplates : MonoBehaviour
         }
     }
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Turret/Commander", false, 803)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Turret/Commander", false, 803)]
     public static void SetUpTurretCommander()
     {
         InitTurrets(typeof(TurretCommander));
@@ -1621,7 +1674,7 @@ public class ModTemplates : MonoBehaviour
         turret.weapons = newWeapons;
     }
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Wheels/SetUp Wheels", false, 801)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Wheels/SetUp Wheels", false, 801)]
     public static void OnSetupWheels()
     {
         if (!IsNewActionTime())
@@ -1630,7 +1683,7 @@ public class ModTemplates : MonoBehaviour
         EditorWindow.GetWindow(typeof(WheelWindow));
         WheelWindow.Init(Selection.gameObjects);
     }
-    [MenuItem("GameObject/ER2 MODS/Vehicle/Wheels/Simple Wheels SetUp", false, 801)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Wheels/Simple Wheels SetUp", false, 801)]
     public static void OnSetupWheelsSimple()
     {
         if (!IsNewActionTime())
@@ -1697,7 +1750,7 @@ public class ModTemplates : MonoBehaviour
         return list;
     }
 
-    [MenuItem("GameObject/ER2 MODS/Vehicle/SetUp Steering Wheel", false, 1001)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/SetUp Steering Wheel", false, 1001)]
     public static void GenerateSteeringWheel()
     {
         if (Selection.activeObject is GameObject && ((GameObject)Selection.activeObject).GetComponentInParent<MovableVehicle>())

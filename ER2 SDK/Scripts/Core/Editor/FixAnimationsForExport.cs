@@ -19,7 +19,7 @@ public class ModelImporterEditor:Editor
     }
 
 
-    [MenuItem("Assets/ER2 MODS/Tools/Animation making/Fix animation as FPS anim", false, 2003)]
+    [MenuItem("Assets/ER2 TOOLS/Tools/Animation making/Fix animation as FPS anim", false, 2003)]
     public static void SetUpPlaneFlap()
     {
         if (!IsNewActionTime())
@@ -74,8 +74,8 @@ public class ModelImporterEditor:Editor
     }
 
     private static HashSet<string> alreadyAdded = new HashSet<string>();
-    [MenuItem("Assets/ER2 MODS/Tools/Animation making/Set up FPS animator", false, 2004)]
-    [MenuItem("GameObject/ER2 MODS/Tools/Animation making/Set up FPS animator", false, 2004)]
+    [MenuItem("Assets/ER2 TOOLS/Tools/Animation making/Set up FPS animator", false, 2004)]
+    [MenuItem("GameObject/ER2 TOOLS/Tools/Animation making/Set up FPS animator", false, 2004)]
     public static void SetUpAnimationTesting()
     {
         if (!ModTemplates.IsNewActionTime()) return;
