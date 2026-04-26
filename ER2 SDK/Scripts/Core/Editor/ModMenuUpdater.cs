@@ -59,7 +59,7 @@ public class ModMenuUpdater : EditorWindow
             manualUrl = data.manual_url;
             www.Dispose();
 
-            if (newVersion > VERSION)
+            if (newVersion > VERSION && VERSION != 0)
             {
                 checkStatus = CheckStatus.NewUpdateFound;
                 GetWindow(typeof(ModMenuUpdater));
