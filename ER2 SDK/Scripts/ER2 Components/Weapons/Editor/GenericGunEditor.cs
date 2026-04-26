@@ -18,17 +18,23 @@ public partial class GenericGunEditor : Editor
 
         if (GUILayout.Button("Enable / Disable hands placement checker") && !Application.isPlaying)
         {
-            HandsPlacementChecker checker = GameObject.FindFirstObjectByType<HandsPlacementChecker>();
-            if (checker)
+            var existing = Resources.FindObjectsOfTypeAll<HandsPlacementChecker>();
+            HandsPlacementChecker mine = null;
+            foreach (var c in existing)
             {
-                if (checker.attached_weapon == myScript)
-                    DestroyImmediate(checker.gameObject);
-                else
-                    checker.attached_weapon = myScript;
+                if (c == null || EditorUtility.IsPersistent(c)) continue;
+                if (c.attached_weapon == myScript) { mine = c; continue; }
+                DestroyImmediate(c.gameObject);
+            }
+
+            if (mine != null)
+            {
+                DestroyImmediate(mine.gameObject);
             }
             else
             {
-                checker = Instantiate(EditorAssetFinder.Find<GameObject>("HandsPlacementChecker")).GetComponent<HandsPlacementChecker>();
+                var checker = Instantiate(EditorAssetFinder.Find<GameObject>("HandsPlacementChecker"))
+                    .GetComponent<HandsPlacementChecker>();
                 checker.attached_weapon = myScript;
             }
         }

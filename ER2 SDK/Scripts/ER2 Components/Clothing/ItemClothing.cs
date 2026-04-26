@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.IO;
+
 
 
 #if UNITY_EDITOR
@@ -279,18 +281,6 @@ public class ItemClothingEditor : Editor
 
                 if (ItemClothing.ValidateSetup(clothing, ItemClothing.ValidateMode.Full, clt.item_id))
                     Debug.Log($"<b>{clt.item_id}</b> seems setted up correctly.");
-
-                GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(clt.gameObject);
-                if (prefab && !EditorUtility.IsPersistent(clt.gameObject))
-                {
-                    if (prefab.name != clt.item_id)
-                        Debug.LogError($"[ItemClothing Validate] Prefab name '{prefab.name}' does not match item_id '{clt.item_id}'.", clothing);
-                }
-                else
-                {
-                    if (clt.gameObject.name != clt.item_id)
-                        Debug.LogError($"[ItemClothing Validate] Prefab name '{prefab.name}' does not match item_id '{clt.item_id}'.", clothing);
-                }
             }
         }
 
@@ -554,6 +544,132 @@ public class ItemClothingEditor : Editor
     {
         var renderer = FindSourceRendererForMesh(mesh);
         return renderer != null ? renderer.sharedMaterials : null;
+    }
+}
+
+
+//id validation
+public class ItemIdAutoAssignPostprocessor : AssetPostprocessor
+{
+    private static HashSet<string> s_knownPrefabPaths;
+
+    [InitializeOnLoadMethod]
+    private static void InitKnownPaths()
+    {
+        s_knownPrefabPaths = new HashSet<string>();
+        foreach (var guid in AssetDatabase.FindAssets("t:Prefab"))
+            s_knownPrefabPaths.Add(AssetDatabase.GUIDToAssetPath(guid));
+    }
+
+    private static void OnPostprocessAllAssets(
+        string[] importedAssets,
+        string[] deletedAssets,
+        string[] movedAssets,
+        string[] movedFromAssetPaths)
+    {
+        if (s_knownPrefabPaths == null) InitKnownPaths();
+
+        foreach (var p in deletedAssets)
+            s_knownPrefabPaths.Remove(p);
+
+        // Renames
+        for (int i = 0; i < movedAssets.Length; i++)
+        {
+            string newPath = movedAssets[i];
+            string oldPath = movedFromAssetPaths[i];
+            s_knownPrefabPaths.Remove(oldPath);
+            s_knownPrefabPaths.Add(newPath);
+
+            if (!newPath.EndsWith(".prefab", System.StringComparison.OrdinalIgnoreCase)) continue;
+
+            string oldName = Path.GetFileNameWithoutExtension(oldPath);
+            string newName = Path.GetFileNameWithoutExtension(newPath);
+            if (oldName == newName) continue;
+
+            string capPath = newPath, capOld = oldName, capNew = newName;
+            EditorApplication.delayCall += () => HandleRename(capPath, capOld, capNew);
+        }
+
+        // Imports (creations + saves)
+        foreach (string path in importedAssets)
+        {
+            if (!path.EndsWith(".prefab", System.StringComparison.OrdinalIgnoreCase)) continue;
+            bool isNew = !s_knownPrefabPaths.Contains(path);
+            s_knownPrefabPaths.Add(path);
+
+            string fileName = Path.GetFileNameWithoutExtension(path);
+            string capPath = path, capName = fileName;
+            bool capIsNew = isNew;
+            EditorApplication.delayCall += () => HandleImport(capPath, capName, capIsNew);
+        }
+    }
+
+    private static bool IsVariant(GameObject go) =>
+        PrefabUtility.GetPrefabAssetType(go) == PrefabAssetType.Variant;
+
+    private static bool IsItemIdOverridden(ItemObject item)
+    {
+        if (item == null) return false;
+        var so = new SerializedObject(item);
+        var prop = so.FindProperty("item_id");
+        return prop != null && prop.prefabOverride;
+    }
+
+    private static void HandleImport(string path, string fileName, bool isNew)
+    {
+        var probe = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (probe == null) return;
+        var item = probe.GetComponent<ItemObject>();
+        if (item == null) return;
+        if (item.item_id == fileName) return;
+
+        bool variant = IsVariant(probe);
+        bool shouldUpdate;
+        if (variant)
+            // New variant with inherited id → give it its own id matching the filename
+            shouldUpdate = isNew && !IsItemIdOverridden(item);
+        else
+            // Regular new prefab with empty id
+            shouldUpdate = string.IsNullOrEmpty(item.item_id);
+
+        if (shouldUpdate) ApplyIdChange(path, fileName);
+    }
+
+    private static void HandleRename(string path, string oldName, string newName)
+    {
+        var probe = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (probe == null) return;
+        var item = probe.GetComponent<ItemObject>();
+        if (item == null) return;
+        if (item.item_id == newName) return;
+
+        bool variant = IsVariant(probe);
+        bool shouldUpdate;
+        if (variant && !IsItemIdOverridden(item))
+            // Inherited id on variant: a rename should give it its own filename-based id
+            shouldUpdate = true;
+        else
+            // Regular prefab or overridden variant: only update if id was synced with old name
+            shouldUpdate = (item.item_id == oldName);
+
+        if (shouldUpdate) ApplyIdChange(path, newName);
+    }
+
+    private static void ApplyIdChange(string path, string newId)
+    {
+        var instance = PrefabUtility.LoadPrefabContents(path);
+        if (instance == null) return;
+        try
+        {
+            var item = instance.GetComponent<ItemObject>();
+            if (item == null || item.item_id == newId) return;
+            item.item_id = newId;
+            PrefabUtility.SaveAsPrefabAsset(instance, path);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(instance);
+        }
     }
 }
 #endif

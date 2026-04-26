@@ -31,17 +31,23 @@ public class SteeringWheelEditor : Editor
 
         if (GUILayout.Button("Enable / Disable hands placement checker") && !Application.isPlaying)
         {
-            HandsPlacementCheckerSteeringWheel checker = GameObject.FindFirstObjectByType<HandsPlacementCheckerSteeringWheel>();
-            if (checker)
+            var existing = Resources.FindObjectsOfTypeAll<HandsPlacementCheckerSteeringWheel>();
+            HandsPlacementCheckerSteeringWheel mine = null;
+            foreach (var c in existing)
             {
-                if (checker.attached_sw == myScript)
-                    DestroyImmediate(checker.gameObject);
-                else
-                    checker.attached_sw = myScript;
+                if (c == null || EditorUtility.IsPersistent(c)) continue;
+                if (c.attached_sw == myScript) { mine = c; continue; }
+                DestroyImmediate(c.gameObject);
+            }
+
+            if (mine != null)
+            {
+                DestroyImmediate(mine.gameObject);
             }
             else
             {
-                checker = Instantiate(EditorAssetFinder.Find<GameObject>("HandsPlacementChecker_SteeringWheel")).GetComponent<HandsPlacementCheckerSteeringWheel>();
+                var checker = Instantiate(EditorAssetFinder.Find<GameObject>("HandsPlacementChecker_SteeringWheel"))
+                    .GetComponent<HandsPlacementCheckerSteeringWheel>();
                 checker.attached_sw = myScript;
             }
         }

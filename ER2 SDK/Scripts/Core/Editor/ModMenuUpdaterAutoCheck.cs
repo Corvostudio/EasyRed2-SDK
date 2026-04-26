@@ -44,12 +44,14 @@ public static class ModMenuUpdaterAutoCheck
         try
         {
             if (File.Exists(sourceFilePath))
+            {
                 File.Copy(sourceFilePath, targetFilePath, true);
+                QualitySettings.SetQualityLevel(0, true);
+            }
         }
         catch (IOException e)
         {
             Debug.LogError("An error occurred while copying the file: " + e.Message);
         }
-        QualitySettings.SetQualityLevel(0, true);
     }
 }

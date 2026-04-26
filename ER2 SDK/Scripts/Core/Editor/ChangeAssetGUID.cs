@@ -181,3 +181,161 @@ public class ChangeAssetGUID : EditorWindow
         return true;
     }
 }
+
+public class ReplaceGuidReferences : EditorWindow
+{
+    private const string MenuPath = "Tools/ER2 Tools/Replace GUID References...";
+
+    private UnityEngine.Object oldAsset;
+    private UnityEngine.Object newAsset;
+    private string oldGuid = "";
+    private string newGuid = "";
+
+    private static readonly HashSet<string> ScannedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ".unity", ".prefab", ".asset", ".mat", ".anim", ".controller", ".overridecontroller",
+        ".mask", ".physicmaterial", ".physicsmaterial", ".physicsmaterial2d", ".mixer",
+        ".spriteatlas", ".spriteatlasv2", ".playable", ".terrainlayer", ".lighting",
+        ".giparams", ".rendertexture", ".cubemap", ".fontsettings", ".guiskin", ".flare",
+        ".brush", ".shadervariants", ".preset", ".signal", ".meta", ".asmdef", ".asmref"
+    };
+
+    [MenuItem(MenuPath, false, 2001)]
+    private static void OpenWindow()
+    {
+        var w = GetWindow<ReplaceGuidReferences>(true, "Replace GUID References", true);
+        w.minSize = new Vector2(540, 320);
+    }
+
+    private void OnGUI()
+    {
+        EditorGUILayout.LabelField("Source (references to THIS will be redirected)", EditorStyles.boldLabel);
+        EditorGUI.BeginChangeCheck();
+        oldAsset = EditorGUILayout.ObjectField("Old asset", oldAsset, typeof(UnityEngine.Object), false);
+        if (EditorGUI.EndChangeCheck() && oldAsset != null)
+            oldGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(oldAsset));
+        oldGuid = EditorGUILayout.TextField("Old GUID", oldGuid).Trim().ToLowerInvariant();
+
+        GUILayout.Space(8);
+
+        EditorGUILayout.LabelField("Target (references will point HERE)", EditorStyles.boldLabel);
+        EditorGUI.BeginChangeCheck();
+        newAsset = EditorGUILayout.ObjectField("New asset", newAsset, typeof(UnityEngine.Object), false);
+        if (EditorGUI.EndChangeCheck() && newAsset != null)
+            newGuid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(newAsset));
+        newGuid = EditorGUILayout.TextField("New GUID", newGuid).Trim().ToLowerInvariant();
+
+        GUILayout.Space(8);
+        EditorGUILayout.HelpBox(
+            "Rewrites every reference to OLD guid in 'Assets/' and 'ProjectSettings/' to point to NEW guid. " +
+            "The asset that owns the old guid is left untouched (its identity is preserved). " +
+            "Back up / commit before applying.",
+            MessageType.Warning);
+
+        GUILayout.Space(8);
+        GUI.enabled = IsValidGuid(oldGuid) && IsValidGuid(newGuid) && oldGuid != newGuid;
+        if (GUILayout.Button("Apply", GUILayout.Height(28)))
+        {
+            if (ApplyReplace(oldGuid, newGuid))
+                Close();
+        }
+        GUI.enabled = true;
+    }
+
+    private static bool IsValidGuid(string g)
+        => !string.IsNullOrEmpty(g) && Regex.IsMatch(g, "^[0-9a-f]{32}$");
+
+    private static bool ApplyReplace(string oldGuid, string newGuid)
+    {
+        string oldPath = AssetDatabase.GUIDToAssetPath(oldGuid);
+        string newPath = AssetDatabase.GUIDToAssetPath(newGuid);
+
+        if (string.IsNullOrEmpty(newPath))
+        {
+            if (!EditorUtility.DisplayDialog("New GUID not found",
+                    "The NEW GUID does not match any asset in the project. Continuing will leave broken references. Continue anyway?",
+                    "Continue", "Cancel"))
+                return false;
+        }
+
+        if (!EditorUtility.DisplayDialog("Confirm Replace",
+                $"Rewrite every reference to:\n\n{oldGuid}\n  ({(string.IsNullOrEmpty(oldPath) ? "<missing>" : oldPath)})\n\n" +
+                $"...so it points to:\n\n{newGuid}\n  ({(string.IsNullOrEmpty(newPath) ? "<missing>" : newPath)})\n\n" +
+                "Project backed up? Continue?",
+                "Replace", "Cancel"))
+            return false;
+
+        AssetDatabase.SaveAssets();
+        EditorUtility.DisplayProgressBar("Replace GUID References", "Enumerating project files...", 0f);
+
+        string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+        var roots = new[]
+        {
+            Application.dataPath,
+            Path.Combine(projectRoot, "ProjectSettings")
+        };
+
+        // Don't touch the .meta of the asset that owns the old GUID — we want to preserve its identity.
+        string skipMetaFull = null;
+        if (!string.IsNullOrEmpty(oldPath))
+            skipMetaFull = Path.GetFullPath(Path.Combine(projectRoot, oldPath + ".meta"));
+
+        var files = new List<string>(16384);
+        foreach (var root in roots)
+        {
+            if (!Directory.Exists(root)) continue;
+            foreach (var f in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+            {
+                if (!ScannedExtensions.Contains(Path.GetExtension(f))) continue;
+                if (skipMetaFull != null && string.Equals(Path.GetFullPath(f), skipMetaFull, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                files.Add(f);
+            }
+        }
+
+        int modifiedCount = 0;
+        int errorCount = 0;
+
+        AssetDatabase.StartAssetEditing();
+        try
+        {
+            EditorUtility.DisplayProgressBar("Replace GUID References", $"Scanning {files.Count} files...", 0.1f);
+
+            Parallel.ForEach(files, file =>
+            {
+                try
+                {
+                    string text = File.ReadAllText(file);
+                    if (text.IndexOf(oldGuid, StringComparison.Ordinal) < 0) return;
+
+                    string replaced = text.Replace(oldGuid, newGuid);
+                    if (replaced != text)
+                    {
+                        File.WriteAllText(file, replaced);
+                        Interlocked.Increment(ref modifiedCount);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Interlocked.Increment(ref errorCount);
+                    Debug.LogWarning($"[Replace GUID Refs] Skipped {file}: {e.Message}");
+                }
+            });
+        }
+        finally
+        {
+            AssetDatabase.StopAssetEditing();
+            EditorUtility.ClearProgressBar();
+        }
+
+        AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+
+        EditorUtility.DisplayDialog("Done",
+            $"References replaced.\n\nOld: {oldGuid}\nNew: {newGuid}\n\n" +
+            $"Files scanned: {files.Count}\nFiles modified: {modifiedCount}" +
+            (errorCount > 0 ? $"\nErrors: {errorCount} (see Console)" : ""),
+            "OK");
+
+        return true;
+    }
+}

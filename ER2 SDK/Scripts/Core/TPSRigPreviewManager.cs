@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
 #endif
 using UnityEngine;
 
@@ -15,6 +16,13 @@ public class TPSRigPreviewManager : MonoBehaviour
     public SkinnedMeshRenderer body;
     public SkinnedMeshRenderer body_fps;
     public Transform headgear_pos;
+
+    public Mesh fps_longsleeve;
+    public Mesh fps_shortleeve;
+    public Mesh tps_longsleeve_longpants;
+    public Mesh tps_longsleeve_shortpants;
+    public Mesh tps_shortleeve_longpants;
+    public Mesh tps_shortleeve_shortpants;
 
 
 #if UNITY_EDITOR
@@ -151,13 +159,7 @@ public class TPSRigPreviewManager : MonoBehaviour
 #endif
 }
 
-
 #if UNITY_EDITOR
-/// <summary>
-/// Editor-only static manager that owns links between ItemClothing/ItemHelmet
-/// and the single TPSRigPreviewManager in the scene. Periodically resyncs all
-/// linked items so that material/mesh changes show up live.
-/// </summary>
 public static class TPSRigTesterManager
 {
     private const double SYNC_INTERVAL = 0.5;
@@ -177,28 +179,68 @@ public static class TPSRigTesterManager
     private static double s_lastSync;
     private static bool s_registered;
 
-    [InitializeOnLoadMethod]
+    [InitializeOnLoadMethod] 
     private static void Register()
     {
         if (s_registered) return;
         s_registered = true;
         EditorApplication.update += OnUpdate;
         EditorApplication.playModeStateChanged += OnPlayModeChanged;
+        UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+        UnityEditor.SceneManagement.EditorSceneManager.sceneOpening += OnSceneOpening;
+
+        // Clean any leftover testers/checkers from a previous editor state
+        EditorApplication.delayCall += () =>
+        {
+            DisableTester();
+            DestroyAllPlacementCheckers();
+        };
     }
 
     private static void OnPlayModeChanged(PlayModeStateChange state)
     {
         if (state == PlayModeStateChange.ExitingEditMode)
+        {
             DisableTester();
+            DestroyAllPlacementCheckers();
+        }
+    }
+
+    private static void OnBeforeAssemblyReload()
+    {
+        DisableTester();
+        DestroyAllPlacementCheckers();
+    }
+
+    private static void OnSceneOpening(string path, UnityEditor.SceneManagement.OpenSceneMode mode)
+    {
+        DisableTester();
+        DestroyAllPlacementCheckers();
+    }
+
+    private static void DestroyAllPlacementCheckers()
+    {
+        DestroyAllOfType<HandsPlacementChecker>();
+        DestroyAllOfType<HandsPlacementCheckerSteeringWheel>();
+        DestroyAllOfType<HeadPlacementChecker>();
+    }
+
+    private static void DestroyAllOfType<T>() where T : MonoBehaviour
+    {
+        var all = Resources.FindObjectsOfTypeAll<T>();
+        foreach (var c in all)
+        {
+            if (c == null) continue;
+            if (EditorUtility.IsPersistent(c)) continue;
+            if (c.gameObject == null) continue;
+            Object.DestroyImmediate(c.gameObject);
+        }
     }
 
     // ===== Tester lifecycle =====
 
     public static TPSRigPreviewManager FindTester()
     {
-        if (s_cachedTester != null && !EditorUtility.IsPersistent(s_cachedTester) && s_cachedTester.gameObject.scene.IsValid())
-            return s_cachedTester;
-
         s_cachedTester = null;
         TPSRigPreviewManager first = null;
         var all = Resources.FindObjectsOfTypeAll<TPSRigPreviewManager>();
@@ -206,7 +248,7 @@ public static class TPSRigTesterManager
         {
             if (t == null) continue;
             if (EditorUtility.IsPersistent(t)) continue;
-            if (!t.gameObject.scene.IsValid()) continue;
+            if (t.gameObject == null) continue;
 
             if (first == null)
                 first = t;
@@ -217,7 +259,7 @@ public static class TPSRigTesterManager
         return first;
     }
 
-    public static TPSRigPreviewManager GetOrSpawnTester()
+    public static TPSRigPreviewManager GetOrSpawnTester(Transform pos)
     {
         var existing = FindTester();
         if (existing != null)
@@ -242,12 +284,40 @@ public static class TPSRigTesterManager
 
         EnforceDontSaveFlags(go);
         s_cachedTester = go.GetComponent<TPSRigPreviewManager>();
+
+        bool isPrefabAsset = pos != null && EditorUtility.IsPersistent(pos.gameObject);
+        if (isPrefabAsset)
+            PositionInFrontOfCamera(s_cachedTester);
+        else
+            PositionAbove(s_cachedTester, pos);
+
         return s_cachedTester;
+    }
+
+    private static void PositionInFrontOfCamera(TPSRigPreviewManager tester)
+    {
+        if (tester == null) return;
+        SceneView sv = SceneView.lastActiveSceneView;
+        if (sv != null && sv.camera != null)
+        {
+            Vector3 camPos = sv.camera.transform.position;
+            Vector3 fwd = sv.camera.transform.forward;
+            tester.transform.position = camPos + fwd * 3f;
+            // face the camera
+            Vector3 lookDir = -fwd; lookDir.y = 0;
+            if (lookDir.sqrMagnitude < 0.0001f) lookDir = Vector3.forward;
+            tester.transform.rotation = Quaternion.LookRotation(lookDir.normalized, Vector3.up);
+        }
+        else
+        {
+            tester.transform.position = Vector3.zero;
+            tester.transform.rotation = Quaternion.identity;
+        }
     }
 
     private static void EnforceDontSaveFlags(GameObject root)
     {
-        var flags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+        var flags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild | HideFlags.HideInHierarchy;
         foreach (var t in root.GetComponentsInChildren<Transform>(true))
             t.gameObject.hideFlags = flags;
     }
@@ -268,9 +338,8 @@ public static class TPSRigTesterManager
     public static void LinkUniform(ItemClothing c, SleeveMode sleeveMode)
     {
         if (c == null) return;
-        var tester = GetOrSpawnTester();
+        var tester = GetOrSpawnTester(c.transform);
         if (tester == null) return;
-        PositionAbove(tester, c.transform);
         s_uniformID = c.GetInstanceID();
         s_uniformSleeveMode = sleeveMode;
         s_lastSync = 0;
@@ -282,9 +351,8 @@ public static class TPSRigTesterManager
     public static void LinkGear(ItemClothing c)
     {
         if (c == null || c.mesh == null) return;
-        var tester = GetOrSpawnTester();
+        var tester = GetOrSpawnTester(c.transform);
         if (tester == null) return;
-        PositionAbove(tester, c.transform);
         int boneCount = c.mesh.bindposes.Length;
         switch (boneCount)
         {
@@ -304,9 +372,8 @@ public static class TPSRigTesterManager
     public static void LinkHelmet(ItemHelmet h)
     {
         if (h == null) return;
-        var tester = GetOrSpawnTester();
+        var tester = GetOrSpawnTester(h.transform);
         if (tester == null) return;
-        PositionAbove(tester, h.transform);
         s_helmetID = h.GetInstanceID();
         s_lastSync = 0;
         SyncAll();
@@ -358,8 +425,6 @@ public static class TPSRigTesterManager
         int id = c.GetInstanceID();
         var tester = FindTester();
         if (s_vestID == id) { s_vestID = 0; if (tester != null) ClearRendererPair(tester.vest, tester.vest_lod); }
-        //if (s_handsID == id) { s_handsID = 0; if (tester != null) ClearRendererPair(tester.hands, tester.hands_lod); }
-        //if (s_headGearID == id) { s_headGearID = 0; if (tester != null) ClearRendererPair(tester.body, tester.head_lod); }
         RepaintRelevantInspectors();
     }
 
@@ -391,8 +456,6 @@ public static class TPSRigTesterManager
         }
         SyncUniform(tester);
         SyncGear(tester, ref s_vestID, tester.vest, tester.vest_lod);
-        //SyncGear(tester, ref s_handsID, tester.hands, tester.hands_lod);
-        //SyncGear(tester, ref s_headGearID, tester.body, tester.head_lod);
         SyncHelmet(tester);
     }
 
@@ -428,14 +491,44 @@ public static class TPSRigTesterManager
         }
 
         var handsMode = useShort ? c.handsModeWithShortSleeveUniform : c.forceHideHands;
-        bool hideHands = handsMode == UniformSleeveCoverType.coversSleeveAndHand;
-        //SetActiveSafe(tester.hands, !hideHands);
-        //SetActiveSafe(tester.hands_lod, !hideHands);
-        SetActiveSafe(tester.body_fps, !hideHands);
 
-        bool hideHead = c.forceHideHead != UniformHeadCoverType.dontCoverHead;
+        // Pick body skin meshes that complement what the uniform exposes
+        Mesh tpsBodyMesh = null;
+        Mesh fpsBodyMesh = null;
+        bool hideFpsBody = false;
+        bool hideHead = false;
+        switch (handsMode)
+        {
+            case UniformSleeveCoverType.longSleeve:
+                tpsBodyMesh = tester.tps_longsleeve_longpants;
+                fpsBodyMesh = tester.fps_longsleeve;
+                break;
+            case UniformSleeveCoverType.shortSleeve:
+                tpsBodyMesh = tester.tps_shortleeve_longpants;
+                fpsBodyMesh = tester.fps_shortleeve;
+                break;
+            case UniformSleeveCoverType.coversSleeveAndHand:
+                hideFpsBody = true;
+                hideHead = true;
+                break;
+            case UniformSleeveCoverType.shortSleeveAndPants:
+                tpsBodyMesh = tester.tps_shortleeve_shortpants;
+                fpsBodyMesh = tester.fps_shortleeve;
+                break;
+            case UniformSleeveCoverType.longSleeveShortPants:
+                tpsBodyMesh = tester.tps_longsleeve_shortpants;
+                fpsBodyMesh = tester.fps_longsleeve;
+                break;
+        }
+
+        if (tester.body != null && tpsBodyMesh != null)
+            tester.body.sharedMesh = tpsBodyMesh;
+        if (tester.body_fps != null && fpsBodyMesh != null)
+            tester.body_fps.sharedMesh = fpsBodyMesh;
+
+        SetActiveSafe(tester.body_fps, !hideFpsBody);
+
         SetActiveSafe(tester.body, !hideHead);
-        //SetActiveSafe(tester.head_lod, !hideHead);
     }
 
     private static void SyncGear(TPSRigPreviewManager tester, ref int slotID, SkinnedMeshRenderer hp, SkinnedMeshRenderer lod)
@@ -554,8 +647,6 @@ public static class TPSRigTesterManager
                 ed.Repaint();
         }
     }
-
-    // ===== Banner helper used by editors =====
 
     public static void DrawLinkedBanner(string text)
     {

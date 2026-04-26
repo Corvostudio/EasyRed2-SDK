@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.SceneManagement;
+using UnityEditor;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -36,4 +38,52 @@ public class HandsPlacementChecker : MonoBehaviour
             DestroyImmediate(gameObject);
         }
     }
+    private void OnEnable()
+    {
+        var flags = HideFlags.HideInHierarchy | HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild | HideFlags.NotEditable;
+        foreach (var t in GetComponentsInChildren<Transform>(true))
+            t.gameObject.hideFlags = flags;
+
+#if UNITY_EDITOR
+        UnityEditor.SceneVisibilityManager.instance.DisablePicking(gameObject, true);
+#endif
+    }
 }
+
+#if UNITY_EDITOR
+
+[InitializeOnLoad]
+public static class PlacementCheckersCleanup
+{
+    static PlacementCheckersCleanup()
+    {
+        AssemblyReloadEvents.beforeAssemblyReload += CleanAll;
+        EditorSceneManager.sceneOpening += (path, mode) => CleanAll();
+        EditorApplication.playModeStateChanged += s =>
+        {
+            if (s == PlayModeStateChange.ExitingEditMode) CleanAll();
+        };
+        // Sweep any leftovers right after domain reload / editor startup
+        EditorApplication.delayCall += CleanAll;
+    }
+
+    [MenuItem("Tools/Placement Checkers/Force Clean All")]
+    public static void CleanAll()
+    {
+        Clean<HandsPlacementChecker>();
+        Clean<HandsPlacementCheckerSteeringWheel>();
+        Clean<HeadPlacementChecker>();
+    }
+
+    private static void Clean<T>() where T : MonoBehaviour
+    {
+        foreach (var c in Resources.FindObjectsOfTypeAll<T>())
+        {
+            if (c == null) continue;
+            if (EditorUtility.IsPersistent(c)) continue;
+            if (c.gameObject == null) continue;
+            Object.DestroyImmediate(c.gameObject);
+        }
+    }
+}
+#endif

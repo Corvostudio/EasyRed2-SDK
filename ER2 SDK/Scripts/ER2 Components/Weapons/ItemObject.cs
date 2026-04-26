@@ -8,7 +8,7 @@ public partial class ItemObject : Interagible
     [Range(0, 100)]
     public float mass = 3.0f;
 
-    [HideInInspector]
+    //[HideInInspector]
     [Tooltip("Id of the item (automatically generated)")]
     public string item_id = "Unknown_id";
 

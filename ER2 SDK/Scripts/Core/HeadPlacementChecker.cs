@@ -19,4 +19,14 @@ public class HeadPlacementChecker : MonoBehaviour
             DestroyImmediate(gameObject);
         }
     }
+    private void OnEnable()
+    {
+        var flags = HideFlags.HideInHierarchy | HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild | HideFlags.NotEditable;
+        foreach (var t in GetComponentsInChildren<Transform>(true))
+            t.gameObject.hideFlags = flags;
+
+#if UNITY_EDITOR
+        UnityEditor.SceneVisibilityManager.instance.DisablePicking(gameObject, true);
+#endif
+    }
 }

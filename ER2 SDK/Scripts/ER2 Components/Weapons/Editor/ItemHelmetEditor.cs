@@ -41,17 +41,23 @@ public partial class ItemHelmetEditor : Editor
         // === Existing head placement checker ===
         if (GUILayout.Button("Enable / Disable head placement checker") && !Application.isPlaying)
         {
-            HeadPlacementChecker checker = GameObject.FindFirstObjectByType<HeadPlacementChecker>();
-            if (checker)
+            var existing = Resources.FindObjectsOfTypeAll<HeadPlacementChecker>();
+            HeadPlacementChecker mine = null;
+            foreach (var c in existing)
             {
-                if (checker.attached_headgear == helmet)
-                    DestroyImmediate(checker.gameObject);
-                else
-                    checker.attached_headgear = helmet;
+                if (c == null || EditorUtility.IsPersistent(c)) continue;
+                if (c.attached_headgear == helmet) { mine = c; continue; }
+                DestroyImmediate(c.gameObject); // sweep stale ones
+            }
+
+            if (mine != null)
+            {
+                DestroyImmediate(mine.gameObject);
             }
             else
             {
-                checker = Instantiate(EditorAssetFinder.Find<GameObject>("HeadPlacementChecker")).GetComponent<HeadPlacementChecker>();
+                var checker = Instantiate(EditorAssetFinder.Find<GameObject>("HeadPlacementChecker"))
+                    .GetComponent<HeadPlacementChecker>();
                 checker.attached_headgear = helmet;
             }
         }
