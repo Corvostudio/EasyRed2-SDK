@@ -16,7 +16,7 @@ public static class ER2CheckUsedTool
         "*.terrainlayer", "*.lighting", "*.brush"
     };
 
-    [MenuItem("Assets/ER2 Tools/Check Used", false, 2000)]
+    [MenuItem("Assets/ER2 TOOLS/Check Used", false, 2000)]
     private static void CheckUsed()
     {
         var selected = Selection.objects;
@@ -184,7 +184,7 @@ public static class ER2CheckUsedTool
                   $"Totale: {targets.Count} | Used: {usedList.Count} | Not used: {unusedList.Count}");
     }
 
-    [MenuItem("Assets/ER2 Tools/Check Used", true)]
+    [MenuItem("Assets/ER2 TOOLS/Check Used", true)]
     private static bool Validate() =>
         Selection.objects != null && Selection.objects.Length > 0;
 

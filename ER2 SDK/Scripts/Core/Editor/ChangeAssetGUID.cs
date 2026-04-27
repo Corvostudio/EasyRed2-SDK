@@ -13,7 +13,7 @@ public class ChangeAssetGUID : EditorWindow
     private string currentGuid = "";
     private string assetPath = "";
 
-    private const string MenuPath = "Assets/EASY RED 2/Change GUID...";
+    private const string MenuPath = "Assets/ER2 TOOLS/Change GUID...";
 
     // Text-serialized Unity asset extensions that can contain `guid:` references,
     // plus .meta (for the target's own guid and for sub-asset / LazyLoadReference maps),
