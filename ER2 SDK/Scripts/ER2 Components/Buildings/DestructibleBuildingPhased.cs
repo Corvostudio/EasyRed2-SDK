@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -10,9 +10,11 @@ public partial class DestructibleBuildingPhased : DestructableBuilding
 {
     [Tooltip("Defines all the possible integrity levels (status) of the buildings; First level must be intact, last must be fully destroyed.")]
     public BuildingStatus[] statusPhases = new BuildingStatus[0];
+    private sbyte phase = 0;
 
-    public void RefreshDestruction(int current_phase)
+    public void RefreshDestruction(sbyte current_phase)
     {
+        phase = current_phase;
         for (int i = 0; i < statusPhases.Length; i++)
         {
             bool setActive = (i == current_phase);
@@ -30,7 +32,10 @@ public partial class DestructibleBuildingPhased : DestructableBuilding
         }
     }
 
-
+    public sbyte GetDestructionPhase()
+    {
+        return phase;
+    }
 }
 [System.Serializable]
 public struct BuildingStatus
@@ -45,6 +50,8 @@ public struct BuildingStatus
 [CustomEditor(typeof(DestructibleBuildingPhased)), CanEditMultipleObjects]
 public partial class DestructibleBuildingPhasedEditor : Editor
 {
+    private int phaseSlider = 0;
+
     partial void ApplySetDestructionPhase(sbyte phase, bool keepLifevalue, bool apply_destruction_around, DestructibleBuildingPhased b, ref bool done);
 
     private void TestDestructionSimple(sbyte phase, DestructibleBuildingPhased b)
@@ -105,6 +112,14 @@ public partial class DestructibleBuildingPhasedEditor : Editor
 
     public override void OnInspectorGUI()
     {
+        if (targets.Length == 1)
+        {
+            var b = (DestructibleBuildingPhased)targets[0];
+            if (!b.gameObject.GetComponentInParent<DestructibleManager>(true))
+                EditorGUILayout.HelpBox("Missing DestructibleManager on the root of the prop!", MessageType.Error);
+        }
+
+
         // Default inspector (supporta multi-edit automaticamente per i campi serializzati)
         DrawDefaultInspector();
 
@@ -126,36 +141,42 @@ public partial class DestructibleBuildingPhasedEditor : Editor
         }
 
         // Info se le lunghezze differiscono
-        bool mismatch = false;
         int firstLen = ((DestructibleBuildingPhased)targets[0]).statusPhases != null
             ? ((DestructibleBuildingPhased)targets[0]).statusPhases.Length
             : 0;
 
-        foreach (var t in targets)
+        if (targets.Length == 1)
         {
-            var b = (DestructibleBuildingPhased)t;
+            var b = (DestructibleBuildingPhased)targets[0];
+
             int len = (b.statusPhases != null) ? b.statusPhases.Length : 0;
-            if (len != firstLen) { mismatch = true; break; }
-        }
+            if (len != firstLen) { return; }
 
-        if (mismatch)
-            EditorGUILayout.HelpBox("Attenzione: gli oggetti selezionati hanno statusPhases con lunghezze diverse. Mostro solo le fasi comuni.", MessageType.Warning);
 
-        for (int i = 0; i < commonPhases; i++)
-        {
-            if (GUILayout.Button($"Set destruction phase {i} (tutti selezionati)"))
+            // slider
+            int phasesCount = b.statusPhases != null ? b.statusPhases.Length : 0;
+            int maxPhase = Mathf.Max(0, phasesCount - 1);
+
+            if (phasesCount <= 0)
             {
-                Undo.RecordObjects(targets, "Set Destruction Phase");
-                foreach (var t in targets)
-                {
-                    var b = (DestructibleBuildingPhased)t;
+                EditorGUILayout.LabelField("<b>statusPhases</b> is empty.");
+                return;
+            }
 
-                    bool done = false;
-                    ApplySetDestructionPhase((sbyte)i, true, true, b, ref done);
-                    if (!done) TestDestructionSimple((sbyte)i, b);
+            int key = b.GetInstanceID();
+            int current = Mathf.Clamp(b.GetDestructionPhase(), 0, maxPhase);
+            phaseSlider = current;
 
-                    EditorUtility.SetDirty(b);
-                }
+            EditorGUI.BeginChangeCheck();
+            int newPhase = EditorGUILayout.IntSlider("Destruction phase", current, 0, maxPhase);
+            if (EditorGUI.EndChangeCheck())
+            {
+                phaseSlider = newPhase;
+
+                Undo.RecordObject(b, "Set Destruction Phase");
+                b.RefreshDestruction((sbyte)newPhase);
+                EditorUtility.SetDirty(b);
+                SceneView.RepaintAll();
             }
         }
     }

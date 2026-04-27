@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-public partial class AutomaticGunWithAmmoBelt : AutomaticGun
+public partial class AutomaticGunWithAmmoBelt : GenericGun
 {
     [HideInInspector] public AmmoBeltsFPSManager beltManager = null;
 }
