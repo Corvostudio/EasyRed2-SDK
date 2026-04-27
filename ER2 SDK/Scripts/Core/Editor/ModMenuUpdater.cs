@@ -67,7 +67,7 @@ public class ModMenuUpdater : EditorWindow
         };
     }
 
-    [MenuItem("ER2 Project/Update/Check for new Updates")]
+    [MenuItem("ER2 TOOLS/Update/Check for new Updates")]
     public static void AutoDownload()
     {
         GetWindow(typeof(ModMenuUpdater));
@@ -101,7 +101,7 @@ public class ModMenuUpdater : EditorWindow
         };
     }
 
-    [MenuItem("ER2 Project/Update/Open SDK Download page")]
+    [MenuItem("ER2 TOOLS/Update/Open SDK Download page")]
     public static void OpenSdkUrl()
     {
         var www = UnityWebRequest.Get(versionJsonURL);

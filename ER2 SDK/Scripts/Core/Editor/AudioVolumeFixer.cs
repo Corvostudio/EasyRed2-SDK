@@ -11,7 +11,7 @@ public class AudioVolumeFixer: Editor
     public static string audioFolderPath; // Set this in the Inspector
 
 
-    [MenuItem("ER2 Project/Tools/Fix audio")]
+    [MenuItem("ER2 TOOLS/Tools/Fix audio")]
     public static void FixSounds()
     {
         string audioFolderPath = EditorUtility.OpenFolderPanel("Select Folder with Audio Clips", "", "");

@@ -54,12 +54,12 @@ public class ModMenu : EditorWindow
 
 
 
-    [MenuItem("ER2 Project/Documentation/Tutorial playlist")]
+    [MenuItem("ER2 TOOLS/Documentation/Tutorial playlist")]
     static void DocumentationTutorialPlaylist()
     {
         Application.OpenURL(YT_PLAYLIST);
     }
-    [MenuItem("ER2 Project/Documentation/Guides")]
+    [MenuItem("ER2 TOOLS/Documentation/Guides")]
     static void DocumentationStringTables()
     {
         Application.OpenURL(MODDING_GUIDE_URL);
@@ -67,7 +67,7 @@ public class ModMenu : EditorWindow
 
 
     // Add menu named "My Window" to the Window menu
-    [MenuItem("ER2 Project/MOD COMPILER")]
+    [MenuItem("ER2 TOOLS/MOD COMPILER")]
     static void Init()
     {
         // Get existing open window or if none, make a new one:
