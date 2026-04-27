@@ -242,7 +242,7 @@ public class ModMenuUpdater : EditorWindow
                 try
                 {
                     AssetDatabase.StartAssetEditing();
-                    CopyDirectory(repoRoot, projectTargetFolder);
+                    ResetAndInstallSdk(repoRoot, projectTargetFolder);
                 }
                 finally
                 {
@@ -262,6 +262,53 @@ public class ModMenuUpdater : EditorWindow
                 checkStatus = CheckStatus.Error;
             }
         };
+    }
+    private static readonly string[] RESET_FOLDERS =
+    {
+        "ER2 SDK",
+        "Steam SDK",
+        //"Examples" // examples don't resets
+    };
+
+    private static void ResetAndInstallSdk(string repoRoot, string projectAssetsFolder)
+    {
+        foreach (string folder in RESET_FOLDERS)
+        {
+            string src = Path.Combine(repoRoot, folder);
+            string dst = Path.Combine(projectAssetsFolder, folder);
+
+            if (!Directory.Exists(src))
+            {
+                Debug.LogWarning("Updater skipped missing repo folder: " + folder);
+                continue;
+            }
+
+            DeleteFolderAndMeta(dst);
+            CopyDirectory(src, dst);
+        }
+
+        // version.json sta in Assets/version.json
+        string srcVersion = Path.Combine(repoRoot, "version.json");
+        string dstVersion = Path.Combine(projectAssetsFolder, "version.json");
+
+        if (File.Exists(srcVersion))
+            File.Copy(srcVersion, dstVersion, true);
+
+        string srcVersionMeta = srcVersion + ".meta";
+        string dstVersionMeta = dstVersion + ".meta";
+
+        if (File.Exists(srcVersionMeta))
+            File.Copy(srcVersionMeta, dstVersionMeta, true);
+    }
+
+    private static void DeleteFolderAndMeta(string folderPath)
+    {
+        if (Directory.Exists(folderPath))
+            Directory.Delete(folderPath, true);
+
+        string metaPath = folderPath + ".meta";
+        if (File.Exists(metaPath))
+            File.Delete(metaPath);
     }
 
     private static void CopyDirectory(string sourceDir, string destDir)
