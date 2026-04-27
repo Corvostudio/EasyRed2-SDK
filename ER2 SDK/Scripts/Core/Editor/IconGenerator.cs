@@ -28,7 +28,7 @@ public class IconGenerator : EditorWindow
     private bool allowAlpha = true;
     //private GameObject lowPolyModel;
 
-    [MenuItem("ER2 Project/Tools/Texture/Icon Generator")]
+    [MenuItem("ER2 TOOLS/Tools/Texture/Icon Generator")]
     public static void ShowWindow()
     {
         EditorWindow.GetWindow<IconGenerator>("Icon Generator");

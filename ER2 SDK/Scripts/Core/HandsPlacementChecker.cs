@@ -70,7 +70,7 @@ public static class PlacementCheckersCleanup
         EditorApplication.delayCall += CleanAll;
     }
 
-    [MenuItem("Tools/Placement Checkers/Force Clean All")]
+   // [MenuItem("Tools/Placement Checkers/Force Clean All")]
     public static void CleanAll()
     {
         Clean<HandsPlacementChecker>();
