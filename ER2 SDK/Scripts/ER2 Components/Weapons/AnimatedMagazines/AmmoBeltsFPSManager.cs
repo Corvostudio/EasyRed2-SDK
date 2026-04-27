@@ -8,77 +8,10 @@ using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 #endif
 
-public class AmmoBeltsFPSManager : MonoBehaviour
+public partial class AmmoBeltsFPSManager : MonoBehaviour
 {
     private short currentlyInstalled = -1;
     public FPSMagManager[] compatibleMagazines;
-
-
-    public void OnSetMagazine(Magazine magazine, GenericGun attachedGun)
-    {
-        //reveal correct meshes
-        short i = 0;
-        currentlyInstalled = -1;
-        foreach (FPSMagManager fps_mag in compatibleMagazines)
-        {
-            bool is_this_mag = magazine != null && fps_mag.mag_id == magazine.item_id;
-            //Debug.Log("Show " + is_this_mag+": "+ magazine.item_id);
-            fps_mag.Show(is_this_mag);
-            if (is_this_mag)
-                currentlyInstalled = i;
-            i++;
-        }
-
-        //reveal correct bullets count
-        UpdateBeltBulletsCount(attachedGun);
-    }
-
-    public void UpdateBeltBulletsCount(GenericGun attachedGun)
-    {
-        FPSMagManager currentMag = GetCurrentInstalledMagazine();
-        if (currentMag!=null)
-        {
-            int ammoCount = attachedGun.GetCurrentAmmoCount();
-            //Debug.Log("Ammo count: " + ammoCount);
-            for (int i = 0; i < currentMag.individualBullets.Length; i++)
-            {
-                currentMag.individualBullets[i].SetActive(ammoCount > i);
-            }
-        }
-    }
-
-    public FPSMagManager GetCurrentInstalledMagazine()
-    {
-        if (currentlyInstalled >= 0)
-            return compatibleMagazines[currentlyInstalled];
-        return null;
-    }
-    public FPSMagManager GetMagazineData(Magazine mag)
-    {
-        foreach (FPSMagManager fps_mag in compatibleMagazines)
-        {
-            if (fps_mag.mag_id == mag.item_id)
-                return fps_mag;
-        }
-        return null;
-    }
-
-    public string GetOverrideReloadAnim(Magazine mag, bool full)
-    {
-        if (mag == null)//no magazine??
-            return null;
-
-        FPSMagManager magData = GetMagazineData(mag);
-        if (magData == null)//no magazine data??
-            return null;
-
-        //return anim
-        if (full)
-            return magData.override_reload_anim_full;
-        else
-            return magData.override_reload_anim_partial;
-    }
-
 
     private void OnValidate()
     {
