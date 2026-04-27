@@ -802,10 +802,23 @@ public class ModMenu : EditorWindow
         string workshopInfo = ModUtils.CreateWorkshopInfoXml(xmlParsingData.bundleName, ws_modVisibility, ws_modChangelogs);
         ModUtils.SaveXmlToFile(workshopInfo, ModUtils.GetModsRootPath, "temp.xml");
 
-        //add upload started
+        PrepareEditorForUploadPlayMode();
         SteamworkUpload.RequestUpload();
         EditorApplication.isPlaying = true;
     }
+    private static void PrepareEditorForUploadPlayMode()
+    {
+        EditorPrefs.SetBool("ScriptCompilationDuringPlay", false);
+
+        var consoleWindowType = typeof(EditorWindow).Assembly.GetType("UnityEditor.ConsoleWindow");
+        if (consoleWindowType != null)
+        {
+            var pauseField = consoleWindowType.GetField("ms_PauseOnError", BindingFlags.Static | BindingFlags.NonPublic);
+            if (pauseField != null)
+                pauseField.SetValue(null, false);
+        }
+    }
+
 
     private void SetupGraphicAPI()
     {

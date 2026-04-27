@@ -7,6 +7,7 @@ using Steamworks;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class SteamworkUpload : MonoBehaviour
@@ -31,6 +32,13 @@ public class SteamworkUpload : MonoBehaviour
     private GameObject errorPanel;
     private EItemUpdateStatus prevStatus = (EItemUpdateStatus)(-1);
 
+    private Text progress_text;
+    private Button cancelButton;
+    private Image cancelButtonImage;
+    private Text cancelButtonText;
+
+    private RectTransform fillRect;
+
     /// <summary>
     /// Editor calls this before entering Play Mode to signal that an upload is pending.
     /// </summary>
@@ -42,14 +50,30 @@ public class SteamworkUpload : MonoBehaviour
         if (!SessionState.GetBool(SESSION_FLAG, false)) return;
         SessionState.SetBool(SESSION_FLAG, false);
 
-        // steam_appid.txt MUST exist before SteamManager's Awake fires
         CreateAppIdFile();
 
+        // Survives the scene unload below
         var go = new GameObject("ER2_SteamWorkshopUploader");
         DontDestroyOnLoad(go);
+
+        // Swap to a fresh empty scene to free anything the user's scene was holding
+        Scene tempScene = SceneManager.CreateScene("ER2_UploadTempScene");
+        SceneManager.SetActiveScene(tempScene);
+
+        EnsureUploadCamera();
+
+        for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
+        {
+            Scene s = SceneManager.GetSceneAt(i);
+            if (s != tempScene && s.IsValid() && s.isLoaded)
+                SceneManager.UnloadSceneAsync(s);
+        }
+
+        // Async unload only destroys GameObjects; this releases the asset RAM too
+        Resources.UnloadUnusedAssets();
+        System.GC.Collect();
+
         go.AddComponent<SteamworkUpload>();
-        // NOTE: do not AddComponent<SteamManager> — it auto-creates as a persistent singleton
-        // when SteamManager.Initialized is accessed.
     }
 
     // ---------------- LIFECYCLE ----------------
@@ -105,28 +129,50 @@ public class SteamworkUpload : MonoBehaviour
         EItemUpdateStatus status = SteamUGC.GetItemUpdateProgress(itemUpdate_handle, out ulong proc, out ulong total);
         if (status == EItemUpdateStatus.k_EItemUpdateStatusInvalid) return;
 
-        float perc = total == 0 ? 0f : (float)proc / (float)total;
+        float rawPerc = total == 0 ? 0f : Mathf.Clamp01((float)proc / (float)total);
         const float maxStage = 5f;
-        float stageNum = (int)status - 1;
-        fillImage.fillAmount = (stageNum / maxStage) + perc * (0.9f / maxStage);
+        float stageNum = Mathf.Max(0, (int)status - 1);
+        float visualPerc = Mathf.Clamp01((stageNum / maxStage) + rawPerc * (0.9f / maxStage));
 
-        if (status != prevStatus)
-        {
-            loading_text.text = $"Uploading '{bundleName}' ({StatusLabel(status)})";
-            prevStatus = status;
-        }
+        SetProgress01(visualPerc);
+
+        string label = StatusLabel(status);
+        int percent = Mathf.RoundToInt(visualPerc * 100f);
+
+        loading_text.text = $"Uploading '{bundleName}'";
+        progress_text.text = $"{percent}% - {label}";
+
+        prevStatus = status;
+    }
+    private static void EnsureUploadCamera()
+    {
+        if (Camera.main != null) return;
+
+        var camGo = new GameObject("ER2_UploadCamera");
+        var cam = camGo.AddComponent<Camera>();
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(0.06f, 0.06f, 0.08f, 1f);
+        cam.nearClipPlane = 0.01f;
+        cam.farClipPlane = 10f;
+        cam.tag = "MainCamera";
     }
 
     private static string StatusLabel(EItemUpdateStatus s)
     {
         switch (s)
         {
-            case EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig: return "preparing config";
-            case EItemUpdateStatus.k_EItemUpdateStatusPreparingContent: return "preparing content";
-            case EItemUpdateStatus.k_EItemUpdateStatusUploadingContent: return "uploading content";
-            case EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile: return "uploading preview";
-            case EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges: return "committing";
-            default: return "working";
+            case EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig:
+                return "Preparing Workshop configuration";
+            case EItemUpdateStatus.k_EItemUpdateStatusPreparingContent:
+                return "Preparing mod files";
+            case EItemUpdateStatus.k_EItemUpdateStatusUploadingContent:
+                return "Uploading mod content";
+            case EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile:
+                return "Uploading cover image";
+            case EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges:
+                return "Finalizing Workshop update";
+            default:
+                return "Working";
         }
     }
 
@@ -178,7 +224,7 @@ public class SteamworkUpload : MonoBehaviour
         pr.sizeDelta = new Vector2(960, 300);
 
         // Title
-        loading_text = MakeText("Title", panel.transform, font, 30, TextAnchor.MiddleCenter, new Color(0.95f, 0.95f, 0.95f));
+        loading_text = MakeText("Title", panel.transform, font, 36, TextAnchor.MiddleCenter, new Color(0.95f, 0.95f, 0.95f));
         var tr = loading_text.rectTransform;
         tr.anchorMin = new Vector2(0, 1); tr.anchorMax = new Vector2(1, 1); tr.pivot = new Vector2(0.5f, 1);
         tr.sizeDelta = new Vector2(-60, 70); tr.anchoredPosition = new Vector2(0, -30);
@@ -188,17 +234,34 @@ public class SteamworkUpload : MonoBehaviour
         // Progress bar bg
         var pbBg = MakeImage("ProgressBg", panel.transform, new Color(0.10f, 0.10f, 0.11f, 1f));
         var pbR = pbBg.rectTransform;
-        pbR.anchorMin = pbR.anchorMax = pbR.pivot = new Vector2(0.5f, 0.5f);
-        pbR.sizeDelta = new Vector2(860, 30);
-        pbR.anchoredPosition = new Vector2(0, 10);
+        pbR.anchorMin = new Vector2(0.5f, 0.5f);
+        pbR.anchorMax = new Vector2(0.5f, 0.5f);
+        pbR.pivot = new Vector2(0.5f, 0.5f);
+        pbR.sizeDelta = new Vector2(860f, 30f);
+        pbR.anchoredPosition = new Vector2(0f, 10f);
 
         // Progress fill
         fillImage = MakeImage("ProgressFill", pbBg.transform, new Color(0.78f, 0.39f, 0.27f, 1f));
-        fillImage.type = Image.Type.Filled;
-        fillImage.fillMethod = Image.FillMethod.Horizontal;
-        fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
-        fillImage.fillAmount = 0;
-        Stretch(fillImage.rectTransform);
+        fillImage.type = Image.Type.Simple;
+
+        fillRect = fillImage.rectTransform;
+        fillRect.anchorMin = new Vector2(0f, 0f);
+        fillRect.anchorMax = new Vector2(0f, 1f);
+        fillRect.pivot = new Vector2(0f, 0.5f);
+        fillRect.anchoredPosition = Vector2.zero;
+        fillRect.offsetMin = Vector2.zero;
+        fillRect.offsetMax = new Vector2(0f, 0f);
+        fillRect.sizeDelta = new Vector2(0f, 0f);
+
+        SetProgress01(0f);
+
+        //descriptive status
+        progress_text = MakeText("ProgressText", panel.transform, font, 24, TextAnchor.MiddleCenter, new Color(0.86f, 0.86f, 0.86f));
+        var ptr = progress_text.rectTransform;
+        ptr.anchorMin = ptr.anchorMax = ptr.pivot = new Vector2(0.5f, 0.5f);
+        ptr.sizeDelta = new Vector2(860, 46);
+        ptr.anchoredPosition = new Vector2(0, -42);
+        progress_text.text = "Preparing upload...";
 
         // Cancel button
         var cancelGo = new GameObject("CancelButton", typeof(Image), typeof(Button));
@@ -206,6 +269,8 @@ public class SteamworkUpload : MonoBehaviour
         var cimg = cancelGo.GetComponent<Image>();
         cimg.color = new Color(0.78f, 0.32f, 0.32f, 1f);
         var cbtn = cancelGo.GetComponent<Button>();
+        cancelButton = cbtn;
+        cancelButtonImage = cimg;
         var colors = cbtn.colors; colors.highlightedColor = new Color(0.88f, 0.42f, 0.42f, 1f);
         colors.pressedColor = new Color(0.62f, 0.22f, 0.22f, 1f); cbtn.colors = colors;
         cbtn.onClick.AddListener(CancelUpload);
@@ -217,6 +282,7 @@ public class SteamworkUpload : MonoBehaviour
         var cText = MakeText("Text", cancelGo.transform, font, 20, TextAnchor.MiddleCenter, Color.white);
         Stretch(cText.rectTransform);
         cText.text = "Cancel";
+        cancelButtonText = cText;
 
         // Error panel
         errorPanel = new GameObject("ErrorPanel", typeof(RectTransform));
@@ -225,12 +291,23 @@ public class SteamworkUpload : MonoBehaviour
         er.anchorMin = new Vector2(0, 0); er.anchorMax = new Vector2(1, 0); er.pivot = new Vector2(0, 0);
         er.sizeDelta = new Vector2(-200, 90); er.anchoredPosition = new Vector2(20, 20);
 
-        error_text = MakeText("ErrorText", errorPanel.transform, font, 14, TextAnchor.LowerLeft, new Color(1f, 0.5f, 0.5f));
+        error_text = MakeText("ErrorText", errorPanel.transform, font, 22, TextAnchor.LowerLeft, new Color(1f, 0.5f, 0.5f));
         Stretch(error_text.rectTransform);
         error_text.text = "";
         errorPanel.SetActive(false);
     }
+    private void SetProgress01(float value)
+    {
+        value = Mathf.Clamp01(value);
 
+        if (fillRect != null)
+        {
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(value, 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+        }
+    }
     private static Image MakeImage(string name, Transform parent, Color color)
     {
         var go = new GameObject(name, typeof(Image));
@@ -285,7 +362,10 @@ public class SteamworkUpload : MonoBehaviour
         is_uploading = false;
         if (!instance) return;
         instance.loading_text.text = string.IsNullOrEmpty(error) ? "Upload failed." : "Upload failed. " + error;
-        instance.fillImage.fillAmount = 0;
+        instance.SetProgress01(0f);
+
+        if (instance.progress_text != null)
+            instance.progress_text.text = "Upload interrupted.";
     }
 
     // ---------------- STEAM ----------------
@@ -367,10 +447,32 @@ public class SteamworkUpload : MonoBehaviour
 
     private IEnumerator WaitAndShutdown()
     {
-        fillImage.fillAmount = 1;
+        SetProgress01(1f);
         loading_text.text = "Upload completed.";
-        yield return new WaitForSeconds(3);
+        progress_text.text = "100% - Workshop upload completed";
+
+        SetCloseButton();
+
+        yield return new WaitForSeconds(3f);
         EditorApplication.isPlaying = false;
+    }
+
+    private void SetCloseButton()
+    {
+        if (cancelButtonText != null)
+            cancelButtonText.text = "Close";
+
+        if (cancelButtonImage != null)
+            cancelButtonImage.color = new Color(0.24f, 0.68f, 0.32f, 1f);
+
+        if (cancelButton != null)
+        {
+            var colors = cancelButton.colors;
+            colors.normalColor = new Color(0.24f, 0.68f, 0.32f, 1f);
+            colors.highlightedColor = new Color(0.32f, 0.78f, 0.40f, 1f);
+            colors.pressedColor = new Color(0.16f, 0.52f, 0.24f, 1f);
+            cancelButton.colors = colors;
+        }
     }
 
     private static ERemoteStoragePublishedFileVisibility GetVisibility()
