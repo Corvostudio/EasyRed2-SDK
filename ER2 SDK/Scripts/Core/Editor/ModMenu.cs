@@ -83,12 +83,6 @@ public class ModMenu : EditorWindow
             propTypeValues[i] = array.GetValue(i).ToString();
 
 
-        //add the build scene to the scene list
-        EditorBuildSettings.scenes = new EditorBuildSettingsScene[] { new EditorBuildSettingsScene("Assets/ER2 SDK/Scenes/UploadScene.unity", true) };
-        if (!Application.isPlaying)
-            EditorSceneManager.SaveOpenScenes();// Save the changes
-
-
         //fix fog
         EnableFogStripping();
     }
@@ -809,11 +803,8 @@ public class ModMenu : EditorWindow
         ModUtils.SaveXmlToFile(workshopInfo, ModUtils.GetModsRootPath, "temp.xml");
 
         //add upload started
-        if (!GameObject.FindObjectOfType<UploadStarter>())
-            new GameObject("Upload Starter").AddComponent<UploadStarter>();
-
-        //start upload in play mode
-        EditorApplication.ExecuteMenuItem("Edit/Play");
+        SteamworkUpload.RequestUpload();
+        EditorApplication.isPlaying = true;
     }
 
     private void SetupGraphicAPI()

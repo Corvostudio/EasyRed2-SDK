@@ -5,12 +5,5 @@ using UnityEngine.SceneManagement;
 
 public class UploadStarter : MonoBehaviour
 {
-    void Start()
-    {
-        if (SceneManager.GetActiveScene().name!="UploadScene")
-        {
-            //Load Scene UploadScene
-            SceneManager.LoadScene("UploadScene", LoadSceneMode.Single);
-        }
-    }
+    //deprecated
 }
