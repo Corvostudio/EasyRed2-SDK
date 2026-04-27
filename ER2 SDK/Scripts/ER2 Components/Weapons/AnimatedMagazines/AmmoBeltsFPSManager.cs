@@ -12,36 +12,6 @@ public partial class AmmoBeltsFPSManager : MonoBehaviour
 {
     private short currentlyInstalled = -1;
     public FPSMagManager[] compatibleMagazines;
-
-    private void OnValidate()
-    {
-#if UNITY_EDITOR
-        AmmoBeltsFPSManager self = this;
-        UnityEditor.EditorApplication.delayCall += () =>
-        {
-            // self may have been destroyed (domain reload, scene unload, GO destroyed) before this fires.
-            if (self == null) return;
-
-            AutomaticGunWithAmmoBelt gg = self.GetComponent<AutomaticGunWithAmmoBelt>();
-            if (gg != null)
-            {
-                gg.beltManager = self;
-            }
-            else
-            {
-                Debug.LogError("Ammo Belt manager must be attached to a GameObject with an AutomaticGunWithAmmoBelt component!", self.gameObject);
-            }
-
-            if (self.compatibleMagazines == null) return;
-            foreach (FPSMagManager fps_mag in self.compatibleMagazines)
-            {
-                if (fps_mag == null || fps_mag.individualBullets == null) continue;
-                foreach (GameObject bullet in fps_mag.individualBullets)
-                    if (bullet != null && !bullet.activeSelf) bullet.SetActive(true);
-            }
-        };
-#endif
-    }
 }
 
 [System.Serializable]
@@ -102,8 +72,7 @@ public class AmmoBeltsFPSManagerEditor : Editor
     public override void OnInspectorGUI()
     {
         AmmoBeltsFPSManager manager = (AmmoBeltsFPSManager)target;
-        AutomaticGunWithAmmoBelt gg = manager.GetComponent<AutomaticGunWithAmmoBelt>();
-        if (!gg || !gg.beltManager)
+        if (!manager.GetComponent<AutomaticGunWithAmmoBelt>())
         {
             EditorGUILayout.HelpBox("Missing or unlinked AutomaticGunWithAmmoBelt!",MessageType.Error);
         }

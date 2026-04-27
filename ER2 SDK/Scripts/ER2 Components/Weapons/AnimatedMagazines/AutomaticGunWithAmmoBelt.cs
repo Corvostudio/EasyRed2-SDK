@@ -7,5 +7,5 @@ using UnityEditor;
 
 public partial class AutomaticGunWithAmmoBelt : GenericGun
 {
-    [HideInInspector] public AmmoBeltsFPSManager beltManager = null;
+    [System.NonSerialized] public AmmoBeltsFPSManager beltManager = null;
 }
