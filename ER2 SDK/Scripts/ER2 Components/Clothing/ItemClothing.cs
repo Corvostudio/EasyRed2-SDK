@@ -228,7 +228,9 @@ public partial class ItemClothing : ItemObject, ISerializationCallbackReceiver
     }
     private void MigrateLegacyMaterial()
     {
-        if (material == null) return;
+        // Use ReferenceEquals to avoid Unity's overloaded == operator,
+        // which is not thread-safe and can't be called during deserialization.
+        if (ReferenceEquals(material, null)) return;
 
         if (materials == null || materials.Length == 0)
             materials = new Material[] { material };
