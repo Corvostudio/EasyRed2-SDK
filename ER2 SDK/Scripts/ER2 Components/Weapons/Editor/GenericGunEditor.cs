@@ -39,6 +39,11 @@ public partial class GenericGunEditor : Editor
             }
         }
 
+        if (GUILayout.Button("Enable / Disable animation tester") && !Application.isPlaying)
+        {
+            AnimationTesterTool.ToggleAnimationTester(myScript);
+        }
+
 
         DrawDefaultInspector();
     }

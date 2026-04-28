@@ -75,83 +75,23 @@ public class ModelImporterEditor:Editor
 
     private static HashSet<string> alreadyAdded = new HashSet<string>();
     [MenuItem("Assets/ER2 TOOLS/Tools/Animation making/Set up FPS animator", false, 2004)]
-    [MenuItem("GameObject/ER2 TOOLS/Tools/Animation making/Set up FPS animator", false, 2004)]
+    [MenuItem("GameObject/ER2 TOOLS/Animation making/Set up FPS animator", false, 2004)]
     public static void SetUpAnimationTesting()
     {
         if (!ModTemplates.IsNewActionTime()) return;
 
-        GenericGun weapon=null;
-        Magazine magazine = null;
-
-        //get weapon
+        GenericGun weapon = null;
         foreach (GameObject go in Selection.objects)
         {
-            if (weapon == null && go.GetComponent<GenericGun>())
+            if (go != null && go.GetComponent<GenericGun>())
+            {
                 weapon = go.GetComponent<GenericGun>();
-            else if (magazine == null && go.GetComponent<Magazine>())
-                magazine = go.GetComponent<Magazine>();
+                break;
+            }
         }
-
         if (!weapon) return;
-        //if (weapon.fpsAnimations.animationSet!=AnimationData.FPSAnimationSet.UseCustom) return;
 
-        //get camera
-        Camera bestCam = null;
-        foreach (Camera cam in GameObject.FindObjectsOfType<Camera>())
-        {
-            if (bestCam == null || bestCam.enabled == false)
-                bestCam = cam;
-        }
-
-        if (!bestCam)
-        {
-            bestCam = new GameObject("Camera").AddComponent<Camera>();
-            bestCam.nearClipPlane = .015f;
-            bestCam.farClipPlane = 100;
-        }
-
-        //cleanup camera childs
-        foreach (Transform tran in bestCam.transform)
-            DestroyImmediate(tran.gameObject);
-
-        //add animation thing
-        GameObject animRoot = Instantiate((GameObject)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Rigs/skeleton for animations.prefab", typeof(GameObject)));
-        animRoot.transform.SetParent(bestCam.transform);
-        animRoot.transform.localPosition = animRoot.transform.localEulerAngles = Vector3.zero;
-        animRoot.transform.localScale = Vector3.one;
-
-        //duplicate weapon and parent to animator
-        GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(weapon.gameObject) ? PrefabUtility.GetCorrespondingObjectFromSource(weapon.gameObject) : weapon.gameObject;
-        GenericGun weapClone = ((GameObject)PrefabUtility.InstantiatePrefab(prefab)).GetComponent<GenericGun>();
-        weapClone.transform.SetParent(animRoot.transform.Find("ROOT/RIGROOT_BJ/CenterSpine2_BJ"));
-        weapClone.transform.localPosition = Vector3.zero;
-        weapClone.transform.localScale = Vector3.one;
-        weapClone.transform.rotation = animRoot.transform.rotation;
-        Selection.activeGameObject = weapClone.gameObject;
-
-        //duplicate magazine if selected
-        if (magazine!=null && weapClone.magazinePosition!=null)
-        {
-            prefab = PrefabUtility.GetCorrespondingObjectFromSource(magazine.gameObject) ? PrefabUtility.GetCorrespondingObjectFromSource(magazine.gameObject) : magazine.gameObject;
-            GameObject magClone = ((GameObject)PrefabUtility.InstantiatePrefab(prefab));
-            magClone.transform.SetParent(weapClone.magazinePosition);
-            magClone.transform.localPosition = Vector3.zero;
-            magClone.transform.localScale = Vector3.one;
-            magClone.transform.localEulerAngles = Vector3.zero;
-        }
-
-        //set up animations
-        Animation anim = animRoot.transform.Find("ROOT").gameObject.GetComponent<Animation>();
-        alreadyAdded.Clear();
-        AddAnimation(weapClone.fpsAnimations.fps_putaway, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_reload_full, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_reload_half, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_bolt_action, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_chamber_open, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_chamber, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_chamber_close, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_chamber_close_noAmmo, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_change_barrell, anim);
+        AnimationTesterTool.ToggleAnimationTester(weapon);
     }
 
     private static void AddAnimation(string anim_name,Animation anim)
