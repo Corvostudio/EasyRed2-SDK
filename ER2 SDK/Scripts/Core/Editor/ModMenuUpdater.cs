@@ -17,8 +17,12 @@ public class ModMenuUpdater : EditorWindow
     private const string BRANCH = "main";
     private const string TARGET_FOLDER = "Assets";
 
-    private const string versionJsonURL =
+    private const string versionJsonBaseURL =
         "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/" + BRANCH + "/version.json";
+
+    private static string versionJsonURL =>
+        versionJsonBaseURL + "?t=" + DateTime.UtcNow.Ticks;
+
     private const string zipURL =
         "https://github.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/archive/refs/heads/" + BRANCH + ".zip";
 
@@ -68,6 +72,7 @@ public class ModMenuUpdater : EditorWindow
     private static int skippedFiles;
     private static int deletedFiles;
 
+    [Serializable]
     private class FileFailure
     {
         public string Path;
@@ -76,8 +81,25 @@ public class ModMenuUpdater : EditorWindow
         public string Detail;
     }
 
+    [Serializable]
+    private class FailureListWrapper
+    {
+        public List<FileFailure> items = new List<FileFailure>();
+    }
+
     private static readonly List<FileFailure> failures = new List<FileFailure>();
     private static Vector2 errorScroll;
+
+    private static ModMenuUpdater _cachedWindow;
+
+    // SessionState keys: stato salvato prima del Refresh per sopravvivere allo script reload.
+    private const string SS_Status = "ER2SDK_Upd_Status";
+    private const string SS_NewVersion = "ER2SDK_Upd_NewVersion";
+    private const string SS_Copied = "ER2SDK_Upd_Copied";
+    private const string SS_Skipped = "ER2SDK_Upd_Skipped";
+    private const string SS_Deleted = "ER2SDK_Upd_Deleted";
+    private const string SS_Error = "ER2SDK_Upd_Error";
+    private const string SS_Failures = "ER2SDK_Upd_Failures";
 
     private static int GetLocalVersion()
     {
@@ -92,9 +114,85 @@ public class ModMenuUpdater : EditorWindow
         catch { return 0; }
     }
 
+    private void OnEnable()
+    {
+        _cachedWindow = this;
+        RestoreSessionState();
+    }
+
+    private static void RepaintWindow()
+    {
+        if (_cachedWindow != null) _cachedWindow.Repaint();
+    }
+
+    private static void SaveSessionState()
+    {
+        SessionState.SetInt(SS_Status, (int)checkStatus);
+        SessionState.SetInt(SS_NewVersion, newVersion);
+        SessionState.SetInt(SS_Copied, copiedFiles);
+        SessionState.SetInt(SS_Skipped, skippedFiles);
+        SessionState.SetInt(SS_Deleted, deletedFiles);
+        SessionState.SetString(SS_Error, error_str ?? "");
+
+        var wrapper = new FailureListWrapper { items = failures };
+        SessionState.SetString(SS_Failures, JsonUtility.ToJson(wrapper));
+    }
+
+    private static void RestoreSessionState()
+    {
+        int s = SessionState.GetInt(SS_Status, -1);
+        if (s < 0) return;
+
+        checkStatus = (CheckStatus)s;
+        newVersion = SessionState.GetInt(SS_NewVersion, 0);
+        copiedFiles = SessionState.GetInt(SS_Copied, 0);
+        skippedFiles = SessionState.GetInt(SS_Skipped, 0);
+        deletedFiles = SessionState.GetInt(SS_Deleted, 0);
+        error_str = SessionState.GetString(SS_Error, "");
+
+        string json = SessionState.GetString(SS_Failures, "");
+        failures.Clear();
+        if (!string.IsNullOrEmpty(json))
+        {
+            try
+            {
+                var wrapper = JsonUtility.FromJson<FailureListWrapper>(json);
+                if (wrapper != null && wrapper.items != null) failures.AddRange(wrapper.items);
+            }
+            catch { }
+        }
+
+        // Se il reload ci ha colti durante uno stato in-progress, lo trattiamo come completato.
+        if (checkStatus == CheckStatus.Checking ||
+            checkStatus == CheckStatus.Downloading ||
+            checkStatus == CheckStatus.Installing)
+        {
+            checkStatus = failures.Count == 0 ? CheckStatus.Downloaded : CheckStatus.DownloadedWithErrors;
+        }
+    }
+
+    private static void ClearSessionState()
+    {
+        SessionState.EraseInt(SS_Status);
+        SessionState.EraseInt(SS_NewVersion);
+        SessionState.EraseInt(SS_Copied);
+        SessionState.EraseInt(SS_Skipped);
+        SessionState.EraseInt(SS_Deleted);
+        SessionState.EraseString(SS_Error);
+        SessionState.EraseString(SS_Failures);
+    }
+
+    private static UnityWebRequest BuildNoCacheGet(string url)
+    {
+        var req = UnityWebRequest.Get(url);
+        req.SetRequestHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        req.SetRequestHeader("Pragma", "no-cache");
+        return req;
+    }
+
     public static void CheckForUpdatesSilent()
     {
-        var www = UnityWebRequest.Get(versionJsonURL);
+        var www = BuildNoCacheGet(versionJsonURL);
         www.SendWebRequest().completed += _ =>
         {
             try
@@ -122,6 +220,7 @@ public class ModMenuUpdater : EditorWindow
     {
         if (!ConfirmBackupBeforeUpdate()) return;
 
+        ClearSessionState();
         GetWindow<ModMenuUpdater>("ModMenuUpdater");
         checkStatus = CheckStatus.Checking;
         error_str = "";
@@ -132,6 +231,7 @@ public class ModMenuUpdater : EditorWindow
     {
         if (!ConfirmBackupBeforeUpdate()) return;
 
+        ClearSessionState();
         GetWindow<ModMenuUpdater>("ModMenuUpdater");
         checkStatus = CheckStatus.Checking;
         error_str = "";
@@ -171,7 +271,7 @@ public class ModMenuUpdater : EditorWindow
     [MenuItem("ER2 TOOLS/Update/Open SDK Download page")]
     public static void OpenSdkUrl()
     {
-        var www = UnityWebRequest.Get(versionJsonURL);
+        var www = BuildNoCacheGet(versionJsonURL);
         www.SendWebRequest().completed += _ =>
         {
             try
@@ -278,9 +378,6 @@ public class ModMenuUpdater : EditorWindow
         EditorGUILayout.Space();
         Rect rect = EditorGUILayout.GetControlRect(false, 22);
         EditorGUI.ProgressBar(rect, Mathf.Clamp01(progressValue), pct + "%");
-
-        var window = GetWindow<ModMenuUpdater>(false);
-        if (window != null) window.Repaint();
     }
 
     private static string VersionToString(int version) => (version / 100f).ToString("F2");
@@ -290,7 +387,7 @@ public class ModMenuUpdater : EditorWindow
         progressValue = 0f;
         progressInfo = "Fetching version.json...";
 
-        var www = UnityWebRequest.Get(versionJsonURL);
+        var www = BuildNoCacheGet(versionJsonURL);
         www.SendWebRequest().completed += _ =>
         {
             try
@@ -299,6 +396,7 @@ public class ModMenuUpdater : EditorWindow
                 {
                     error_str = "Error fetching version.json: " + www.error;
                     checkStatus = CheckStatus.Error;
+                    RepaintWindow();
                     return;
                 }
 
@@ -307,6 +405,7 @@ public class ModMenuUpdater : EditorWindow
                 {
                     error_str = "Invalid version.json.";
                     checkStatus = CheckStatus.Error;
+                    RepaintWindow();
                     return;
                 }
 
@@ -322,6 +421,7 @@ public class ModMenuUpdater : EditorWindow
                 {
                     checkStatus = CheckStatus.UpToDate;
                 }
+                RepaintWindow();
             }
             finally { www.Dispose(); }
         };
@@ -352,7 +452,7 @@ public class ModMenuUpdater : EditorWindow
                 error_str = "Failed to download zip: " + downloadingRequest.error;
                 checkStatus = CheckStatus.Error;
                 downloadingRequest.Dispose();
-                EditorUtility.ClearProgressBar();
+                RepaintWindow();
                 return;
             }
 
@@ -367,11 +467,7 @@ public class ModMenuUpdater : EditorWindow
         float download = Mathf.Clamp01(downloadingRequest.downloadProgress);
         progressValue = download * 0.35f;
         progressInfo = "Downloading GitHub repository zip... " + Mathf.RoundToInt(download * 100f) + "%";
-
-        EditorUtility.DisplayProgressBar("ER2 SDK Update", progressInfo, progressValue);
-
-        var window = GetWindow<ModMenuUpdater>(false);
-        if (window != null) window.Repaint();
+        RepaintWindow();
     }
 
     private static void InstallDownloadedZip()
@@ -423,8 +519,12 @@ public class ModMenuUpdater : EditorWindow
                 AssetDatabase.StopAssetEditing();
             }
 
-            SetProgress(0.96f, "Refreshing Unity AssetDatabase...");
-            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+            // Imposta lo stato finale PRIMA del Refresh: il Refresh può scatenare
+            // uno script reload che azzera gli static. Salviamo su SessionState e in
+            // OnEnable (dopo il reload) ricarichiamo questi valori.
+            checkStatus = failures.Count == 0
+                ? CheckStatus.Downloaded
+                : CheckStatus.DownloadedWithErrors;
 
             SetProgress(1f, failures.Count == 0
                 ? "SDK update completed."
@@ -441,9 +541,9 @@ public class ModMenuUpdater : EditorWindow
                 Debug.LogWarning("ER2 SDK: " + f.Operation + " failed for '" + f.Path + "': " + f.Reason +
                                  " (" + f.Detail + ")");
 
-            checkStatus = failures.Count == 0
-                ? CheckStatus.Downloaded
-                : CheckStatus.DownloadedWithErrors;
+            SaveSessionState();
+
+            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
         }
         catch (Exception e)
         {
@@ -453,6 +553,7 @@ public class ModMenuUpdater : EditorWindow
 
             Debug.LogError("ER2 SDK update error: " + e);
             checkStatus = CheckStatus.Error;
+            SaveSessionState();
         }
         finally
         {
@@ -461,9 +562,7 @@ public class ModMenuUpdater : EditorWindow
             try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true); }
             catch { }
 
-            EditorUtility.ClearProgressBar();
-            var window = GetWindow<ModMenuUpdater>(false);
-            if (window != null) window.Repaint();
+            RepaintWindow();
         }
     }
 
@@ -471,9 +570,7 @@ public class ModMenuUpdater : EditorWindow
     {
         progressValue = Mathf.Clamp01(value);
         progressInfo = info;
-        EditorUtility.DisplayProgressBar("ER2 SDK Update", progressInfo, progressValue);
-        var window = GetWindow<ModMenuUpdater>(false);
-        if (window != null) window.Repaint();
+        RepaintWindow();
     }
 
     private static void ValidateRepoContents(string repoRoot)
@@ -491,62 +588,6 @@ public class ModMenuUpdater : EditorWindow
     }
 
     // ---------------- Robust file ops ----------------
-
-    private const int RETRY_ATTEMPTS = 3;
-    private const int RETRY_DELAY_MS = 200;
-
-    /// <summary>
-    /// Esegue un'operazione di filesystem con retry sui transient sharing violation
-    /// (antivirus, OneDrive/Dropbox sync, indexer di Windows). Codici 32 e 33.
-    /// </summary>
-    private static void RunWithRetry(Action op)
-    {
-        for (int attempt = 0; attempt < RETRY_ATTEMPTS; attempt++)
-        {
-            try
-            {
-                op();
-                return;
-            }
-            catch (IOException ioEx)
-            {
-                int code = ioEx.HResult & 0xFFFF;
-                bool isTransient = code == 32 || code == 33;
-                if (!isTransient || attempt == RETRY_ATTEMPTS - 1)
-                    throw;
-
-                System.Threading.Thread.Sleep(RETRY_DELAY_MS);
-            }
-        }
-    }
-
-    private static bool IsProjectInProtectedPath(out string detectedPath)
-    {
-        string projectRoot = Directory.GetParent(Application.dataPath).FullName.ToLowerInvariant();
-
-        string[] protectedRoots =
-        {
-        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-        Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-        Environment.GetFolderPath(Environment.SpecialFolder.System),
-        Environment.GetFolderPath(Environment.SpecialFolder.SystemX86)
-    };
-
-        foreach (string root in protectedRoots)
-        {
-            if (string.IsNullOrEmpty(root)) continue;
-            string normalized = root.ToLowerInvariant();
-            if (projectRoot.StartsWith(normalized))
-            {
-                detectedPath = root;
-                return true;
-            }
-        }
-
-        detectedPath = null;
-        return false;
-    }
 
     /// <summary>
     /// Sostituisce un file in modo robusto.
@@ -579,6 +620,58 @@ public class ModMenuUpdater : EditorWindow
 
             File.Copy(srcFile, dstFile, false);
         });
+    }
+
+    private const int RETRY_ATTEMPTS = 3;
+    private const int RETRY_DELAY_MS = 200;
+
+    private static void RunWithRetry(Action op)
+    {
+        for (int attempt = 0; attempt < RETRY_ATTEMPTS; attempt++)
+        {
+            try
+            {
+                op();
+                return;
+            }
+            catch (IOException ioEx)
+            {
+                int code = ioEx.HResult & 0xFFFF;
+                bool isTransient = code == 32 || code == 33;
+                if (!isTransient || attempt == RETRY_ATTEMPTS - 1)
+                    throw;
+
+                System.Threading.Thread.Sleep(RETRY_DELAY_MS);
+            }
+        }
+    }
+
+    private static bool IsProjectInProtectedPath(out string detectedPath)
+    {
+        string projectRoot = Directory.GetParent(Application.dataPath).FullName.ToLowerInvariant();
+
+        string[] protectedRoots =
+        {
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+            Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+            Environment.GetFolderPath(Environment.SpecialFolder.System),
+            Environment.GetFolderPath(Environment.SpecialFolder.SystemX86)
+        };
+
+        foreach (string root in protectedRoots)
+        {
+            if (string.IsNullOrEmpty(root)) continue;
+            string normalized = root.ToLowerInvariant();
+            if (projectRoot.StartsWith(normalized))
+            {
+                detectedPath = root;
+                return true;
+            }
+        }
+
+        detectedPath = null;
+        return false;
     }
 
     private static string GetFriendlyReason(Exception e)
