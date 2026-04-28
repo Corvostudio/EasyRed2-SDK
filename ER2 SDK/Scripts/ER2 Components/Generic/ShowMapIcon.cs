@@ -31,6 +31,7 @@ public partial class ShowMapIcon : MonoBehaviour
 
 
     public static readonly float MaxAlpha = .8f;
+    public static readonly AnimationCurve distanceFade = AnimationCurve.Linear(.35f, 1f, 1f, 0f);
 
     /// <summary>World position used for GUI / overlay placement.</summary>
     public virtual Vector3 GetGUIWorldPosition()
