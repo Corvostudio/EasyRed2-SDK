@@ -36,6 +36,7 @@ public static class ModMenuUpdaterAutoCheck
 
     private static void AutoFixQualityLevels()
     {
+#if !PHOTON_UNITY_NETWORKING
         // 1. Copia il QualitySettings.asset di base dall'SDK (struttura: 3 livelli con nomi e impostazioni corrette)
         TryCopyQualitySettingsFile();
 
@@ -54,6 +55,7 @@ public static class ModMenuUpdaterAutoCheck
         // 5. High Quality come livello attivo di default
         try { QualitySettings.SetQualityLevel(0, true); }
         catch (System.Exception e) { Debug.LogWarning("ER2 SDK: impossibile impostare il quality level di default: " + e.Message); }
+#endif
     }
 
     private static void TryCopyQualitySettingsFile()
