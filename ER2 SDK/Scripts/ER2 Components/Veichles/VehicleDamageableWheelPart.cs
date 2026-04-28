@@ -7,9 +7,13 @@ public partial class VehicleDamageableWheelPart : VehicleDamagablePart
 {
     public WheelCollider connectedWheel;
 
+    [System.NonSerialized] float originalWheelRadius = .3f;
+
+    partial void Initialize();
+
     protected new void Awake()
     {
-        base.Awake();
+        Initialize();
 
         if (connectedWheel)
         {
