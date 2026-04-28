@@ -20,19 +20,17 @@ using Steamworks;
 // It handles the basics of starting up and shutting down the SteamAPI for use.
 //
 [DisallowMultipleComponent]
-//[ExecuteInEditMode]
 public class SteamManager : MonoBehaviour {
 #if !DISABLESTEAMWORKS
 	protected static bool s_EverInitialized = false;
 
-	protected static SteamManager s_instance;
+    public static readonly uint APP_ID = 1324780;
+
+    protected static SteamManager s_instance;
 	protected static SteamManager Instance {
 		get {
 			if (s_instance == null) {
-				s_instance = GameObject.FindObjectOfType<SteamManager>();
-				if (s_instance == null)
-					s_instance = new GameObject("SteamManager").AddComponent<SteamManager>();
-				return s_instance;
+				return new GameObject("SteamManager").AddComponent<SteamManager>();
 			}
 			else {
 				return s_instance;
@@ -81,8 +79,7 @@ public class SteamManager : MonoBehaviour {
 		}
 
 		// We want our SteamManager Instance to persist across scenes.
-		if (Application.isPlaying)
-			DontDestroyOnLoad(gameObject);
+		DontDestroyOnLoad(gameObject);
 
 		if (!Packsize.Test()) {
 			Debug.LogError("[Steamworks.NET] Packsize Test returned false, the wrong version of Steamworks.NET is being run in this platform.", this);
@@ -101,7 +98,7 @@ public class SteamManager : MonoBehaviour {
 			// Once you get a Steam AppID assigned by Valve, you need to replace AppId_t.Invalid with it and
 			// remove steam_appid.txt from the game depot. eg: "(AppId_t)480" or "new AppId_t(480)".
 			// See the Valve documentation for more information: https://partner.steamgames.com/doc/sdk/api#initialization_and_shutdown
-			if (SteamAPI.RestartAppIfNecessary(AppId_t.Invalid)) {
+			if (SteamAPI.RestartAppIfNecessary(new Steamworks.AppId_t(APP_ID))) {
 				Debug.Log("[Steamworks.NET] Shutting down because RestartAppIfNecessary returned true. Steam will restart the application.");
 
 				Application.Quit();

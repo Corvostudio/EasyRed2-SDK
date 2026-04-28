@@ -12,7 +12,6 @@ using UnityEngine.UI;
 
 public class SteamworkUpload : MonoBehaviour
 {
-    private const uint APP_ID = 1324780;
     private const string SESSION_FLAG = "ER2_PendingUpload";
 
     private static SteamworkUpload instance;
@@ -519,7 +518,7 @@ public class SteamworkUpload : MonoBehaviour
     private static void CreateAppIdFile()
     {
         string filePath = Directory.GetParent(Application.dataPath).FullName + "/steam_appid.txt";
-        File.WriteAllText(filePath, APP_ID.ToString());
+        File.WriteAllText(filePath, SteamManager.APP_ID.ToString());
     }
 }
 #endif
