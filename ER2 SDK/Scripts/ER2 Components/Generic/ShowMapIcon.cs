@@ -29,27 +29,32 @@ public partial class ShowMapIcon : MonoBehaviour
     [Header("Editor Debug")]
     public bool debugDrawInEditor = true;
 
-    protected virtual void OnGUI()
+
+    public static readonly float MaxAlpha = .8f;
+
+    /// <summary>World position used for GUI / overlay placement.</summary>
+    public virtual Vector3 GetGUIWorldPosition()
     {
-        if (!_cachedShouldDraw)
-            return;
+        return transform.TransformPoint(guiWorldOffset);
+    }
 
-        Vector3 worldPos = GetGUIWorldPosition();
-        Vector3 screenPos = ResourcesManager.mainCamera.WorldToScreenPoint(worldPos);
-        float alpha = GetDistanceAlpha(ResourcesManager.mainCamera.transform.position) * MaxAlpha;
-        float size = drawSize * GetSizeMultiplier();
+    public virtual float GetSizeMultiplier()
+    {
+        return 0.8f;
+    }
 
-        var ui_rect = new Rect(
-            screenPos.x - size * 0.5f,
-            Screen.height - screenPos.y - size * 0.5f,
-            size,
-            size
-        );
+    /// <summary>
+    /// Returns alpha multiplier based on distance to viewer.
+    /// Suggested usage: finalAlpha = baseAlpha * GetDistanceAlpha(viewerPosition).
+    /// </summary>
+    public virtual float GetDistanceAlpha(Vector3 viewerWorldPosition)
+    {
+        if (maxDistance <= 0.0001f)
+            return 0f;
 
-        Color prev = GUI.color;
-        GUI.color = new Color(1f, 1f, 1f, alpha);
-        GUI.DrawTexture(ui_rect, _cachedTexture);
-        GUI.color = prev;
+        float d = Vector3.Distance(viewerWorldPosition, GetGUIWorldPosition());
+        float t = Mathf.Clamp01(d / maxDistance);
+        return Mathf.Clamp01(distanceFade.Evaluate(t));
     }
 
 #if UNITY_EDITOR
