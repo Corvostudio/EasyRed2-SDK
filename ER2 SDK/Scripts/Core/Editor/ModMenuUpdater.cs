@@ -26,6 +26,7 @@ public class ModMenuUpdater : EditorWindow
     private static readonly string[] SYNC_FOLDERS =
     {
         "ER2 SDK",
+        "Examples",
         "Steam SDK"
     };
 
