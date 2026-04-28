@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+ï»¿#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -140,17 +140,29 @@ public class ModMenuUpdater : EditorWindow
 
     private static bool ConfirmBackupBeforeUpdate()
     {
+        string protectedPathWarning = "";
+        if (IsProjectInProtectedPath(out string detectedPath))
+        {
+            protectedPathWarning =
+                "\n\nâš  WARNING: this Unity project is located inside a protected system folder:\n" +
+                "  " + detectedPath + "\n" +
+                "Updates from there usually fail unless Unity is launched as Administrator. " +
+                "It is strongly recommended to move the project to a normal user folder " +
+                "(e.g. Documents or a dedicated Dev folder on your disk) before updating.";
+        }
+
         string message =
             "The updater will overwrite and delete files inside these SDK folders:\n\n" +
             "  " + SYNC_FOLDERS_LIST + "\n\n" +
             "Before continuing, please make sure that:\n" +
-            "  • You have a backup of your project (or it is on version control).\n" +
-            "  • Any personal assets, mods or work-in-progress files are stored OUTSIDE the folders listed above. " +
-            "Anything inside those folders that does not belong to the official SDK will be removed.\n\n" +
-            "Do you want to proceed with the update?";
+            "  â€¢ You have a backup of your project (or it is on version control).\n" +
+            "  â€¢ Any personal assets, mods or work-in-progress files are stored OUTSIDE the folders listed above. " +
+            "Anything inside those folders that does not belong to the official SDK will be removed." +
+            protectedPathWarning +
+            "\n\nDo you want to proceed with the update?";
 
         return EditorUtility.DisplayDialog(
-            "ER2 SDK Update — confirm",
+            "ER2 SDK Update â€” confirm",
             message,
             "I have a backup, update now",
             "Cancel");
@@ -226,7 +238,7 @@ public class ModMenuUpdater : EditorWindow
                 errorScroll = EditorGUILayout.BeginScrollView(errorScroll, GUILayout.MaxHeight(220));
                 foreach (var f in failures)
                 {
-                    EditorGUILayout.LabelField(f.Operation + " — " + Path.GetFileName(f.Path), EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField(f.Operation + " â€” " + Path.GetFileName(f.Path), EditorStyles.boldLabel);
                     EditorGUILayout.LabelField(f.Reason, EditorStyles.wordWrappedLabel);
                     EditorGUILayout.LabelField(f.Path, EditorStyles.miniLabel);
                     GUILayout.Space(6);
@@ -480,13 +492,69 @@ public class ModMenuUpdater : EditorWindow
 
     // ---------------- Robust file ops ----------------
 
+    private const int RETRY_ATTEMPTS = 3;
+    private const int RETRY_DELAY_MS = 200;
+
+    /// <summary>
+    /// Esegue un'operazione di filesystem con retry sui transient sharing violation
+    /// (antivirus, OneDrive/Dropbox sync, indexer di Windows). Codici 32 e 33.
+    /// </summary>
+    private static void RunWithRetry(Action op)
+    {
+        for (int attempt = 0; attempt < RETRY_ATTEMPTS; attempt++)
+        {
+            try
+            {
+                op();
+                return;
+            }
+            catch (IOException ioEx)
+            {
+                int code = ioEx.HResult & 0xFFFF;
+                bool isTransient = code == 32 || code == 33;
+                if (!isTransient || attempt == RETRY_ATTEMPTS - 1)
+                    throw;
+
+                System.Threading.Thread.Sleep(RETRY_DELAY_MS);
+            }
+        }
+    }
+
+    private static bool IsProjectInProtectedPath(out string detectedPath)
+    {
+        string projectRoot = Directory.GetParent(Application.dataPath).FullName.ToLowerInvariant();
+
+        string[] protectedRoots =
+        {
+        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+        Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+        Environment.GetFolderPath(Environment.SpecialFolder.System),
+        Environment.GetFolderPath(Environment.SpecialFolder.SystemX86)
+    };
+
+        foreach (string root in protectedRoots)
+        {
+            if (string.IsNullOrEmpty(root)) continue;
+            string normalized = root.ToLowerInvariant();
+            if (projectRoot.StartsWith(normalized))
+            {
+                detectedPath = root;
+                return true;
+            }
+        }
+
+        detectedPath = null;
+        return false;
+    }
+
     /// <summary>
     /// Sostituisce un file in modo robusto.
     /// Su Windows i DLL caricati da Unity (es. steam_api64.dll) sono lockati per la SCRITTURA
     /// ma NON per la cancellazione: LoadLibrary apre l'immagine con FILE_SHARE_DELETE, quindi
     /// File.Delete riesce anche con la DLL caricata. Cancelliamo prima e ricopiamo da capo.
     /// L'editor in esecuzione continua a usare la vecchia immagine in RAM fino al prossimo avvio,
-    /// ma il file su disco è già aggiornato.
+    /// ma il file su disco Ã¨ giÃ  aggiornato.
     /// </summary>
     private static void SafeReplaceFile(string srcFile, string dstFile)
     {
@@ -494,20 +562,23 @@ public class ModMenuUpdater : EditorWindow
         if (!Directory.Exists(dstDir))
             Directory.CreateDirectory(dstDir);
 
-        if (File.Exists(dstFile))
+        RunWithRetry(() =>
         {
-            try
+            if (File.Exists(dstFile))
             {
-                FileAttributes attr = File.GetAttributes(dstFile);
-                if ((attr & FileAttributes.ReadOnly) != 0)
-                    File.SetAttributes(dstFile, attr & ~FileAttributes.ReadOnly);
+                try
+                {
+                    FileAttributes attr = File.GetAttributes(dstFile);
+                    if ((attr & FileAttributes.ReadOnly) != 0)
+                        File.SetAttributes(dstFile, attr & ~FileAttributes.ReadOnly);
+                }
+                catch { /* best-effort */ }
+
+                File.Delete(dstFile);
             }
-            catch { /* best-effort */ }
 
-            File.Delete(dstFile);
-        }
-
-        File.Copy(srcFile, dstFile, false);
+            File.Copy(srcFile, dstFile, false);
+        });
     }
 
     private static string GetFriendlyReason(Exception e)
@@ -642,11 +713,14 @@ public class ModMenuUpdater : EditorWindow
 
                 try
                 {
-                    FileAttributes attr = File.GetAttributes(dstFile);
-                    if ((attr & FileAttributes.ReadOnly) != 0)
-                        File.SetAttributes(dstFile, attr & ~FileAttributes.ReadOnly);
+                    RunWithRetry(() =>
+                    {
+                        FileAttributes attr = File.GetAttributes(dstFile);
+                        if ((attr & FileAttributes.ReadOnly) != 0)
+                            File.SetAttributes(dstFile, attr & ~FileAttributes.ReadOnly);
 
-                    File.Delete(dstFile);
+                        File.Delete(dstFile);
+                    });
                     deletedFiles++;
                 }
                 catch (Exception e)
