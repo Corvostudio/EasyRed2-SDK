@@ -22,15 +22,32 @@ public static class AnimationTesterTool
 
         var existing = Object.FindObjectsOfType<AnimationTesterChecker>();
         AnimationTesterChecker mine = null;
+
         foreach (var c in existing)
         {
             if (c == null || EditorUtility.IsPersistent(c)) continue;
-            if (c.attached_weapon == weapon) { mine = c; continue; }
-            DestroyTester(c); // rimuove tester di altre armi: ne resta sempre solo uno
+
+            bool isAttachedWeapon = c.attached_weapon == weapon;
+            bool isWeaponInsideTester = weapon != null && weapon.transform.IsChildOf(c.transform);
+
+            if (isAttachedWeapon || isWeaponInsideTester)
+            {
+                mine = c;
+                continue;
+            }
+
+            DestroyTester(c);
         }
 
-        if (mine != null) DestroyTester(mine);
-        else CreateTester(weapon);
+        if (mine != null)
+        {
+            DestroyTester(mine);
+            return;
+        }
+
+        if (weapon == null) return;
+
+        CreateTester(weapon);
     }
 
     private static void DestroyTester(AnimationTesterChecker checker)
@@ -65,8 +82,13 @@ public static class AnimationTesterTool
             return;
         }
 
+        if (weapon == null) return;
+
+        string weaponName = weapon.name;
+        GameObject weaponObject = weapon.gameObject;
+
         GameObject animRoot = Object.Instantiate(skeletonPrefab);
-        animRoot.name = "Animation Tester (" + weapon.name + ")";
+        animRoot.name = "Animation Tester (" + weaponName + ")";
         animRoot.transform.SetParent(bestCam.transform, false);
         animRoot.transform.localPosition = Vector3.zero;
         animRoot.transform.localEulerAngles = Vector3.zero;
@@ -84,8 +106,8 @@ public static class AnimationTesterTool
         }
 
         // Clone arma sotto CenterSpine2_BJ
-        GameObject src = PrefabUtility.GetCorrespondingObjectFromSource(weapon.gameObject);
-        GameObject weaponPrefab = src != null ? src : weapon.gameObject;
+        GameObject src = PrefabUtility.GetCorrespondingObjectFromSource(weaponObject);
+        GameObject weaponPrefab = src != null ? src : weaponObject;
         GenericGun weapClone = ((GameObject)PrefabUtility.InstantiatePrefab(weaponPrefab)).GetComponent<GenericGun>();
         weapClone.transform.SetParent(centerSpine, false);
         weapClone.transform.localPosition = Vector3.zero;
