@@ -12,7 +12,6 @@ public class AnimationTesterChecker : MonoBehaviour
 
 public static class AnimationTesterTool
 {
-    private const string SkeletonPrefabPath = "Assets/ER2 SDK/Rigs/skeleton for animations.prefab";
     private const string CenterSpineRelativePath = "ROOT/RIGROOT_BJ/CenterSpine2_BJ";
     private static readonly HashSet<string> alreadyAdded = new HashSet<string>();
 
@@ -75,10 +74,10 @@ public static class AnimationTesterTool
             bestCam.farClipPlane = 100;
         }
 
-        var skeletonPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(SkeletonPrefabPath);
+        var skeletonPrefab = EditorAssetFinder.Find<GameObject>("skeleton for animations");
         if (skeletonPrefab == null)
         {
-            Debug.LogError("Animation skeleton prefab not found at " + SkeletonPrefabPath);
+            Debug.LogError("Animation skeleton prefab not found (skeleton for animations)");
             return;
         }
 
