@@ -120,6 +120,8 @@ public class ModMenuUpdater : EditorWindow
     [MenuItem("ER2 TOOLS/Update/Check for new Updates")]
     public static void AutoDownload()
     {
+        if (!ConfirmBackupBeforeUpdate()) return;
+
         GetWindow<ModMenuUpdater>("ModMenuUpdater");
         checkStatus = CheckStatus.Checking;
         error_str = "";
