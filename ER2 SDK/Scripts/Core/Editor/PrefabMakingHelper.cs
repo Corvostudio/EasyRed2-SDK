@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -1837,7 +1836,7 @@ public class PrefabMakingHelper : MonoBehaviour
     }
 
 
-    [MenuItem("GameObject/ER2 TOOLS/Check Bone Order", false, 1510)]
+    [MenuItem("GameObject/ER2 TOOLS/Animation making/Check Bone Order", false, 1510)]
     public static void CheckboneOrder()
     {
         if (Selection.activeGameObject == null) return;
@@ -1917,4 +1916,382 @@ public class PrefabMakingHelper : MonoBehaviour
         return name;
     }
 
+
+
+    // Tweak if needed (meters in world space).
+    private const float GroundPlaneTolerance = 0.08f;
+
+    // -----------------------------
+    // Menu: Assign wheel meshes
+    // -----------------------------
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Wheel Collider Updater/Assign selected wheel meshes", false, 1580)]
+    public static void AssignWheelMeshes()
+    {
+        var selection = Selection.transforms;
+        if (selection == null || selection.Length == 0) return;
+
+        if (!TryGetSingleVehicleRootFromSelection(selection, out var vehicleRoot, out var vehicle))
+        {
+            EditorUtility.DisplayDialog("ER2 TOOLS",
+                "Selection must belong to a single VehicleWithWheels (same root parent).", "OK");
+            return;
+        }
+
+        // Collect updaters that correspond to wheels in tracks (WheelColliderUpdater sits on the WheelCollider object).
+        var updaters = CollectTrackWheelUpdaters(vehicle);
+        if (updaters.Count == 0)
+        {
+            EditorUtility.DisplayDialog("ER2 TOOLS",
+                "No WheelColliderUpdater found on leftTrack/rightTrack wheel colliders.", "OK");
+            return;
+        }
+
+        // Clean arrays BEFORE assigning
+        foreach (var u in updaters)
+        {
+            Undo.RecordObject(u, "Clean wheel arrays");
+            CleanWheelUpdaterArrays(u);
+        }
+
+        var rootPos = vehicleRoot.position;
+        var rootUp = vehicleRoot.up;
+
+        int assignedSuspension = 0;
+        int assignedRotOnly = 0;
+
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+
+        // Build a filtered list of candidate wheel-mesh transforms from current selection
+        var candidates = new List<Transform>();
+        for (int i = 0; i < selection.Length; i++)
+        {
+            var t = selection[i];
+            if (t == null) continue;
+            if (t.GetComponent<WheelColliderUpdater>() != null) continue;
+            if (t.GetComponent<WheelCollider>() != null) continue;
+            candidates.Add(t);
+        }
+
+        if (candidates.Count == 0) return;
+
+        // Compute heights and find lowest
+        var heights = new List<float>(candidates.Count);
+        float minH = float.MaxValue;
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            float h = HeightAlongUp(candidates[i].position, rootPos, rootUp);
+            heights.Add(h);
+            if (h < minH) minH = h;
+        }
+
+        // Decide band tolerance (adaptive) - or replace with a fixed value if you prefer
+        float groundBandTol = ComputeGroundBandTolerance(heights, minH);
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var t = candidates[i];
+
+            var closestUpdater = FindClosestUpdater(updaters, t.position);
+            if (closestUpdater == null) continue;
+
+            float h = heights[i];
+            bool isGroundWheel = (h - minH) <= groundBandTol;
+
+            if (isGroundWheel)
+            {
+                if (AddUniqueToArray(closestUpdater, "wheelsTransform", t))
+                    assignedSuspension++;
+            }
+            else
+            {
+                if (AddUniqueToArray(closestUpdater, "wheelsTransform_syncOnlyRot", t))
+                    assignedRotOnly++;
+            }
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+    }
+
+    // -----------------------------
+    // Menu: Assign Tracks Bones
+    // -----------------------------
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Wheel Collider Updater/Assign selected Tracks Bones", false, 1610)]
+    public static void AssignTrackBones()
+    {
+        var selection = Selection.transforms;
+        if (selection == null || selection.Length == 0) return;
+
+        if (!TryGetSingleVehicleRootFromSelection(selection, out var vehicleRoot, out var vehicle))
+        {
+            EditorUtility.DisplayDialog("ER2 TOOLS",
+                "Selection must belong to a single VehicleWithWheels (same root parent).", "OK");
+            return;
+        }
+
+        var updaters = CollectTrackWheelUpdaters(vehicle);
+        if (updaters.Count == 0)
+        {
+            EditorUtility.DisplayDialog("ER2 TOOLS",
+                "No WheelColliderUpdater found on leftTrack/rightTrack wheel colliders.", "OK");
+            return;
+        }
+
+        foreach (var u in updaters)
+        {
+            Undo.RecordObject(u, "Clean wheel arrays");
+            CleanWheelUpdaterArrays(u);
+        }
+
+        // For bones assignment, selection count must match updater count.
+        // (As requested: "amount of bones selected must match the amount of wheel collider updaters assigned to the vehiclewithwheels component")
+        if (selection.Length != updaters.Count)
+        {
+            EditorUtility.DisplayDialog("ER2 TOOLS",
+                $"Bones selected: {selection.Length}\nWheelColliderUpdaters in tracks: {updaters.Count}\n\nCounts must match.",
+                "OK");
+            return;
+        }
+
+        // Build 1-to-1 pairing: each updater gets its closest unassigned bone.
+        // Greedy with ordering by each updater's nearest distance to reduce conflicts.
+        var bones = new List<Transform>(selection);
+
+        var updaterInfos = new List<(WheelColliderUpdater updater, float nearestDistSq)>(updaters.Count);
+        foreach (var u in updaters)
+            updaterInfos.Add((u, NearestDistanceSq(u.transform.position, bones)));
+
+        updaterInfos.Sort((a, b) => a.nearestDistSq.CompareTo(b.nearestDistSq));
+
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+
+        int assigned = 0;
+        var used = new HashSet<Transform>();
+
+        foreach (var info in updaterInfos)
+        {
+            var u = info.updater;
+            Transform bestBone = null;
+            float bestD = float.MaxValue;
+
+            for (int i = 0; i < bones.Count; i++)
+            {
+                var b = bones[i];
+                if (b == null || used.Contains(b)) continue;
+
+                float d = (b.position - u.transform.position).sqrMagnitude;
+                if (d < bestD)
+                {
+                    bestD = d;
+                    bestBone = b;
+                }
+            }
+
+            if (bestBone == null)
+            {
+                // Should not happen if counts match, but keep safe.
+                continue;
+            }
+
+            used.Add(bestBone);
+
+            // Assign connectedBone via SerializedObject so it properly records and marks dirty.
+            var so = new SerializedObject(u);
+            var prop = so.FindProperty("connectedBone");
+            Undo.RecordObject(u, "Assign selected Tracks Bones");
+            prop.objectReferenceValue = bestBone;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(u);
+
+            assigned++;
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+    }
+
+    // -----------------------------
+    // Helpers
+    // -----------------------------
+    private static bool TryGetSingleVehicleRootFromSelection(
+        Transform[] selection,
+        out Transform vehicleRoot,
+        out VehicleWithWheels vehicle)
+    {
+        vehicleRoot = null;
+        vehicle = null;
+
+        VehicleWithWheels firstVeh = null;
+
+        foreach (var t in selection)
+        {
+            if (t == null) continue;
+
+            var v = t.GetComponentInParent<VehicleWithWheels>();
+            if (v == null) continue;
+
+            if (firstVeh == null)
+                firstVeh = v;
+            else if (v != firstVeh)
+                return false; // multiple vehicles in selection
+        }
+
+        if (firstVeh == null) return false;
+
+        vehicle = firstVeh;
+        vehicleRoot = firstVeh.transform;
+        return true;
+    }
+
+    private static List<WheelColliderUpdater> CollectTrackWheelUpdaters(VehicleWithWheels vehicle)
+    {
+        var result = new List<WheelColliderUpdater>(32);
+        var seen = new HashSet<WheelColliderUpdater>();
+
+        void AddFromTrack(WheelCollider[] track)
+        {
+            if (track == null) return;
+            for (int i = 0; i < track.Length; i++)
+            {
+                var wc = track[i];
+                if (!wc) continue;
+
+                var upd = wc.GetComponent<WheelColliderUpdater>();
+                if (!upd) continue;
+
+                if (seen.Add(upd))
+                    result.Add(upd);
+            }
+        }
+
+        AddFromTrack(vehicle.leftTrack);
+        AddFromTrack(vehicle.rightTrack);
+
+        return result;
+    }
+
+    private static WheelColliderUpdater FindClosestUpdater(List<WheelColliderUpdater> updaters, Vector3 pos)
+    {
+        WheelColliderUpdater best = null;
+        float bestD = float.MaxValue;
+
+        for (int i = 0; i < updaters.Count; i++)
+        {
+            var u = updaters[i];
+            if (!u) continue;
+            float d = (u.transform.position - pos).sqrMagnitude;
+            if (d < bestD)
+            {
+                bestD = d;
+                best = u;
+            }
+        }
+        return best;
+    }
+
+    // Height of a point along an axis (vehicleRoot.up)
+    private static float HeightAlongUp(Vector3 worldPos, Vector3 rootPos, Vector3 rootUp)
+    {
+        return Vector3.Dot(worldPos - rootPos, rootUp.normalized);
+    }
+
+    private static float ComputeGroundBandTolerance(List<float> heights, float minHeight)
+    {
+        // Adaptive tolerance: based on wheel height spread, with sane clamps.
+        // Works when some wheels are slightly above/below ground due to art/pivot offsets.
+        float maxHeight = minHeight;
+        for (int i = 0; i < heights.Count; i++)
+            if (heights[i] > maxHeight) maxHeight = heights[i];
+
+        float spread = maxHeight - minHeight;
+
+        // If spread is small, keep small band; if spread is large, allow a bit more.
+        // Clamp avoids band getting too permissive.
+        return Mathf.Clamp(spread * 0.15f, 0.04f, 0.18f);
+    }
+
+    private static float NearestDistanceSq(Vector3 pos, List<Transform> candidates)
+    {
+        float best = float.MaxValue;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var t = candidates[i];
+            if (!t) continue;
+            float d = (t.position - pos).sqrMagnitude;
+            if (d < best) best = d;
+        }
+        return best;
+    }
+
+    private static bool AddUniqueToArray(UnityEngine.Object targetComponent, string arrayFieldName, Transform value)
+    {
+        if (targetComponent == null || value == null) return false;
+
+        var so = new SerializedObject(targetComponent);
+        var arr = so.FindProperty(arrayFieldName);
+        if (arr == null || !arr.isArray)
+        {
+            Debug.LogWarning($"ER2 TOOLS: Field '{arrayFieldName}' not found or not an array on {targetComponent.name}");
+            return false;
+        }
+
+        // Check duplicates
+        for (int i = 0; i < arr.arraySize; i++)
+        {
+            var el = arr.GetArrayElementAtIndex(i);
+            if (el.objectReferenceValue == value)
+                return false;
+        }
+
+        Undo.RecordObject(targetComponent, "Assign selected wheel meshes");
+
+        int newIndex = arr.arraySize;
+        arr.InsertArrayElementAtIndex(newIndex);
+        arr.GetArrayElementAtIndex(newIndex).objectReferenceValue = value;
+
+        so.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(targetComponent);
+
+        return true;
+    }
+    private static void CleanWheelUpdaterArrays(WheelColliderUpdater updater)
+    {
+        if (updater == null) return;
+
+        var so = new SerializedObject(updater);
+
+        CleanArrayProperty(so, "wheelsTransform");
+        CleanArrayProperty(so, "wheelsTransform_syncOnlyRot");
+
+        so.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(updater);
+    }
+
+    private static void CleanArrayProperty(SerializedObject so, string propertyName)
+    {
+        var arr = so.FindProperty(propertyName);
+        if (arr == null || !arr.isArray) return;
+
+        var unique = new HashSet<Object>();
+        var valid = new List<Object>();
+
+        for (int i = 0; i < arr.arraySize; i++)
+        {
+            var el = arr.GetArrayElementAtIndex(i);
+            var obj = el.objectReferenceValue;
+
+            if (obj == null) continue;                // remove nulls
+            if (!unique.Add(obj)) continue;           // remove duplicates
+
+            valid.Add(obj);
+        }
+
+        arr.arraySize = valid.Count;
+
+        for (int i = 0; i < valid.Count; i++)
+        {
+            arr.GetArrayElementAtIndex(i).objectReferenceValue = valid[i];
+        }
+    }
 }

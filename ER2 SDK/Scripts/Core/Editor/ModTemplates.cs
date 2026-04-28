@@ -731,7 +731,7 @@ public class ModTemplates : MonoBehaviour
         }
     }
 
-    [MenuItem("GameObject/ER2 TOOLS/Add Missing Building Impact Managers", false, 1500)]
+    [MenuItem("GameObject/ER2 TOOLS/Buildings/Add Missing Building Impact Managers", false, 1500)]
     private static void AddCollisionSystems()
     {
         if (!IsNewActionTime())
