@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public partial class RepairStation : MonoBehaviour
 {
-    [Range(0.1f, 5)]
+    [Range(0.1f, 15)]
     public float radius = 1.5f;
 
     void OnDrawGizmosSelected()
