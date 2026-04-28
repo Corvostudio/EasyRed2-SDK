@@ -19,7 +19,6 @@ public class ModMenuUpdater : EditorWindow
 
     private const string versionJsonURL =
         "https://raw.githubusercontent.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/" + BRANCH + "/version.json";
-
     private const string zipURL =
         "https://github.com/" + GITHUB_USER + "/" + GITHUB_REPO + "/archive/refs/heads/" + BRANCH + ".zip";
 
@@ -30,20 +29,16 @@ public class ModMenuUpdater : EditorWindow
         "Steam SDK"
     };
 
+    private static readonly string SYNC_FOLDERS_LIST = string.Join(", ", SYNC_FOLDERS);
+
     private static readonly HashSet<string> SKIP_ROOT_FILES = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        ".gitignore",
-        ".gitattributes",
-        "README.md",
-        "README.md.meta",
-        "LICENSE",
-        "LICENSE.md"
+        ".gitignore", ".gitattributes", "README.md", "README.md.meta", "LICENSE", "LICENSE.md"
     };
 
     private static readonly HashSet<string> SKIP_DIRS = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        ".git",
-        ".github"
+        ".git", ".github"
     };
 
     private static int newVersion;
@@ -57,6 +52,7 @@ public class ModMenuUpdater : EditorWindow
         Installing,
         UpToDate,
         Downloaded,
+        DownloadedWithErrors,
         Error,
         NewUpdateFound
     }
@@ -72,6 +68,17 @@ public class ModMenuUpdater : EditorWindow
     private static int skippedFiles;
     private static int deletedFiles;
 
+    private class FileFailure
+    {
+        public string Path;
+        public string Operation;
+        public string Reason;
+        public string Detail;
+    }
+
+    private static readonly List<FileFailure> failures = new List<FileFailure>();
+    private static Vector2 errorScroll;
+
     private static int GetLocalVersion()
     {
         try
@@ -82,10 +89,7 @@ public class ModMenuUpdater : EditorWindow
             var data = JsonUtility.FromJson<JSONData>(File.ReadAllText(path));
             return data != null ? data.version : 0;
         }
-        catch
-        {
-            return 0;
-        }
+        catch { return 0; }
     }
 
     public static void CheckForUpdatesSilent()
@@ -95,12 +99,10 @@ public class ModMenuUpdater : EditorWindow
         {
             try
             {
-                if (www.result != UnityWebRequest.Result.Success)
-                    return;
+                if (www.result != UnityWebRequest.Result.Success) return;
 
                 var data = JsonUtility.FromJson<JSONData>(www.downloadHandler.text);
-                if (data == null)
-                    return;
+                if (data == null) return;
 
                 newVersion = data.version;
                 manualUrl = data.manual_url;
@@ -111,10 +113,7 @@ public class ModMenuUpdater : EditorWindow
                     GetWindow<ModMenuUpdater>("ModMenuUpdater");
                 }
             }
-            finally
-            {
-                www.Dispose();
-            }
+            finally { www.Dispose(); }
         };
     }
 
@@ -129,10 +128,30 @@ public class ModMenuUpdater : EditorWindow
 
     public static void ForceUpdate()
     {
+        if (!ConfirmBackupBeforeUpdate()) return;
+
         GetWindow<ModMenuUpdater>("ModMenuUpdater");
         checkStatus = CheckStatus.Checking;
         error_str = "";
         GetVersionAsync(true);
+    }
+
+    private static bool ConfirmBackupBeforeUpdate()
+    {
+        string message =
+            "The updater will overwrite and delete files inside these SDK folders:\n\n" +
+            "  " + SYNC_FOLDERS_LIST + "\n\n" +
+            "Before continuing, please make sure that:\n" +
+            "  • You have a backup of your project (or it is on version control).\n" +
+            "  • Any personal assets, mods or work-in-progress files are stored OUTSIDE the folders listed above. " +
+            "Anything inside those folders that does not belong to the official SDK will be removed.\n\n" +
+            "Do you want to proceed with the update?";
+
+        return EditorUtility.DisplayDialog(
+            "ER2 SDK Update — confirm",
+            message,
+            "I have a backup, update now",
+            "Cancel");
     }
 
     [MenuItem("ER2 TOOLS/Update/Open SDK Download page")]
@@ -153,10 +172,7 @@ public class ModMenuUpdater : EditorWindow
                 if (data != null && !string.IsNullOrEmpty(data.manual_url))
                     Application.OpenURL(data.manual_url);
             }
-            finally
-            {
-                www.Dispose();
-            }
+            finally { www.Dispose(); }
         };
     }
 
@@ -187,17 +203,45 @@ public class ModMenuUpdater : EditorWindow
                 GUILayout.Label("SDK updated successfully.", EditorStyles.boldLabel);
                 GUILayout.Label("New version: " + VersionToString(newVersion));
                 GUILayout.Space(8);
-                GUILayout.Label("Copied/updated files: " + copiedFiles);
-                GUILayout.Label("Skipped unchanged files: " + skippedFiles);
-                GUILayout.Label("Deleted obsolete files: " + deletedFiles);
+                GUILayout.Label("Updated files: " + copiedFiles);
+                GUILayout.Label("Unchanged files: " + skippedFiles);
+                GUILayout.Label("Removed obsolete files: " + deletedFiles);
+                break;
+
+            case CheckStatus.DownloadedWithErrors:
+                GUILayout.Label("SDK update partially completed.", EditorStyles.boldLabel);
+                GUILayout.Label("Target version: " + VersionToString(newVersion));
+                GUILayout.Space(6);
+                GUILayout.Label("Updated files: " + copiedFiles);
+                GUILayout.Label("Unchanged files: " + skippedFiles);
+                GUILayout.Label("Removed obsolete files: " + deletedFiles);
+                GUILayout.Label("Files with issues: " + failures.Count, EditorStyles.boldLabel);
+                GUILayout.Space(6);
+                EditorGUILayout.HelpBox(
+                    "Some files could not be updated. The SDK still works for everything that succeeded; the entries below explain how to fix the rest.",
+                    MessageType.Warning);
+
+                errorScroll = EditorGUILayout.BeginScrollView(errorScroll, GUILayout.MaxHeight(220));
+                foreach (var f in failures)
+                {
+                    EditorGUILayout.LabelField(f.Operation + " — " + Path.GetFileName(f.Path), EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField(f.Reason, EditorStyles.wordWrappedLabel);
+                    EditorGUILayout.LabelField(f.Path, EditorStyles.miniLabel);
+                    GUILayout.Space(6);
+                }
+                EditorGUILayout.EndScrollView();
+
+                GUILayout.Space(6);
+                if (GUILayout.Button("Retry update")) ForceUpdate();
+                if (GUILayout.Button("Open SDK Download page")) OpenSdkUrl();
                 break;
 
             case CheckStatus.Error:
                 GUILayout.Label("SDK update error:", EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox(error_str, MessageType.Error);
                 GUILayout.Space(8);
-                if (GUILayout.Button("Open SDK Download page"))
-                    OpenSdkUrl();
+                if (GUILayout.Button("Retry")) ForceUpdate();
+                if (GUILayout.Button("Open SDK Download page")) OpenSdkUrl();
                 break;
 
             case CheckStatus.NewUpdateFound:
@@ -206,12 +250,8 @@ public class ModMenuUpdater : EditorWindow
                 GUILayout.Label("New version: " + VersionToString(newVersion));
                 GUILayout.Label("Current version: " + VersionToString(VERSION));
                 GUILayout.Space(12);
-
-                if (GUILayout.Button("Update now"))
-                    ForceUpdate();
-
-                if (GUILayout.Button("Open SDK Download page"))
-                    OpenSdkUrl();
+                if (GUILayout.Button("Update now")) ForceUpdate();
+                if (GUILayout.Button("Open SDK Download page")) OpenSdkUrl();
                 break;
         }
     }
@@ -219,23 +259,17 @@ public class ModMenuUpdater : EditorWindow
     private static void DrawProgress(string title)
     {
         int pct = Mathf.RoundToInt(Mathf.Clamp01(progressValue) * 100f);
-
         GUILayout.Label(title, EditorStyles.boldLabel);
         GUILayout.Label(pct + "% - " + progressInfo);
         EditorGUILayout.Space();
-
         Rect rect = EditorGUILayout.GetControlRect(false, 22);
         EditorGUI.ProgressBar(rect, Mathf.Clamp01(progressValue), pct + "%");
 
         var window = GetWindow<ModMenuUpdater>(false);
-        if (window != null)
-            window.Repaint();
+        if (window != null) window.Repaint();
     }
 
-    private static string VersionToString(int version)
-    {
-        return (version / 100f).ToString("F2");
-    }
+    private static string VersionToString(int version) => (version / 100f).ToString("F2");
 
     private static void GetVersionAsync(bool forceInstall)
     {
@@ -275,10 +309,7 @@ public class ModMenuUpdater : EditorWindow
                     checkStatus = CheckStatus.UpToDate;
                 }
             }
-            finally
-            {
-                www.Dispose();
-            }
+            finally { www.Dispose(); }
         };
     }
 
@@ -287,6 +318,7 @@ public class ModMenuUpdater : EditorWindow
         copiedFiles = 0;
         skippedFiles = 0;
         deletedFiles = 0;
+        failures.Clear();
 
         downloadingRequest = UnityWebRequest.Get(zipURL);
         isDownloading = true;
@@ -316,8 +348,7 @@ public class ModMenuUpdater : EditorWindow
 
     private static void UpdateDownloadProgress()
     {
-        if (!isDownloading || downloadingRequest == null)
-            return;
+        if (!isDownloading || downloadingRequest == null) return;
 
         float download = Mathf.Clamp01(downloadingRequest.downloadProgress);
         progressValue = download * 0.35f;
@@ -326,8 +357,7 @@ public class ModMenuUpdater : EditorWindow
         EditorUtility.DisplayProgressBar("ER2 SDK Update", progressInfo, progressValue);
 
         var window = GetWindow<ModMenuUpdater>(false);
-        if (window != null)
-            window.Repaint();
+        if (window != null) window.Repaint();
     }
 
     private static void InstallDownloadedZip()
@@ -339,10 +369,7 @@ public class ModMenuUpdater : EditorWindow
             checkStatus = CheckStatus.Installing;
 
             SetProgress(0.38f, "Preparing temporary update folder...");
-
-            if (Directory.Exists(tempDir))
-                Directory.Delete(tempDir, true);
-
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
             Directory.CreateDirectory(tempDir);
 
             string zipPath = Path.Combine(tempDir, "sdk.zip");
@@ -351,34 +378,27 @@ public class ModMenuUpdater : EditorWindow
             downloadingRequest = null;
 
             SetProgress(0.48f, "Extracting GitHub repository zip...");
-
             string extractDir = Path.Combine(tempDir, "extracted");
             ZipFile.ExtractToDirectory(zipPath, extractDir);
 
             string[] rootDirs = Directory.GetDirectories(extractDir);
-            if (rootDirs.Length == 0)
-                throw new Exception("Extracted zip is empty.");
-
+            if (rootDirs.Length == 0) throw new Exception("Extracted zip is empty.");
             string repoRoot = rootDirs[0];
 
             string projectAssetsFolder = Path.Combine(
-                Directory.GetParent(Application.dataPath).FullName,
-                TARGET_FOLDER);
+                Directory.GetParent(Application.dataPath).FullName, TARGET_FOLDER);
 
             SetProgress(0.58f, "Validating update contents...");
             ValidateRepoContents(repoRoot);
-
-            SetProgress(0.64f, "Checking file access before writing...");
-            ValidateWritableTargets(repoRoot, projectAssetsFolder);
 
             try
             {
                 AssetDatabase.StartAssetEditing();
 
-                SetProgress(0.70f, "Copying missing and changed files...");
+                SetProgress(0.66f, "Updating files...");
                 SyncSdkFolders(repoRoot, projectAssetsFolder);
 
-                SetProgress(0.86f, "Updating version.json...");
+                SetProgress(0.84f, "Updating version.json...");
                 CopyVersionFile(repoRoot, projectAssetsFolder);
 
                 SetProgress(0.90f, "Removing obsolete SDK files...");
@@ -392,50 +412,44 @@ public class ModMenuUpdater : EditorWindow
             SetProgress(0.96f, "Refreshing Unity AssetDatabase...");
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 
-            SetProgress(1f, "SDK update completed.");
+            SetProgress(1f, failures.Count == 0
+                ? "SDK update completed."
+                : "SDK update completed with issues.");
 
             Debug.Log(
-                "ER2 SDK updated successfully. Version: " + VersionToString(newVersion) +
-                " | Copied/updated: " + copiedFiles +
+                "ER2 SDK update done. Version: " + VersionToString(newVersion) +
+                " | Updated: " + copiedFiles +
                 " | Unchanged: " + skippedFiles +
-                " | Deleted obsolete: " + deletedFiles);
+                " | Removed: " + deletedFiles +
+                " | Issues: " + failures.Count);
 
-            checkStatus = CheckStatus.Downloaded;
+            foreach (var f in failures)
+                Debug.LogWarning("ER2 SDK: " + f.Operation + " failed for '" + f.Path + "': " + f.Reason +
+                                 " (" + f.Detail + ")");
+
+            checkStatus = failures.Count == 0
+                ? CheckStatus.Downloaded
+                : CheckStatus.DownloadedWithErrors;
         }
         catch (Exception e)
         {
             error_str =
-                e.Message +
-                "\n\nUpdate aborted safely. Existing SDK files were not pre-deleted. " +
-                "If the error mentions steam_api64.dll or another DLL, close Unity/Game/Steam-related processes that may be locking it, then retry.";
+                "Could not complete the update: " + e.Message +
+                "\n\nNo SDK files have been deleted. Please retry; if the issue persists, use the manual download.";
 
             Debug.LogError("ER2 SDK update error: " + e);
             checkStatus = CheckStatus.Error;
         }
         finally
         {
-            try
-            {
-                if (downloadingRequest != null)
-                {
-                    downloadingRequest.Dispose();
-                    downloadingRequest = null;
-                }
-            }
+            try { if (downloadingRequest != null) { downloadingRequest.Dispose(); downloadingRequest = null; } }
             catch { }
-
-            try
-            {
-                if (Directory.Exists(tempDir))
-                    Directory.Delete(tempDir, true);
-            }
+            try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true); }
             catch { }
 
             EditorUtility.ClearProgressBar();
-
             var window = GetWindow<ModMenuUpdater>(false);
-            if (window != null)
-                window.Repaint();
+            if (window != null) window.Repaint();
         }
     }
 
@@ -443,12 +457,9 @@ public class ModMenuUpdater : EditorWindow
     {
         progressValue = Mathf.Clamp01(value);
         progressInfo = info;
-
         EditorUtility.DisplayProgressBar("ER2 SDK Update", progressInfo, progressValue);
-
         var window = GetWindow<ModMenuUpdater>(false);
-        if (window != null)
-            window.Repaint();
+        if (window != null) window.Repaint();
     }
 
     private static void ValidateRepoContents(string repoRoot)
@@ -465,54 +476,74 @@ public class ModMenuUpdater : EditorWindow
             throw new Exception("Update package is missing version.json.");
     }
 
-    private static void ValidateWritableTargets(string repoRoot, string projectAssetsFolder)
+    // ---------------- Robust file ops ----------------
+
+    /// <summary>
+    /// Sostituisce un file in modo robusto.
+    /// Su Windows i DLL caricati da Unity (es. steam_api64.dll) sono lockati per la SCRITTURA
+    /// ma NON per la cancellazione: LoadLibrary apre l'immagine con FILE_SHARE_DELETE, quindi
+    /// File.Delete riesce anche con la DLL caricata. Cancelliamo prima e ricopiamo da capo.
+    /// L'editor in esecuzione continua a usare la vecchia immagine in RAM fino al prossimo avvio,
+    /// ma il file su disco è già aggiornato.
+    /// </summary>
+    private static void SafeReplaceFile(string srcFile, string dstFile)
     {
-        foreach (string folder in SYNC_FOLDERS)
+        string dstDir = Path.GetDirectoryName(dstFile);
+        if (!Directory.Exists(dstDir))
+            Directory.CreateDirectory(dstDir);
+
+        if (File.Exists(dstFile))
         {
-            string srcRoot = Path.Combine(repoRoot, folder);
-            string dstRoot = Path.Combine(projectAssetsFolder, folder);
-
-            foreach (string srcFile in Directory.GetFiles(srcRoot, "*", SearchOption.AllDirectories))
+            try
             {
-                if (ShouldSkipFile(srcFile))
-                    continue;
+                FileAttributes attr = File.GetAttributes(dstFile);
+                if ((attr & FileAttributes.ReadOnly) != 0)
+                    File.SetAttributes(dstFile, attr & ~FileAttributes.ReadOnly);
+            }
+            catch { /* best-effort */ }
 
-                string rel = GetRelativePath(srcRoot, srcFile);
-                string dstFile = Path.Combine(dstRoot, rel);
+            File.Delete(dstFile);
+        }
 
-                if (!File.Exists(dstFile))
-                    continue;
+        File.Copy(srcFile, dstFile, false);
+    }
 
-                if (FilesAreEqual(srcFile, dstFile))
-                    continue;
+    private static string GetFriendlyReason(Exception e)
+    {
+        if (e is UnauthorizedAccessException)
+            return "Access denied. The file may be read-only or write-protected by version control (Perforce, Plastic, Git LFS). " +
+                   "If the project is in a system folder (Program Files, OneDrive, etc.), move it elsewhere or run Unity as Administrator.";
 
-                EnsureWritableFile(dstFile);
+        if (e is IOException ioEx)
+        {
+            int code = ioEx.HResult & 0xFFFF;
+            switch (code)
+            {
+                case 5: return "Access denied by the operating system. Run Unity as Administrator, or move the project out of protected folders (Program Files, system drives).";
+                case 32:
+                case 33: return "File is open in another program. Close any running instance of the game, Steam, Visual Studio or other tools that may be using it, then click Retry.";
+                case 39:
+                case 112: return "Not enough free space on the disk to complete the update.";
+                case 145: return "A folder still contains files that could not be removed. Close Unity and the game, then click Retry.";
+                case 183: return "A file with the same name already exists and could not be overwritten. Close Unity and the game, then click Retry.";
             }
         }
 
-        string dstVersion = Path.Combine(projectAssetsFolder, "version.json");
-        if (File.Exists(dstVersion))
-            EnsureWritableFile(dstVersion);
+        return e.Message;
     }
 
-    private static void EnsureWritableFile(string path)
+    private static void RecordFailure(string path, string operation, Exception e)
     {
-        FileInfo info = new FileInfo(path);
-
-        if ((info.Attributes & FileAttributes.ReadOnly) != 0)
-            info.Attributes &= ~FileAttributes.ReadOnly;
-
-        try
+        failures.Add(new FileFailure
         {
-            using (FileStream stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
-            {
-            }
-        }
-        catch (Exception e)
-        {
-            throw new Exception("File is locked or not writable: " + path + "\n" + e.Message);
-        }
+            Path = path,
+            Operation = operation,
+            Reason = GetFriendlyReason(e),
+            Detail = e.GetType().Name + ": " + e.Message
+        });
     }
+
+    // ---------------- Sync ----------------
 
     private static void SyncSdkFolders(string repoRoot, string projectAssetsFolder)
     {
@@ -520,7 +551,6 @@ public class ModMenuUpdater : EditorWindow
         {
             string srcRoot = Path.Combine(repoRoot, folder);
             string dstRoot = Path.Combine(projectAssetsFolder, folder);
-
             CopyChangedAndMissingFiles(srcRoot, dstRoot);
         }
     }
@@ -529,36 +559,35 @@ public class ModMenuUpdater : EditorWindow
     {
         foreach (string dir in Directory.GetDirectories(sourceRoot, "*", SearchOption.AllDirectories))
         {
-            if (ShouldSkipDirectory(dir))
-                continue;
-
+            if (ShouldSkipDirectory(dir)) continue;
             string rel = GetRelativePath(sourceRoot, dir);
-            Directory.CreateDirectory(Path.Combine(destRoot, rel));
+            string fullDst = Path.Combine(destRoot, rel);
+            try { Directory.CreateDirectory(fullDst); }
+            catch (Exception e) { RecordFailure(fullDst, "Create folder", e); }
         }
 
         foreach (string srcFile in Directory.GetFiles(sourceRoot, "*", SearchOption.AllDirectories))
         {
-            if (ShouldSkipFile(srcFile))
-                continue;
+            if (ShouldSkipFile(srcFile)) continue;
 
             string rel = GetRelativePath(sourceRoot, srcFile);
             string dstFile = Path.Combine(destRoot, rel);
-            string dstDir = Path.GetDirectoryName(dstFile);
 
-            if (!Directory.Exists(dstDir))
-                Directory.CreateDirectory(dstDir);
-
-            if (File.Exists(dstFile) && FilesAreEqual(srcFile, dstFile))
+            try
             {
-                skippedFiles++;
-                continue;
+                if (File.Exists(dstFile) && FilesAreEqual(srcFile, dstFile))
+                {
+                    skippedFiles++;
+                    continue;
+                }
+
+                SafeReplaceFile(srcFile, dstFile);
+                copiedFiles++;
             }
-
-            if (File.Exists(dstFile))
-                EnsureWritableFile(dstFile);
-
-            File.Copy(srcFile, dstFile, true);
-            copiedFiles++;
+            catch (Exception e)
+            {
+                RecordFailure(dstFile, "Update file", e);
+            }
         }
     }
 
@@ -567,23 +596,23 @@ public class ModMenuUpdater : EditorWindow
         string srcVersion = Path.Combine(repoRoot, "version.json");
         string dstVersion = Path.Combine(projectAssetsFolder, "version.json");
 
-        if (File.Exists(dstVersion) && FilesAreEqual(srcVersion, dstVersion))
-            return;
-
-        if (File.Exists(dstVersion))
-            EnsureWritableFile(dstVersion);
-
-        File.Copy(srcVersion, dstVersion, true);
+        try
+        {
+            if (!File.Exists(dstVersion) || !FilesAreEqual(srcVersion, dstVersion))
+                SafeReplaceFile(srcVersion, dstVersion);
+        }
+        catch (Exception e) { RecordFailure(dstVersion, "Update file", e); }
 
         string srcMeta = srcVersion + ".meta";
         string dstMeta = dstVersion + ".meta";
-
         if (File.Exists(srcMeta))
         {
-            if (File.Exists(dstMeta))
-                EnsureWritableFile(dstMeta);
-
-            File.Copy(srcMeta, dstMeta, true);
+            try
+            {
+                if (!File.Exists(dstMeta) || !FilesAreEqual(srcMeta, dstMeta))
+                    SafeReplaceFile(srcMeta, dstMeta);
+            }
+            catch (Exception e) { RecordFailure(dstMeta, "Update file", e); }
         }
     }
 
@@ -593,60 +622,62 @@ public class ModMenuUpdater : EditorWindow
         {
             string srcRoot = Path.Combine(repoRoot, folder);
             string dstRoot = Path.Combine(projectAssetsFolder, folder);
-
-            if (!Directory.Exists(dstRoot))
-                continue;
+            if (!Directory.Exists(dstRoot)) continue;
 
             HashSet<string> sourceFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
             foreach (string srcFile in Directory.GetFiles(srcRoot, "*", SearchOption.AllDirectories))
             {
-                if (ShouldSkipFile(srcFile))
-                    continue;
-
+                if (ShouldSkipFile(srcFile)) continue;
                 sourceFiles.Add(NormalizeRelativePath(GetRelativePath(srcRoot, srcFile)));
             }
 
             foreach (string dstFile in Directory.GetFiles(dstRoot, "*", SearchOption.AllDirectories))
             {
-                if (ShouldSkipFile(dstFile))
-                    continue;
+                if (ShouldSkipFile(dstFile)) continue;
 
                 string rel = NormalizeRelativePath(GetRelativePath(dstRoot, dstFile));
+                if (sourceFiles.Contains(rel)) continue;
 
-                if (sourceFiles.Contains(rel))
-                    continue;
+                try
+                {
+                    FileAttributes attr = File.GetAttributes(dstFile);
+                    if ((attr & FileAttributes.ReadOnly) != 0)
+                        File.SetAttributes(dstFile, attr & ~FileAttributes.ReadOnly);
 
-                EnsureWritableFile(dstFile);
-                File.Delete(dstFile);
-                deletedFiles++;
+                    File.Delete(dstFile);
+                    deletedFiles++;
+                }
+                catch (Exception e)
+                {
+                    RecordFailure(dstFile, "Delete obsolete file", e);
+                }
             }
 
-            DeleteEmptyDirectories(dstRoot);
+            try { DeleteEmptyDirectories(dstRoot); }
+            catch { /* best-effort */ }
         }
     }
 
     private static void DeleteEmptyDirectories(string root)
     {
-        if (!Directory.Exists(root))
-            return;
+        if (!Directory.Exists(root)) return;
 
         string[] dirs = Directory.GetDirectories(root, "*", SearchOption.AllDirectories);
         Array.Sort(dirs, (a, b) => b.Length.CompareTo(a.Length));
 
         foreach (string dir in dirs)
         {
-            if (ShouldSkipDirectory(dir))
-                continue;
-
-            if (Directory.GetFiles(dir).Length == 0 && Directory.GetDirectories(dir).Length == 0)
+            if (ShouldSkipDirectory(dir)) continue;
+            try
             {
-                string meta = dir + ".meta";
-                Directory.Delete(dir, false);
-
-                if (File.Exists(meta))
-                    File.Delete(meta);
+                if (Directory.GetFiles(dir).Length == 0 && Directory.GetDirectories(dir).Length == 0)
+                {
+                    string meta = dir + ".meta";
+                    Directory.Delete(dir, false);
+                    if (File.Exists(meta)) File.Delete(meta);
+                }
             }
+            catch { /* skip */ }
         }
     }
 
@@ -655,11 +686,8 @@ public class ModMenuUpdater : EditorWindow
         FileInfo fa = new FileInfo(a);
         FileInfo fb = new FileInfo(b);
 
-        if (!fb.Exists)
-            return false;
-
-        if (fa.Length != fb.Length)
-            return false;
+        if (!fb.Exists) return false;
+        if (fa.Length != fb.Length) return false;
 
         using (SHA256 sha = SHA256.Create())
         using (FileStream sa = File.OpenRead(a))
@@ -668,32 +696,15 @@ public class ModMenuUpdater : EditorWindow
             byte[] ha = sha.ComputeHash(sa);
             byte[] hb = sha.ComputeHash(sb);
 
-            if (ha.Length != hb.Length)
-                return false;
-
+            if (ha.Length != hb.Length) return false;
             for (int i = 0; i < ha.Length; i++)
-                if (ha[i] != hb[i])
-                    return false;
-
+                if (ha[i] != hb[i]) return false;
             return true;
         }
     }
 
-    private static bool ShouldSkipFile(string path)
-    {
-        string name = Path.GetFileName(path);
-
-        if (SKIP_ROOT_FILES.Contains(name))
-            return true;
-
-        return false;
-    }
-
-    private static bool ShouldSkipDirectory(string path)
-    {
-        string name = Path.GetFileName(path);
-        return SKIP_DIRS.Contains(name);
-    }
+    private static bool ShouldSkipFile(string path) => SKIP_ROOT_FILES.Contains(Path.GetFileName(path));
+    private static bool ShouldSkipDirectory(string path) => SKIP_DIRS.Contains(Path.GetFileName(path));
 
     private static string GetRelativePath(string root, string path)
     {
@@ -703,16 +714,12 @@ public class ModMenuUpdater : EditorWindow
             .Replace('/', Path.DirectorySeparatorChar);
     }
 
-    private static string NormalizeRelativePath(string path)
-    {
-        return path.Replace('\\', '/');
-    }
+    private static string NormalizeRelativePath(string path) => path.Replace('\\', '/');
 
     private static string AppendDirectorySeparatorChar(string path)
     {
         if (!path.EndsWith(Path.DirectorySeparatorChar.ToString()))
             return path + Path.DirectorySeparatorChar;
-
         return path;
     }
 
