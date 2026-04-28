@@ -1,4 +1,3 @@
-using Corvostudio.Weapons;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
