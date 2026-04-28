@@ -12,44 +12,72 @@ using System.Linq;
 
 public partial class ItemClothing : ItemObject, ISerializationCallbackReceiver
 {
+    [Header("⏺ Uniform Stats & type")]
     public WearableType type;
-    [Tooltip("(ONLY IF TYPE IS UNIFORM) longSleeve: Use short hands model. shortSLeeve: Use long hands model. coversSleeveAndHand: Hide completly hands model")]
-    public UniformSleeveCoverType forceHideHands = UniformSleeveCoverType.longSleeve;
-    [Tooltip("(ONLY IF TYPE IS UNIFORM) dontCoverHead: shows head and headgear when wearing. coversHead: Hide head but shows headgear. coversHeadAndHeadgear: hide head and headgear.")]
-    public UniformHeadCoverType forceHideHead = UniformHeadCoverType.dontCoverHead;
-
-    [Tooltip("(ONLY IF TYPE IS UNIFORM) coordinates of the ranks on the uniform. (0,0,0) if shouldn't appear.")]
-    public Vector3 ranks_coords = new Vector3(.5f, 1.21f, .75f);
-    [Tooltip("(ONLY IF TYPE IS UNIFORM) coordinates of the batalion patch on the uniform. (0,0,0) if shouldn't appear.")]
-    public Vector3 patch_coords = new Vector3(.5f, 0.2f, .8f);
-
-    public Material[] materials = new Material[0];
-    public Material[] materials_lod = new Material[0];
-    public Mesh mesh;
-    public Mesh mesh_lod;
-
-    public Material[] materials_short = new Material[0];
-    public Material[] materials_short_lod = new Material[0];
-    public Mesh mesh_short_sleeve;
-    public Mesh mesh_short_sleeve_lod;
-    public UniformSleeveCoverType handsModeWithShortSleeveUniform = UniformSleeveCoverType.shortSleeve;
-
-    public Material[] materials_fps = new Material[0];
-    public Material[] materials_short_fps = new Material[0];
-    public Mesh fps_mesh;
-    public Mesh fps_mesh_short_sleeve;
-
-    public ProtectionData protectionData;
-    [Range(0, 35)] public int camoIndex = 15;
-    public float CamoPercReduction { get { return camoIndex / 35f; } }
-
-    [Range(0, 30)] public int extraInventorySpace = 0;
-
+    [Tooltip("[Gears only] Allow to perform radio calls")]
     public bool isRadio = false;
+    [Tooltip("[Gears only] Allow to fire a flamethrower")]
     public bool isFuelTank = false;
 
-    [Range(0, 50)]
-    public float shortSleeveThreshold = 23;
+    [Tooltip("Damage reduction (penetration / fire / sliver). Damage is reduced by a random amount between 0 and the value.")]
+    public ProtectionData protectionData;
+    [Tooltip("Camouflage: 0 = none, 35 = max. Reduces detection range.")]
+    [Range(0, 35)] public int camoIndex = 15;
+    [Tooltip("Extra inventory slots granted to the wearer.")]
+    [Range(0, 30)] public int extraInventorySpace = 0;
+
+    [Header("⏺ Uniform Cover Modes  (uniforms only)")]
+    [Tooltip("How sleeves/hands render.\nIgnored if a Short-Sleeve mesh is assigned below — that takes over.")]
+    public UniformSleeveCoverType forceHideHands = UniformSleeveCoverType.longSleeve;
+    [Tooltip("How head and headgear render.")]
+    public UniformHeadCoverType forceHideHead = UniformHeadCoverType.dontCoverHead;
+    [Tooltip("Rank decal offset on the uniform. (0,0,0) = hidden.")]
+    public Vector3 ranks_coords = new Vector3(.5f, 1.21f, .75f);
+    [Tooltip("Battalion patch offset on the uniform. (0,0,0) = hidden.")]
+    public Vector3 patch_coords = new Vector3(.5f, 0.2f, .8f);
+
+    [Header("⏺ TPS Mesh — REQUIRED")]
+    [Tooltip("Third-person high-poly mesh. Required.")]
+    public Mesh mesh;
+    [Tooltip("Materials for the HP mesh. Required.")]
+    public Material[] materials = new Material[0];
+
+    [Space(4)]
+    [Tooltip("Optional low-poly mesh used at distance.")]
+    public Mesh mesh_lod;
+    [Tooltip("Optional. If empty, falls back to the HP 'materials' above.")]
+    public Material[] materials_lod = new Material[0];
+
+    [Header("⏺ [Uniforms only] Short-Sleeve Variant (OPTIONAL)")]
+    [Tooltip("Alternate HP mesh auto-selected when mission temperature exceeds the threshold below " +
+             "(or when mission is forced to Summer).\nLeave EMPTY to disable the variant.")]
+    public Mesh mesh_short_sleeve;
+    [Tooltip("Optional. If empty, falls back to the main HP 'materials'.")]
+    public Material[] materials_short = new Material[0];
+
+    [Space(4)]
+    [Tooltip("Optional LOD for the short-sleeve mesh.")]
+    public Mesh mesh_short_sleeve_lod;
+    [Tooltip("Optional. Fallback chain if empty:  materials_lod → materials_short → materials.")]
+    public Material[] materials_short_lod = new Material[0];
+
+    [Space(4)]
+    [Tooltip("How hands/sleeves render when the short-sleeve mesh is active.")]
+    public UniformSleeveCoverType handsModeWithShortSleeveUniform = UniformSleeveCoverType.shortSleeve;
+    [Tooltip("Above this mission temperature (°C) the short-sleeve mesh is auto-selected in 'Auto' uniform mode.")]
+    [Range(0, 50)] public float shortSleeveThreshold = 23;
+
+    [Header("⏺ [Uniforms only] FPS Mesh")]
+    [Tooltip("First-person mesh. Only needed when 'type' is Gear (uniforms don't use an FPS mesh).")]
+    public Mesh fps_mesh;
+    [Tooltip("Optional. If empty, falls back to TPS 'materials'.")]
+    public Material[] materials_fps = new Material[0];
+
+    [Space(4)]
+    [Tooltip("FPS mesh for the short-sleeve variant. Rarely used — only relevant for gear that swaps with sleeve mode.")]
+    public Mesh fps_mesh_short_sleeve;
+    [Tooltip("Optional. Fallback chain if empty:  materials_fps → materials_short → materials.")]
+    public Material[] materials_short_fps = new Material[0];
 
 
     partial void CheckShouldUseShortSleeve(ref bool result);
