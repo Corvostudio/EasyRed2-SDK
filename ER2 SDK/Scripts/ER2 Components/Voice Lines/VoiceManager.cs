@@ -171,9 +171,10 @@ public partial class VoiceManager : MonoBehaviour
                 }
 
                 // 0.4 dà voce intellegibile senza artefatti, 0.25 era troppo aggressivo per il parlato
-                if (!Mathf.Approximately(settings.quality, 0.4f))
+                float V_QLT = .35f;
+                if (!Mathf.Approximately(settings.quality, V_QLT))
                 {
-                    settings.quality = 0.35f;
+                    settings.quality = V_QLT;
                     changed = true;
                 }
 
