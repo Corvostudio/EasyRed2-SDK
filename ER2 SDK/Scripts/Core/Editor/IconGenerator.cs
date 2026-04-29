@@ -1,11 +1,8 @@
 #if UNITY_EDITOR
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
-using UnityEditor.Rendering;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class IconGenerator : EditorWindow
 {
@@ -176,13 +173,21 @@ public class IconGenerator : EditorWindow
                 l.enabled = false;
             }
         }
-        Volume volumeGUI = GameObject.FindObjectOfType<Volume>();
-        if (volumeGUI)
+        Component volumeGUI = null;
+        var volumeType = GetVolumeType();
+        if (volumeType != null)
         {
-            if (!volumeGUI.gameObject.activeSelf)
-                volumeGUI = null;
-            else
-                volumeGUI.gameObject.SetActive(false);
+            var found = UnityEngine.Object.FindObjectsByType(volumeType, FindObjectsSortMode.None);
+            if (found != null && found.Length > 0)
+                volumeGUI = (Component)found[0];
+
+            if (volumeGUI)
+            {
+                if (!volumeGUI.gameObject.activeSelf)
+                    volumeGUI = null;
+                else
+                    volumeGUI.gameObject.SetActive(false);
+            }
         }
 
 
@@ -381,6 +386,22 @@ public class IconGenerator : EditorWindow
     {
         int charStart = globalPath.IndexOf("Assets");
         return globalPath.Substring(charStart);
+    }
+
+    private static System.Type _cachedVolumeType;
+    private static bool _volumeTypeChecked;
+
+    private static System.Type GetVolumeType()
+    {
+        if (_volumeTypeChecked) return _cachedVolumeType;
+        _volumeTypeChecked = true;
+
+        foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var t = asm.GetType("UnityEngine.Rendering.Volume");
+            if (t != null) { _cachedVolumeType = t; break; }
+        }
+        return _cachedVolumeType;
     }
 }
 #endif

@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 using UnityEditor;
 using System.IO;
 
@@ -37,14 +36,18 @@ public static class ModMenuUpdaterAutoCheck
     private static void AutoFixQualityLevels()
     {
 #if !PHOTON_UNITY_NETWORKING
-        // 1. Copia il QualitySettings.asset di base dall'SDK (struttura: 3 livelli con nomi e impostazioni corrette)
+        // 0. Se URP non è installato, salta tutto il setup URP-specifico.
+        var rendererDataType = GetURPScriptableRendererDataType();
+        if (rendererDataType == null) return;
+
+        // 1. Copia il QualitySettings.asset di base
         TryCopyQualitySettingsFile();
 
         // 2. Risolvi i 3 URP asset e il Forward Renderer per nome
         var high = EditorAssetFinder.Find<RenderPipelineAsset>("UniversalRP-HighQuality");
         var medium = EditorAssetFinder.Find<RenderPipelineAsset>("UniversalRP-MediumQuality");
         var low = EditorAssetFinder.Find<RenderPipelineAsset>("UniversalRP-LowQuality");
-        var forwardRenderer = EditorAssetFinder.Find<ScriptableRendererData>("Forward Rendering Asset_Renderer");
+        var forwardRenderer = FindAssetByName(rendererDataType, "Forward Rendering Asset_Renderer");
 
         // 3. Assegna gli URP asset ai 3 livelli di Quality
         TryAssignPipelinesToQualityLevels(high, medium, low);
@@ -56,6 +59,36 @@ public static class ModMenuUpdaterAutoCheck
         try { QualitySettings.SetQualityLevel(0, true); }
         catch (System.Exception e) { Debug.LogWarning("ER2 SDK: impossibile impostare il quality level di default: " + e.Message); }
 #endif
+    }
+
+    private static System.Type _cachedRendererDataType;
+    private static bool _rendererDataTypeChecked;
+
+    /// <summary>Returns UnityEngine.Rendering.Universal.ScriptableRendererData via reflection, or null if URP is not installed.</summary>
+    private static System.Type GetURPScriptableRendererDataType()
+    {
+        if (_rendererDataTypeChecked) return _cachedRendererDataType;
+        _rendererDataTypeChecked = true;
+
+        foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var t = asm.GetType("UnityEngine.Rendering.Universal.ScriptableRendererData");
+            if (t != null) { _cachedRendererDataType = t; break; }
+        }
+        return _cachedRendererDataType;
+    }
+
+    private static UnityEngine.Object FindAssetByName(System.Type type, string assetName)
+    {
+        if (type == null) return null;
+        var guids = AssetDatabase.FindAssets($"t:{type.Name} {assetName}");
+        foreach (var guid in guids)
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            var asset = AssetDatabase.LoadAssetAtPath(path, type);
+            if (asset != null && asset.name == assetName) return asset;
+        }
+        return null;
     }
 
     private static void TryCopyQualitySettingsFile()
@@ -128,7 +161,7 @@ public static class ModMenuUpdaterAutoCheck
             pipelineProp.objectReferenceValue = asset;
     }
 
-    private static void TryAssignRendererToPipelines(ScriptableRendererData renderer, params RenderPipelineAsset[] pipelines)
+    private static void TryAssignRendererToPipelines(UnityEngine.Object renderer, params RenderPipelineAsset[] pipelines)
     {
         if (!renderer)
         {
