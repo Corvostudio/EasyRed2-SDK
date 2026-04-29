@@ -91,17 +91,17 @@ MonoBehaviour:
   body: {fileID: 6444189856601672008}
   body_fps: {fileID: 6358494945454244229}
   headgear_pos: {fileID: 2859908111151523362}
-  fps_longsleeve: {fileID: -7864513088985528278, guid: 9a6a60299371a23418e1a76b9fb5199c,
+  fps_longsleeve: {fileID: -7864513088985528278, guid: ff81a8f6d9d1d4b4289c30fdee855b78,
     type: 3}
-  fps_shortleeve: {fileID: -885915564381193079, guid: 9a6a60299371a23418e1a76b9fb5199c,
+  fps_shortleeve: {fileID: -885915564381193079, guid: ff81a8f6d9d1d4b4289c30fdee855b78,
     type: 3}
-  tps_longsleeve_longpants: {fileID: -1486539030312966612, guid: 9a6a60299371a23418e1a76b9fb5199c,
+  tps_longsleeve_longpants: {fileID: -1486539030312966612, guid: ff81a8f6d9d1d4b4289c30fdee855b78,
     type: 3}
-  tps_longsleeve_shortpants: {fileID: 9103062362007658157, guid: 9a6a60299371a23418e1a76b9fb5199c,
+  tps_longsleeve_shortpants: {fileID: 9103062362007658157, guid: ff81a8f6d9d1d4b4289c30fdee855b78,
     type: 3}
-  tps_shortleeve_longpants: {fileID: 8473912306069769766, guid: 9a6a60299371a23418e1a76b9fb5199c,
+  tps_shortleeve_longpants: {fileID: 8473912306069769766, guid: ff81a8f6d9d1d4b4289c30fdee855b78,
     type: 3}
-  tps_shortleeve_shortpants: {fileID: 8715763059546201065, guid: 9a6a60299371a23418e1a76b9fb5199c,
+  tps_shortleeve_shortpants: {fileID: 8715763059546201065, guid: ff81a8f6d9d1d4b4289c30fdee855b78,
     type: 3}
 --- !u!205 &1611587738311228826
 LODGroup:
@@ -532,7 +532,7 @@ SkinnedMeshRenderer:
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
   m_SkinnedMotionVectors: 1
-  m_Mesh: {fileID: -1486539030312966612, guid: 9a6a60299371a23418e1a76b9fb5199c, type: 3}
+  m_Mesh: {fileID: -1486539030312966612, guid: ff81a8f6d9d1d4b4289c30fdee855b78, type: 3}
   m_Bones:
   - {fileID: 6489903473139891960}
   - {fileID: 5675175959678197391}
