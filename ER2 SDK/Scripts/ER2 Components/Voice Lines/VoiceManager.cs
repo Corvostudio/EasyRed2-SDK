@@ -112,21 +112,33 @@ public partial class VoiceManager : MonoBehaviour
 
             AudioImporter importer = AssetImporter.GetAtPath(path) as AudioImporter;
             if (importer == null)
-                return;
+                continue; // skip questo clip, non abortire tutto il loop
 
             bool changed = false;
 
-            // Check mono
+            // Mono
             if (!importer.forceToMono)
             {
                 importer.forceToMono = true;
                 changed = true;
             }
 
-            // Get current settings
+            // Carica i dati audio su thread separato: niente stall sul main thread
+            if (!importer.loadInBackground)
+            {
+                importer.loadInBackground = true;
+                changed = true;
+            }
+
             AudioImporterSampleSettings settings = importer.defaultSampleSettings;
 
-            // Compare + assign only if different
+            if (settings.preloadAudioData)
+            {
+                settings.preloadAudioData = false;
+                changed = true;
+            }
+
+            // CompressedInMemory: decodifica sull'audio thread, no spike di decompression-on-load
             if (settings.loadType != AudioClipLoadType.CompressedInMemory)
             {
                 settings.loadType = AudioClipLoadType.CompressedInMemory;
@@ -139,9 +151,10 @@ public partial class VoiceManager : MonoBehaviour
                 changed = true;
             }
 
-            if (!Mathf.Approximately(settings.quality, 0.25f))
+            // 0.4 dà voce intellegibile senza artefatti, 0.25 era troppo aggressivo per il parlato
+            if (!Mathf.Approximately(settings.quality, 0.4f))
             {
-                settings.quality = 0.25f;
+                settings.quality = 0.4f;
                 changed = true;
             }
 
@@ -151,13 +164,13 @@ public partial class VoiceManager : MonoBehaviour
                 changed = true;
             }
 
-            if (settings.sampleRateOverride != 22050)
+            // 32 kHz: voce chiara, ancora ~27% più piccolo di 44.1k
+            if (settings.sampleRateOverride != 32000)
             {
-                settings.sampleRateOverride = 22050;
+                settings.sampleRateOverride = 32000;
                 changed = true;
             }
 
-            // Apply only if something changed
             if (changed)
             {
                 importer.defaultSampleSettings = settings;
