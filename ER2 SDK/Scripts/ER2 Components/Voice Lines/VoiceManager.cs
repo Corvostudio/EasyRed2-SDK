@@ -151,11 +151,13 @@ public partial class VoiceManager : MonoBehaviour
 
                 AudioImporterSampleSettings settings = importer.defaultSampleSettings;
 
+#if UNITY_2022_3_OR_NEWER
                 if (settings.preloadAudioData)
                 {
                     settings.preloadAudioData = false;
                     changed = true;
                 }
+#endif
 
                 // CompressedInMemory: decodifica sull'audio thread, no spike di decompression-on-load
                 if (settings.loadType != AudioClipLoadType.CompressedInMemory)
@@ -461,11 +463,11 @@ public partial class VoiceManager : MonoBehaviour
             output.Add(current.ToString().ToLowerInvariant());
     }
 #endif
-}
+            }
 
 
 #if UNITY_EDITOR
-[CustomEditor(typeof(VoiceManager))]
+            [CustomEditor(typeof(VoiceManager))]
 [CanEditMultipleObjects]
 public class VoiceManagerEditor : Editor
 {
