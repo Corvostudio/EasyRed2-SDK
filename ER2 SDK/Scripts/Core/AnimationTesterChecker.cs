@@ -121,14 +121,19 @@ public static class AnimationTesterTool
         Animation anim = animRoot.transform.Find("ROOT").GetComponent<Animation>();
         alreadyAdded.Clear();
         AddAnimation(weapClone.fpsAnimations.fps_putaway, anim);
+        AddAnimation(weapClone.fpsAnimations.fps_unequip, anim);
         AddAnimation(weapClone.fpsAnimations.fps_reload_full, anim);
         AddAnimation(weapClone.fpsAnimations.fps_reload_half, anim);
         AddAnimation(weapClone.fpsAnimations.fps_bolt_action, anim);
         AddAnimation(weapClone.fpsAnimations.fps_chamber_open, anim);
+        AddAnimation(weapClone.fpsAnimations.fps_chamber_open_noAmmo, anim);
         AddAnimation(weapClone.fpsAnimations.fps_chamber, anim);
         AddAnimation(weapClone.fpsAnimations.fps_chamber_close, anim);
         AddAnimation(weapClone.fpsAnimations.fps_chamber_close_noAmmo, anim);
         AddAnimation(weapClone.fpsAnimations.fps_change_barrell, anim);
+
+        foreach (var multianim in weapClone.fpsAnimations.multi_ammo_chambering)
+            AddAnimation(multianim.anim_id, anim);
 
         // Lock: tutto NotEditable, poi sblocca CenterSpine2_BJ + figli (per animare),
         // poi rilocka l'arma (figlia di CenterSpine) e gli SkinnedMeshRenderer
