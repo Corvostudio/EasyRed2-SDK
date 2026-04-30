@@ -16,7 +16,9 @@ public class RemoveKeyframes : Editor
 
         targetAnimationClip = (AnimationClip)AssetDatabase.LoadAssetAtPath(animPath, typeof(AnimationClip));
 
+#pragma warning disable CS0618 // Type or member is obsolete
         AnimationClipCurveData[] curveDataArray = AnimationUtility.GetAllCurves(targetAnimationClip);
+#pragma warning restore CS0618 // Type or member is obsolete
         bool dirty = false;
         foreach (AnimationClipCurveData curveData in curveDataArray)
         {
@@ -33,7 +35,9 @@ public class RemoveKeyframes : Editor
                 for (int i = keyframes.Length - 1; i >= 0; i--)
                     curve.RemoveKey(i);
 
+#pragma warning disable CS0618 // Type or member is obsolete
                 AnimationUtility.SetEditorCurve(targetAnimationClip, curveData.path, curveData.type, curveData.propertyName, curve);
+#pragma warning restore CS0618 // Type or member is obsolete
 
 
                 /*targetAnimationClip.SetCurve(curveData.path, typeof(Transform), "m_LocalPosition", null);

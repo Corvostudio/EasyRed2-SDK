@@ -16,6 +16,9 @@ public partial class AnimationData
         GenericMG
     }
 
+    [Tooltip("Reuse animations from another weapon. At runtime the root GameObject of this gun is renamed to match the source weapon ID. The entire transform hierarchy must be identical to the source prefab (only the root name can differ, as it must always be unique).")]
+    public string recycledAnimationsWeaponId = "";//recycle animations from anothewr weapon
+
     [Tooltip("Select which default FPS animation set this weapon uses. Choose \"Use Custom\" to manually assign all animations.")]
     public FPSAnimationSet animationSet = FPSAnimationSet.GenericMagazine;
 

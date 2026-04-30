@@ -113,6 +113,13 @@ public static class AnimationTesterTool
         weapClone.transform.localScale = Vector3.one;
         weapClone.transform.rotation = animRoot.transform.rotation;
 
+        // Mirror runtime behavior: when recycledAnimationsWeaponId is set, the weapon's
+        // root GameObject is renamed to that ID so animation curve paths resolve
+        // (and so the spin_pos curve-strip prompt can match the bolt path).
+        string recycleId = weapClone.fpsAnimations.recycledAnimationsWeaponId;
+        if (!string.IsNullOrEmpty(recycleId))
+            weapClone.gameObject.name = recycleId;
+
         // Spawna TUTTI i magazine compatibili sulla magazinePosition
         if (weapClone.magazinePosition != null && !string.IsNullOrEmpty(weapClone.magazineSocket))
             SpawnMatchingMagazines(weapClone);
@@ -120,7 +127,13 @@ public static class AnimationTesterTool
         // Animazioni
         Animation anim = animRoot.transform.Find("ROOT").GetComponent<Animation>();
         alreadyAdded.Clear();
-        AddAnimation(weapClone.fpsAnimations.fps_putaway, anim);
+
+        // Equip clip (named fps_putaway for legacy reasons): after adding, prompt the user
+        // to strip any spin_pos keyframes so bolt_movementDistance can drive it at runtime.
+        var equipClips = AddAnimation(weapClone.fpsAnimations.fps_putaway, anim);
+        foreach (var clip in equipClips)
+            MaybePromptStripSpinPosFromClip(weapClone, clip, anim.transform, "equip");
+
         AddAnimation(weapClone.fpsAnimations.fps_unequip, anim);
         AddAnimation(weapClone.fpsAnimations.fps_reload_full, anim);
         AddAnimation(weapClone.fpsAnimations.fps_reload_half, anim);
@@ -172,28 +185,84 @@ public static class AnimationTesterTool
         }
     }
 
-    private static void AddAnimation(string anim_name, Animation anim)
+    /// <summary>
+    /// Loads all AnimationClip assets matching <paramref name="anim_name"/>, ensures they
+    /// are legacy + ClampForever, and adds them to the Animation component. Returns the
+    /// list of clips actually added (so callers can post-process the asset itself).
+    /// </summary>
+    private static List<AnimationClip> AddAnimation(string anim_name, Animation anim)
     {
-        if (string.IsNullOrEmpty(anim_name)) return;
+        var added = new List<AnimationClip>();
+        if (string.IsNullOrEmpty(anim_name)) return added;
+
         string[] assets = AssetDatabase.FindAssets(anim_name + " t:AnimationClip");
         foreach (string guid in assets)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (!path.EndsWith(".fbx") && !alreadyAdded.Contains(guid))
+            if (path.EndsWith(".fbx")) continue;
+            if (alreadyAdded.Contains(guid)) continue;
+
+            AnimationClip temp = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+            if (temp == null) continue;
+
+            if (temp.wrapMode != WrapMode.ClampForever || !temp.legacy)
             {
-                AnimationClip temp = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
-                if (temp.wrapMode != WrapMode.ClampForever || !temp.legacy)
-                {
-                    temp.wrapMode = WrapMode.ClampForever;
-                    temp.legacy = true;
-                    EditorUtility.SetDirty(temp);
-                }
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-                anim.AddClip(temp, anim_name);
-                alreadyAdded.Add(guid);
+                temp.wrapMode = WrapMode.ClampForever;
+                temp.legacy = true;
+                EditorUtility.SetDirty(temp);
             }
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            anim.AddClip(temp, anim_name);
+            alreadyAdded.Add(guid);
+            added.Add(temp);
         }
+        return added;
+    }
+
+    /// <summary>
+    /// If the weapon has a spin_pos and the given clip animates that exact transform,
+    /// prompt the user to strip those curves so bolt_movementDistance can drive the bolt
+    /// at runtime. Modifies the asset on disk if the user confirms.
+    /// </summary>
+    private static void MaybePromptStripSpinPosFromClip(GenericGun weapon, AnimationClip clip, Transform animationRoot, string clipLabel)
+    {
+        if (weapon == null || weapon.spin_pos == null) return;
+        if (clip == null || animationRoot == null) return;
+
+        // Path of spin_pos relative to the Animation component's transform (ROOT of the tester rig).
+        // If spin_pos isn't a descendant, CalculateTransformPath returns an empty string.
+        string spinPosPath = AnimationUtility.CalculateTransformPath(weapon.spin_pos, animationRoot);
+        if (string.IsNullOrEmpty(spinPosPath)) return;
+
+        var matching = new List<EditorCurveBinding>();
+        foreach (var b in AnimationUtility.GetCurveBindings(clip))
+        {
+            if (b.path == spinPosPath) matching.Add(b);
+        }
+
+        if (matching.Count == 0) return;
+
+        bool yes = EditorUtility.DisplayDialog(
+            "spin_pos animated in " + clipLabel + " clip",
+            "The " + clipLabel + " clip '" + clip.name + "' contains " + matching.Count +
+            " keyframed curve(s) on the spin_pos Transform.\n\n" +
+            "Path: " + spinPosPath + "\n\n" +
+            "Remove these curves so the bolt can be driven at runtime by bolt_movementDistance?",
+            "Yes, remove",
+            "No, keep");
+
+        if (!yes) return;
+
+        foreach (var b in matching)
+            AnimationUtility.SetEditorCurve(clip, b, null);
+
+        EditorUtility.SetDirty(clip);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        Debug.Log("[AnimationTester] Removed " + matching.Count + " curve(s) on '" + spinPosPath +
+                  "' from clip '" + clip.name + "'.", clip);
     }
 }
 #endif

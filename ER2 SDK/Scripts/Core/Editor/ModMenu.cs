@@ -312,7 +312,6 @@ public class ModMenu : EditorWindow
         return tmp;
     }
 
-    [Obsolete]
     private static bool ScanAssetsInBundle(XmlParsingResult xmlParsingdata)
     {
         //cleanup old data
@@ -680,7 +679,6 @@ public class ModMenu : EditorWindow
         }
     }
 
-    [Obsolete]
     private static void FinalizeWeaponAnimations(GenericGun asset, string bundleName)
     {
         FixAnimation(asset.fpsAnimations.fps_putaway, WrapMode.ClampForever, bundleName, asset,true);
@@ -701,7 +699,6 @@ public class ModMenu : EditorWindow
         xmlParsingdata.prefab_prop_type.Add(type);
     }
 
-    [Obsolete]
     private static void FixAnimation(string anim, WrapMode wrapMode,string bundleName, GenericGun gg=null, bool isEquip=false)
     {
         if (string.IsNullOrEmpty(anim))

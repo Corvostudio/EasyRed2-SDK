@@ -1,6 +1,4 @@
 #if UNITY_EDITOR
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -9,6 +7,10 @@ using UnityEngine;
 public class ModTemplates : MonoBehaviour
 {
     private static double next_action_time = 0;
+    private static Vector3 copiedWorldPos = Vector3.zero;
+
+    // Tweak if needed (meters in world space).
+    private const float GroundPlaneTolerance = 0.08f;
 
     private static GameObject GenerateBaseRoot(string objectName, UnityEngine.Object modelObject = null)
     {
@@ -35,6 +37,39 @@ public class ModTemplates : MonoBehaviour
         return false;
     }
 
+    public static bool IsNewActionTime()
+    {
+        if (EditorApplication.timeSinceStartup > next_action_time)
+        {
+            next_action_time = EditorApplication.timeSinceStartup + .5f;
+            return true;
+        }
+        return false;
+    }
+
+    public static void UnpackPrefab(GameObject selected)
+    {
+        if (PrefabUtility.IsPartOfAnyPrefab(selected))
+            PrefabUtility.UnpackPrefabInstanceAndReturnNewOutermostRoots(PrefabUtility.GetOutermostPrefabInstanceRoot(selected), PrefabUnpackMode.OutermostRoot);
+    }
+
+    private static List<GameObject> GetSelectedWeaponAndgameObjects(out GenericGun rootGun)
+    {
+        rootGun = null;
+        List<GameObject> selectedGameObject = new List<GameObject>();
+        foreach (UnityEngine.Object go in Selection.objects)
+        {
+            if (go is GameObject)
+            {
+                selectedGameObject.Add((GameObject)go);
+                if (!rootGun && ((GameObject)go).GetComponentInParent<GenericGun>())
+                {
+                    rootGun = ((GameObject)go).GetComponentInParent<GenericGun>();
+                }
+            }
+        }
+        return selectedGameObject;
+    }
 
     #region PROP
 
@@ -43,7 +78,6 @@ public class ModTemplates : MonoBehaviour
     private static void OnPropTemplate()
     {
         GameObject root = GenerateBaseRoot("My Prop", Selection.activeObject);
-        
     }
 
     #endregion
@@ -62,19 +96,19 @@ public class ModTemplates : MonoBehaviour
         box.size = new Vector3(0.1978775f, 0.1014323f, 0.19939f);
     }
 
-    [MenuItem("GameObject/ER2 TOOLS/Clothing Template/Uniform", false , 100)]
+    [MenuItem("GameObject/ER2 TOOLS/Clothing Template/Uniform", false, 100)]
     [MenuItem("Assets/ER2 TOOLS/Clothing Template/Uniform", false, 100)]
     private static void OnUniformTemplate()
     {
         GameObject uni = GenerateClothingTemplate("My Uniform");
         ItemClothing ic = uni.GetComponent<ItemClothing>();
         ic.type = WearableType.uniform;
-        ic.materials_fps = new Material[] {  };
+        ic.materials_fps = new Material[] { };
         ic.icon = (Sprite)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/UI/Icons/icon_uniform_usa.png", typeof(Sprite));
         if (Selection.activeObject != null)
         {
-            SkinnedMeshRenderer smr = Selection.activeGameObject? Selection.activeGameObject.GetComponent<SkinnedMeshRenderer>():null;
-            if (smr==null && Selection.activeObject is Mesh)//prova a prenderlo in un altro modo
+            SkinnedMeshRenderer smr = Selection.activeGameObject ? Selection.activeGameObject.GetComponent<SkinnedMeshRenderer>() : null;
+            if (smr == null && Selection.activeObject is Mesh)//prova a prenderlo in un altro modo
                 TPSRigPreviewManager.GetSelectedSkinnedMeshRenderer((Mesh)Selection.activeObject, out smr, out int bonesCount);
             if (smr)
             {
@@ -86,7 +120,7 @@ public class ModTemplates : MonoBehaviour
         uni.GetComponent<LODGroup>().SetLODs(new LOD[1] { new LOD(.02f, uni.GetComponentsInChildren<Renderer>()) });
     }
 
-    [MenuItem("GameObject/ER2 TOOLS/Clothing Template/Gear",false, 102)]
+    [MenuItem("GameObject/ER2 TOOLS/Clothing Template/Gear", false, 102)]
     [MenuItem("Assets/ER2 TOOLS/Clothing Template/Gear", false, 102)]
     private static void OnGearTemplate()
     {
@@ -115,7 +149,7 @@ public class ModTemplates : MonoBehaviour
         BoxCollider box = root.AddComponent<BoxCollider>();
         box.center = new Vector3(0.01488298f, 0.05060583f, 0.02130306f);
         box.size = new Vector3(0.2884414f, 0.08745337f, 0.2993522f);
-        GameObject mesh= Instantiate((GameObject)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Models/Clothes Item/folded_uniform_item_1.fbx", typeof(GameObject)));
+        GameObject mesh = Instantiate((GameObject)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Models/Clothes Item/folded_uniform_item_1.fbx", typeof(GameObject)));
         mesh.transform.SetParent(root.transform);
         return root;
     }
@@ -128,29 +162,29 @@ public class ModTemplates : MonoBehaviour
     [MenuItem("Assets/ER2 TOOLS/Weapon Template/SMG", false, 200)]
     private static void OnSMGTemplate()
     {
-        GenericGun smg = GenerateWeaponTemplate(Selection.activeObject, "Smg"); 
+        GenericGun smg = GenerateWeaponTemplate(Selection.activeObject, "Smg");
         GenerateWeaponWithMagazineTemplate(smg);
 
         smg.compatibleAmmo = "ammo_9mm";
         smg.tpsAnims.userController = "CCV2_thompson";
-        smg.fireSound= (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Smg/smg_fire.ogg", typeof(AudioClip));
-        smg.fireSound_distance= (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Smg/distantfire_smg.wav", typeof(AudioClip));
-        smg.fpsAnimations.reload_sound_full= (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Magazine/generic_magazine_reload_full.mp3", typeof(AudioClip));
-        smg.fpsAnimations.reload_sound_half= (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Magazine/generic_magazine_reload_half.mp3", typeof(AudioClip));
+        smg.fireSound = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Smg/smg_fire.ogg", typeof(AudioClip));
+        smg.fireSound_distance = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Smg/distantfire_smg.wav", typeof(AudioClip));
+        smg.fpsAnimations.reload_sound_full = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Magazine/generic_magazine_reload_full.mp3", typeof(AudioClip));
+        smg.fpsAnimations.reload_sound_half = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Magazine/generic_magazine_reload_half.mp3", typeof(AudioClip));
         smg.fpsAnimations.animationSet = AnimationData.FPSAnimationSet.GenericMagazine;
     }
 
-    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/HandGun",false, 201)]
+    [MenuItem("GameObject/ER2 TOOLS/Weapon Template/HandGun", false, 201)]
     [MenuItem("Assets/ER2 TOOLS/Weapon Template/HandGun", false, 201)]
     private static void OnHandGunTemplate()
     {
         GenericGun HG = GenerateWeaponTemplate(Selection.activeObject, "Handgun");
-        GenerateWeaponWithMagazineTemplate(HG,true);
+        GenerateWeaponWithMagazineTemplate(HG, true);
 
         HG.compatibleAmmo = "ammo_9mm";
         HG.leftHandHoldPosition = null;
         HG.tpsAnims.userController = "CCV2_pistol";
-        HG.tpsAnims.fpsAnimSet = HandheldItem.FPSAnimationSetID.pistolRun;
+        //HG.tpsAnims.fpsAnimSet = HandheldItem.FPSAnimationSetID.pistolRun;
         HG.tpsAnims.IKWhenSprinting = false;
         HG.weaponPose = WeaponPose.pistol;
         HG.fireSound = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Handgun/handgun_fire.mp3", typeof(AudioClip));
@@ -158,7 +192,6 @@ public class ModTemplates : MonoBehaviour
         HG.fpsAnimations.reload_sound_full = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/HandGun/generic_HG_reload.mp3", typeof(AudioClip));
         HG.fpsAnimations.reload_sound_half = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/HandGun/generic_HG_reload.mp3", typeof(AudioClip));
         HG.fpsAnimations.animationSet = AnimationData.FPSAnimationSet.GenericHandgun;
-
     }
 
     [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Bolt Action", false, 202)]
@@ -172,9 +205,9 @@ public class ModTemplates : MonoBehaviour
         gg.tpsAnims.userController = "CCV2_rifle";
         gg.fireSound = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Rifles/rifle_fire.wav", typeof(AudioClip));
         gg.fireSound_distance = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Rifles/distance_fire_generic.wav", typeof(AudioClip));
-        gg.fpsAnimations.boltaction_sound= (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Bolt Action/bolt_action.ogg", typeof(AudioClip));
+        gg.fpsAnimations.boltaction_sound = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Bolt Action/bolt_action.ogg", typeof(AudioClip));
         gg.fpsAnimations.chamber_sound_open = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Bolt Action/bolt_action_open.ogg", typeof(AudioClip));
-        gg.fpsAnimations.chamber_sound= (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Bolt Action/bolt_feed.ogg", typeof(AudioClip));
+        gg.fpsAnimations.chamber_sound = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Bolt Action/bolt_feed.ogg", typeof(AudioClip));
         gg.fpsAnimations.chamber_sound_close = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Bolt Action/bolt_action_close.ogg", typeof(AudioClip));
         gg.fpsAnimations.animationSet = AnimationData.FPSAnimationSet.GenericBoltAction;
     }
@@ -226,6 +259,7 @@ public class ModTemplates : MonoBehaviour
         gg.fpsAnimations.reload_sound_full = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Rocket Launcher/rocket_launcher_reload.ogg", typeof(AudioClip));
         gg.fpsAnimations.animationSet = AnimationData.FPSAnimationSet.GenericRocketLauncher;
     }
+
     [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Grenade and Mines", false, 306)]
     [MenuItem("Assets/ER2 TOOLS/Weapon Template/Grenade and Mines", false, 306)]
     private static void OnGrenadeTemplate()
@@ -242,21 +276,6 @@ public class ModTemplates : MonoBehaviour
         box.center = new Vector3(0, 0, 0);
         box.size = new Vector3(0.065f, 0.11f, 0.065f);
     }
-
-    /*[MenuItem("GameObject/ER2 TOOLS/Items/Weapon Attachments/Bayonet", false, 301)]
-    [MenuItem("Assets/ER2 TOOLS/Items/Weapon Attachments/Bayonet", false, 301)]
-    private static void SetupBayonet()
-    {
-        GameObject root = new GameObject("My Bayonet");
-        if (Selection.activeObject != null && Selection.activeObject is GameObject)
-        {
-
-        }
-
-    }*/
-
-
-
 
     [MenuItem("GameObject/ER2 TOOLS/Items/Life Recover Item", false, 301)]
     [MenuItem("Assets/ER2 TOOLS/Items/Life Recover Ite", false, 301)]
@@ -275,13 +294,13 @@ public class ModTemplates : MonoBehaviour
         root.AddComponent<ItemObjectRecoverLife>();
 
         BoxCollider box = root.AddComponent<BoxCollider>();
-        box.center = new Vector3(0,0,0);
+        box.center = new Vector3(0, 0, 0);
         box.size = new Vector3(0.2f, 0.1f, 0.3f);
     }
 
-    private static GenericGun GenerateWeaponTemplate(UnityEngine.Object activeObject,string weaponType)
+    private static GenericGun GenerateWeaponTemplate(UnityEngine.Object activeObject, string weaponType)
     {
-        GameObject root = GenerateBaseRoot("My "+ weaponType , activeObject);
+        GameObject root = GenerateBaseRoot("My " + weaponType, activeObject);
 
         BoxCollider box = root.AddComponent<BoxCollider>();
         if (weaponType == "Handgun")
@@ -332,42 +351,14 @@ public class ModTemplates : MonoBehaviour
         return defaultValues;
     }
 
-    private static void GenerateWeaponWithMagazineTemplate(GenericGun gunRoot,bool isPistol=false)
+    private static void GenerateWeaponWithMagazineTemplate(GenericGun gunRoot, bool isPistol = false)
     {
         GameObject magPosition = new GameObject("magPosition");
         magPosition.transform.SetParent(gunRoot.transform);
         magPosition.transform.localPosition = isPistol ?
-            new Vector3(0, 0, 0)://pistol mag pos
+            new Vector3(0, 0, 0) ://pistol mag pos
             new Vector3(0, 0, 0.160f);//rifle mag pos
         gunRoot.magazinePosition = magPosition.transform;
-    }
-
-    public static bool IsNewActionTime()
-    {
-        if (EditorApplication.timeSinceStartup > next_action_time)
-        {
-            next_action_time = EditorApplication.timeSinceStartup + .5f;
-            return true;
-        }
-        return false;
-    }
-
-    private static List<GameObject> GetSelectedWeaponAndgameObjects(out GenericGun rootGun)
-    {
-        rootGun = null;
-        List<GameObject> selectedGameObject = new List<GameObject>();
-        foreach (UnityEngine.Object go in Selection.objects)
-        {
-            if (go is GameObject)
-            {
-                selectedGameObject.Add((GameObject)go);
-                if (!rootGun && ((GameObject)go).GetComponentInParent<GenericGun>())
-                {
-                    rootGun = ((GameObject)go).GetComponentInParent<GenericGun>();
-                }
-            }
-        }
-        return selectedGameObject;
     }
 
     [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Gun Accessories/Magazine")]
@@ -390,7 +381,7 @@ public class ModTemplates : MonoBehaviour
             rootGun.magazineSocket = genericSocketName;
 
             //crea magazine position if missing
-            if (rootGun.magazinePosition==null)
+            if (rootGun.magazinePosition == null)
             {
                 rootGun.magazinePosition = new GameObject("magPosition").transform;
                 rootGun.magazinePosition.transform.SetParent(rootGun.transform);
@@ -417,8 +408,7 @@ public class ModTemplates : MonoBehaviour
             else
             {
                 //assegna posizione placeholder
-                bool isPistol = rootGun.tpsAnims.fpsAnimSet == HandheldItem.FPSAnimationSetID.pistolRun;
-                rootGun.magazinePosition.transform.localPosition = isPistol ?
+                rootGun.magazinePosition.transform.localPosition = IsPistol(rootGun) ?
                     new Vector3(0, 0, 0) ://pistol mag pos
                     new Vector3(0, 0, 0.160f);//rifle mag pos
             }
@@ -440,10 +430,22 @@ public class ModTemplates : MonoBehaviour
         magazine.gameObject.AddComponent<LODGroup>();
     }
 
+    static bool IsPistol(HandheldItem hhi)
+    {
+        switch (hhi.tpsAnims.userController)
+        {
+            case "CCV2_pistol":
+            case "CCV2_revolver":
+                return true;
+            default:
+                return false;
+        }
+    }
+
     [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Gun Accessories/Simple Scope")]
     [MenuItem("Assets/ER2 TOOLS/Weapon Template/Gun Accessories/Simple Scope")]
     private static void GenerateAttachmentScopeSimple()
-    {
+    { 
         if (!IsNewActionTime()) return;
 
         AttachmentScope attachment = (AttachmentScope)SetUpAttachment(typeof(AttachmentScope), "Scope");
@@ -455,6 +457,7 @@ public class ModTemplates : MonoBehaviour
         attachment.GetComponent<BoxCollider>().center = new Vector3(0.004863327f, 0.01609762f, 0.006838739f);
         attachment.GetComponent<BoxCollider>().size = new Vector3(0.04015234f, 0.0559434f, 0.1695825f);
     }
+
     [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Gun Accessories/Magnification Scope")]
     [MenuItem("Assets/ER2 TOOLS/Weapon Template/Gun Accessories/Magnification Scope")]
     private static void GenerateAttachmentScopeMagnification()
@@ -475,6 +478,7 @@ public class ModTemplates : MonoBehaviour
         attachment.aimPos.SetParent(subScope.transform);
         attachment.aimPos.transform.localPosition = new Vector3(0, 0, -.12f);
     }
+
     [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Gun Accessories/Bipod")]
     [MenuItem("Assets/ER2 TOOLS/Weapon Template/Gun Accessories/Bipod")]
     private static void GenerateAttachmentBipod()
@@ -492,6 +496,7 @@ public class ModTemplates : MonoBehaviour
         attachment.GetComponent<BoxCollider>().center = new Vector3(0.004863327f, 0.01609762f, 0.006838739f);
         attachment.GetComponent<BoxCollider>().size = new Vector3(0.04015234f, 0.0559434f, 0.1695825f);
     }
+
     [MenuItem("GameObject/ER2 TOOLS/Weapon Template/Gun Accessories/Bayonet")]
     [MenuItem("Assets/ER2 TOOLS/Weapon Template/Gun Accessories/Bayonet")]
     private static void GenerateAttachmentBayonet()
@@ -503,10 +508,7 @@ public class ModTemplates : MonoBehaviour
         //finalize with last scripts
         attachment.GetComponent<BoxCollider>().center = new Vector3(0.0001868731f, -0.00110326f, 0.197107f);
         attachment.GetComponent<BoxCollider>().size = new Vector3(0.02367238f, 0.04378714f, 0.5574284f);
-
     }
-
-
 
     [MenuItem("Assets/ER2 TOOLS/Terrain/Create Terrain Detail 2D")]
     private static void GenerateTerrainDetail2D()
@@ -514,12 +516,14 @@ public class ModTemplates : MonoBehaviour
         if (!IsNewActionTime()) return;
         GenerateTerrainDetail(0);
     }
+
     [MenuItem("Assets/ER2 TOOLS/Terrain/Create Terrain Detail X")]
     private static void GenerateTerrainDetailX()
     {
         if (!IsNewActionTime()) return;
         GenerateTerrainDetail(1);
     }
+
     private static void GenerateTerrainDetail(int type)
     {
         foreach (UnityEngine.Object obj in Selection.objects)
@@ -545,11 +549,11 @@ public class ModTemplates : MonoBehaviour
                 patch_go.AddComponent<TerrainDetailData>();
 
                 string path = Path.GetDirectoryName(AssetDatabase.GetAssetPath(obj));
-                AssetDatabase.CreateAsset(mat, path+"/"+ patch_go.name+"_Material.mat");
+                AssetDatabase.CreateAsset(mat, path + "/" + patch_go.name + "_Material.mat");
             }
             else
             {
-                Debug.LogError("Make sure to select a texture! "+ obj, obj);
+                Debug.LogError("Make sure to select a texture! " + obj, obj);
             }
         }
     }
@@ -562,8 +566,8 @@ public class ModTemplates : MonoBehaviour
         //crea attachment template
         Attachment attachment = (Attachment)new GameObject(
             selectedGameObjects.Count > 0 ?
-            name+" ("+selectedGameObjects[0].name+")" : 
-            "My "+ name
+            name + " (" + selectedGameObjects[0].name + ")" :
+            "My " + name
         ).AddComponent(componentToAdd);
 
         //fix scope position in first selected mesh positon
@@ -584,8 +588,6 @@ public class ModTemplates : MonoBehaviour
 
         return attachment;
     }
-
-
 
     private static void AdjustAccessoryPosition(Transform transform, List<GameObject> selectedGameObjects)
     {
@@ -628,9 +630,6 @@ public class ModTemplates : MonoBehaviour
         }
     }
 
-
-
-
     #endregion
 
     #region BUILDING
@@ -639,9 +638,9 @@ public class ModTemplates : MonoBehaviour
     [MenuItem("Assets/ER2 TOOLS/Building Template", false, 300)]
     private static void OnBuildingTemplate()
     {
-       GameObject building =GenerateBaseRoot("My Building", Selection.activeObject);
-        
-        DestructibleManager ds= building.AddComponent<DestructibleManager>();
+        GameObject building = GenerateBaseRoot("My Building", Selection.activeObject);
+
+        DestructibleManager ds = building.AddComponent<DestructibleManager>();
         int parts_count = 2;
         ds.destructibleParts = new DestructableBuilding[parts_count];
         for (int i = 0; i < parts_count; i++)
@@ -653,13 +652,11 @@ public class ModTemplates : MonoBehaviour
             ds.destructibleParts[i] = part.GetComponent<DestructibleBuildingPhased>();
 
             //create intact and detsroyed versions of the part
-            GameObject intactPart = new GameObject("Intact_"+i+" (Intact mesh should be here)");
-            GameObject destrPart = new GameObject("Destroyed_"+i+ " (Destroyed mesh should be here)");
+            GameObject intactPart = new GameObject("Intact_" + i + " (Intact mesh should be here)");
+            GameObject destrPart = new GameObject("Destroyed_" + i + " (Destroyed mesh should be here)");
             intactPart.transform.position = destrPart.transform.position = building.transform.position;
             intactPart.transform.SetParent(part.transform);
             destrPart.transform.SetParent(part.transform);
-            //SetUpAsdamageablePart(intactPart);
-            //SetUpAsdamageablePart(destrPart);
             destrPart.gameObject.SetActive(false);
             bPart.statusPhases = new BuildingStatus[2];
             bPart.statusPhases[0].destructionLevel_objects = new GameObject[] { intactPart };
@@ -667,7 +664,6 @@ public class ModTemplates : MonoBehaviour
         }
 
         building.AddComponent<DoorRegister>();
-
     }
 
     [MenuItem("GameObject/ER2 TOOLS/Buildings/Make Door", false, 0)]
@@ -703,7 +699,6 @@ public class ModTemplates : MonoBehaviour
         Selection.activeGameObject = root.gameObject;
     }
 
-
     [MenuItem("GameObject/ER2 TOOLS/Buildings/Add Collisions to damageable part", false, 300)]
     private static void SetUpAsdamageablePart()
     {
@@ -719,12 +714,15 @@ public class ModTemplates : MonoBehaviour
         //add building collision managers
         AddCollisionSystems();
     }
+
     private static void SetUpAsdamageablePart(GameObject part)
     {
         if (part != null)
         {
             if (!part.GetComponent<BuildingImpact>())
                 part.AddComponent<BuildingImpact>();
+            if (!part.GetComponent<MeshCollider>())
+                part.AddComponent<MeshCollider>();
             //layer?
             //cover positions?
             //foot step specifier
@@ -764,6 +762,7 @@ public class ModTemplates : MonoBehaviour
                 SetUpCollisionAndRemoveMesh(((GameObject)selected));
         }
     }
+
     private static void SetUpCollisionAndRemoveMesh(GameObject part)
     {
         if (part != null)
@@ -782,12 +781,9 @@ public class ModTemplates : MonoBehaviour
         }
     }
 
-
     #endregion
 
     #region VEHICLES
-
-
 
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Static", false, 399)]
     [MenuItem("Assets/ER2 TOOLS/Vehicle/Static", false, 399)]
@@ -829,10 +825,8 @@ public class ModTemplates : MonoBehaviour
         vehicle.seats[1].seat.onSeatAnimator_id = "OnVehicleSeat_Pak40_secondplace";
     }
 
-
-
-
     #region LAND VEHICLES
+
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Wheeled Template", false, 400)]
     [MenuItem("Assets/ER2 TOOLS/Vehicle/Wheeled Template", false, 400)]
     public static void OnWheeledTemplate()
@@ -842,9 +836,9 @@ public class ModTemplates : MonoBehaviour
         VehicleWithWheels mv = root.AddComponent<VehicleWithWheels>();
         BoxCollider[] boxes = new BoxCollider[2];
         SetUpMovableVehicle(mv, out GameObject mufflerSmoke, (Sprite)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/UI/Icons/veh_icon.png", typeof(Sprite)), boxes, 8);
-        
+
         //HITBOX REPOSITIONING
-        
+
         boxes[0].center = new Vector3(-0.003900528f, 1.728621f, 0.746038f);
         boxes[0].size = new Vector3(1.442336f, 0.6330223f, 0.1117871f);
         boxes[1].center = new Vector3(-0.003900528f, 0.992584f, -0.002175093f);
@@ -904,15 +898,14 @@ public class ModTemplates : MonoBehaviour
 
 
         root.AddComponent<RigidbodyMassSetter>().localMassPos = new Vector3(0, .5f, 0);
-        mv.crashSound= (AudioClip)Instantiate(AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/vehicle_crash_1.ogg", typeof(AudioClip)));
-
+        mv.crashSound = (AudioClip)Instantiate(AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/vehicle_crash_1.ogg", typeof(AudioClip)));
     }
-    public static void SetUpMovableVehicle(MovableVehicle vehicle, out GameObject muffleSmoke_root, Sprite icon,  BoxCollider[] bxCol, int numberOfSits = 4)
+
+    public static void SetUpMovableVehicle(MovableVehicle vehicle, out GameObject muffleSmoke_root, Sprite icon, BoxCollider[] bxCol, int numberOfSits = 4)
     {
         //LOAD COLLIDER
-        for(int i=0; i< bxCol.Length; i++)
+        for (int i = 0; i < bxCol.Length; i++)
         {
-            
             BoxCollider boxCollider = vehicle.gameObject.AddComponent<BoxCollider>();
             bxCol[i] = boxCollider;
         }
@@ -929,7 +922,7 @@ public class ModTemplates : MonoBehaviour
 
 
         //ASSIGN THE ICON
-        vehicle.icon= icon;
+        vehicle.icon = icon;
 
 
         //INTERNAL PARTS
@@ -937,9 +930,9 @@ public class ModTemplates : MonoBehaviour
         vehicle.internalParts = new InternalVehiclePart[4];
         GameObject internalParts = new GameObject("InternalParts");
         internalParts.transform.SetParent(vehicle.transform);
-        for(int i=0; i<4; i++)
+        for (int i = 0; i < 4; i++)
         {
-            InternalVehiclePart part = AddPart(internalParts, (VehicleInternalPart) i);
+            InternalVehiclePart part = AddPart(internalParts, (VehicleInternalPart)i);
             vehicle.internalParts[i] = part;
         }
 
@@ -950,11 +943,7 @@ public class ModTemplates : MonoBehaviour
         GameObject seats = new GameObject("Seats");
         seats.transform.SetParent(vehicle.transform);
         GenerateSeatList(seats, vehicle, numberOfSits, false);
-
-
-
     }
-
 
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Tank Template", false, 401)]
     [MenuItem("Assets/ER2 TOOLS/Vehicle/Tank Template", false, 401)]
@@ -966,7 +955,7 @@ public class ModTemplates : MonoBehaviour
         BoxCollider[] boxes = new BoxCollider[1];
         VehicleTank mv = root.AddComponent<VehicleTank>();
         SetUpMovableVehicle(mv, out GameObject mufflerSmoke, (Sprite)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/UI/Icons/veh_icon.png", typeof(Sprite)), boxes, 3);
-        root.GetComponent<VehicleDamagablePart>().armorThickness= 50;
+        root.GetComponent<VehicleDamagablePart>().armorThickness = 50;
         root.GetComponent<VehicleDamagablePart>().impactType = ImpactType.metal;
         mv.maxMotorTorque = 1200;
         mv.accelerationSpeed = 40;
@@ -979,7 +968,7 @@ public class ModTemplates : MonoBehaviour
         frontBox.transform.SetParent(root.transform);
         frontBox.transform.localPosition = new Vector3(0, 0.432f, 1.576f);
         frontBox.transform.localEulerAngles = new Vector3(-69.076f, 0, 0);
-        BoxCollider fb= frontBox.AddComponent<BoxCollider>();
+        BoxCollider fb = frontBox.AddComponent<BoxCollider>();
         fb.center = new Vector3(-0.0156033f, -0.05171413f, 0.3228208f);
         fb.size = new Vector3(2.442272f, 1.136573f, 0.3543585f);
         frontBox.AddComponent<VehicleDamagablePart>();
@@ -1026,7 +1015,76 @@ public class ModTemplates : MonoBehaviour
 
         root.AddComponent<RigidbodyMassSetter>().localMassPos = new Vector3(0, .5f, 0);
         mv.crashSound = (AudioClip)Instantiate(AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/vehicle_crash_1.ogg", typeof(AudioClip)));
+    }
 
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Add destructibility to tracks", false, 1560)]
+    public static void AssignTracksDestructionColliderToVehicle()
+    {
+        if (!IsNewActionTime()) return;
+
+        bool added = false;
+        foreach (var activeObject in Selection.gameObjects)
+        {
+            var tupdater = activeObject.GetComponentInParent<TrackWeelsUpdater>(true);
+            if (tupdater != null)
+            {
+                if (tupdater.leftTrack && !tupdater.leftTrack.GetComponent<VehicleDamageableTrackPart>())
+                {
+                    VehicleDamageableTrackPart vww = tupdater.leftTrack.gameObject.AddComponent<VehicleDamageableTrackPart>();
+                    Debug.Log("Added destructible tracks to " + vww.name, vww.gameObject);
+                    added = true;
+                }
+                if (tupdater.rightTrack && !tupdater.rightTrack.GetComponent<VehicleDamageableTrackPart>())
+                {
+                    VehicleDamageableTrackPart vww = tupdater.rightTrack.gameObject.AddComponent<VehicleDamageableTrackPart>();
+                    Debug.Log("Added destructible tracks to " + vww.name, vww.gameObject);
+                    added = true;
+                }
+            }
+        }
+
+        if (!added)
+        {
+            Debug.LogError("Missing TrackWheelsUpdater in selected vehicles(s)");
+        }
+    }
+
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Add destructibility to wheels", false, 1570)]
+    public static void AssignWheelDestructionColliderToVehicle()
+    {
+        if (!IsNewActionTime()) return;
+
+        foreach (GameObject activeObject in Selection.gameObjects)
+        {
+            VehicleWithWheels vww = activeObject.GetComponent<VehicleWithWheels>();
+            if (!vww) continue;
+
+            List<WheelCollider> allWheels = new List<WheelCollider>();
+            allWheels.AddRange(vww.leftTrack);
+            allWheels.AddRange(vww.rightTrack);
+
+            int added = 0;
+            foreach (WheelCollider wc in allWheels)
+            {
+                if (wc == null) continue;
+                WheelColliderUpdater wcu = wc.GetComponent<WheelColliderUpdater>();
+                if (!wcu) continue;
+                if (wcu.connectedBone != null) continue;
+
+                if (wcu.wheelsTransform.Length == 1 && wcu.wheelsTransform_syncOnlyRot.Length == 0)
+                {
+                    added++;
+                    wcu.wheelsTransform[0].gameObject.AddComponent<VehicleDamageableWheelPart>().AssignDestructibleWheel(wc);
+                }
+                else if (wcu.wheelsTransform.Length == 0 && wcu.wheelsTransform_syncOnlyRot.Length == 1)
+                {
+                    added++;
+                    wcu.wheelsTransform_syncOnlyRot[0].gameObject.AddComponent<VehicleDamageableWheelPart>().AssignDestructibleWheel(wc);
+                }
+            }
+
+            Debug.Log("Added " + added + " destructible wheels to " + vww.name, vww.gameObject);
+        }
     }
 
     #endregion
@@ -1050,13 +1108,13 @@ public class ModTemplates : MonoBehaviour
         // AUDIO
         mv.engine_start = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/M5_Start_Up_Exterior.wav", typeof(AudioClip));
         mv.engine_move = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/M5_Engine_Loop_Exterior.wav", typeof(AudioClip));
-        mv.whistle= (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/whistle_lcvp.ogg", typeof(AudioClip));
-        
+        mv.whistle = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/whistle_lcvp.ogg", typeof(AudioClip));
+
         //Particle Sys
         GameObject ms = Instantiate((GameObject)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Particles/LCVP water FX.prefab", typeof(GameObject)));
         ms.transform.SetParent(root.transform);
         ms.transform.localPosition = new Vector3(-0.04f, -0.028f, 2.759f);
-        mv.waterSplash = ms.GetComponent<ParticleSystem>(); 
+        mv.waterSplash = ms.GetComponent<ParticleSystem>();
 
         //Seats
 
@@ -1071,7 +1129,6 @@ public class ModTemplates : MonoBehaviour
         seatList[5].transform.localPosition = new Vector3(-0.4f, -0.1f, 1.25f);
     }
 
-
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Auto Transport Glider Template", false, 403)]
     [MenuItem("Assets/ER2 TOOLS/Vehicle/Auto Transport Glider Template", false, 403)]
     public static void OnATGliderTemplate()
@@ -1084,7 +1141,7 @@ public class ModTemplates : MonoBehaviour
         rb.angularDrag = 0.1f;
         rb.drag = 0.1f;
         BoxCollider[] box = new BoxCollider[4];
-        box[0]= root.AddComponent<BoxCollider>();
+        box[0] = root.AddComponent<BoxCollider>();
         box[0].center = new Vector3(0.01767862f, 1.853587f, 1.798799f);
         box[0].size = new Vector3(1.722506f, 1.4025f, 8.034792f);
         box[1] = root.AddComponent<BoxCollider>();
@@ -1132,7 +1189,6 @@ public class ModTemplates : MonoBehaviour
         seatList[11].SetActive(false);
     }
 
-
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Auto Transport Cargo Template", false, 404)]
     [MenuItem("Assets/ER2 TOOLS/Vehicle/Auto Transport Cargo Template", false, 404)]
     public static void OnATCargoTemplate()
@@ -1143,7 +1199,7 @@ public class ModTemplates : MonoBehaviour
         box[0] = root.AddComponent<BoxCollider>();
         box[0].center = new Vector3(-0.05046821f, 1.523426f, -2.529927f);
         box[0].size = new Vector3(1.636089f, 1.73651f, 15.27669f);
-        
+
         box[1] = root.AddComponent<BoxCollider>();
         box[1].center = new Vector3(-0.04423428f, 1.483439f, -1.69201f);
         box[1].size = new Vector3(16.5308f, 0.07711351f, 4.29598f);
@@ -1194,10 +1250,9 @@ public class ModTemplates : MonoBehaviour
         seatList[10].SetActive(false);
     }
 
-
-
     #endregion
 
+    #region PLANES
 
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Plane Template", false, 405)]
     [MenuItem("Assets/ER2 TOOLS/Vehicle/Planes/Plane Template", false, 405)]
@@ -1215,7 +1270,7 @@ public class ModTemplates : MonoBehaviour
         box[1] = root.AddComponent<BoxCollider>();
         box[1].center = new Vector3(0.03071752f, 1.708493f, -0.7849936f);
         box[1].size = new Vector3(0.5587591f, 0.338726f, 3.178361f);
-        VehiclePlane mv= root.AddComponent<VehiclePlane>();
+        VehiclePlane mv = root.AddComponent<VehiclePlane>();
         root.GetComponent<VehicleDamagablePart>().armorThickness = 0;
         root.GetComponent<VehicleDamagablePart>().considerAngledArmor = false;
         root.GetComponent<VehicleDamagablePart>().canRicochet = false;
@@ -1255,8 +1310,8 @@ public class ModTemplates : MonoBehaviour
 
         mv.engine_start = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/M5_Start_Up_Exterior.wav", typeof(AudioClip));
         mv.engine_move = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/M5_Engine_Loop_Exterior.wav", typeof(AudioClip));
-        
-        mv.crashSound= (AudioClip)Instantiate(AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/vehicle_crash_1.ogg", typeof(AudioClip)));
+
+        mv.crashSound = (AudioClip)Instantiate(AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/Vehicles/vehicle_crash_1.ogg", typeof(AudioClip)));
 
         GameObject swgo = new GameObject("SteeringWheel");
         swgo.transform.SetParent(root.transform);
@@ -1274,10 +1329,9 @@ public class ModTemplates : MonoBehaviour
         seatList[0].SetActive(false);
         seatList[0].transform.localPosition = new Vector3(0, 1.03f, 0.22f);
         mv.seats[0].seat.onSeatAnimator_id = "OnVehicleSeat_sitted_planeSmall";
-        
     }
 
-    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make BombBay", false , 1000)]
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make BombBay", false, 1000)]
     public static void SetUpBombBay()
     {
         if (!IsNewActionTime())
@@ -1320,7 +1374,7 @@ public class ModTemplates : MonoBehaviour
 
         foreach (GameObject go in Selection.gameObjects)
         {
-            if (go!=null && IsInstance(go) && !go.GetComponentInParent<VehicleDamagableDetachablePart>())
+            if (go != null && IsInstance(go) && !go.GetComponentInParent<VehicleDamagableDetachablePart>())
             {
                 if (rootplane == null)
                     rootplane = go.GetComponentInParent<VehiclePlane>();
@@ -1333,29 +1387,32 @@ public class ModTemplates : MonoBehaviour
                 tail.damagePlayerOnCollision = true;
                 tail.detachablePartLife = 100;
                 tail.minImpactSpeedToDamage = 43;
-                BoxCollider coll= go.AddComponent<BoxCollider>();
+                BoxCollider coll = go.AddComponent<BoxCollider>();
 
                 //register tail on root plane
                 List<VehicleDamagableDetachablePart> tails = new List<VehicleDamagableDetachablePart>();
                 for (int i = 0; i < rootplane.detachableTails.Length; i++)
-                    if (rootplane.detachableTails[i]!=null)
-                        tails.Add( rootplane.detachableTails[i]);
+                    if (rootplane.detachableTails[i] != null)
+                        tails.Add(rootplane.detachableTails[i]);
                 tails.Add(tail);
                 rootplane.detachableTails = tails.ToArray();
                 tails.Clear();
             }
         }
     }
+
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make Detachable part(s)/Left Wing", false, 1002)]
     public static void SetUpDetachableWingLeft()
     {
         SetUpDetachableWing(true);
     }
+
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make Detachable part(s)/Right Wing", false, 1002)]
     public static void SetUpDetachableWingRight()
     {
         SetUpDetachableWing(false);
     }
+
     public static void SetUpDetachableWing(bool isLeftWing)
     {
         if (!IsNewActionTime())
@@ -1374,7 +1431,7 @@ public class ModTemplates : MonoBehaviour
                 wing.armorThickness = 0;
                 wing.considerAngledArmor = false;
                 wing.canRicochet = false;
-                wing.damagePlayerOnCollision=true;
+                wing.damagePlayerOnCollision = true;
                 wing.detachablePartLife = 100;
                 wing.minImpactSpeedToDamage = 22;
                 wing.impactType = ImpactType.metal;
@@ -1410,7 +1467,7 @@ public class ModTemplates : MonoBehaviour
                 propeller.transform.SetParent(rootplane.transform);
                 propeller.transform.position = go.transform.position;
                 propeller.transform.localEulerAngles = new Vector3(90, 0, 0);
-                VehicleDamagableDetachablePart vddp  = propeller.AddComponent<VehicleDamagableDetachablePart>();
+                VehicleDamagableDetachablePart vddp = propeller.AddComponent<VehicleDamagableDetachablePart>();
                 vddp.armorThickness = 0;
                 vddp.considerAngledArmor = false;
                 vddp.canRicochet = false;
@@ -1449,6 +1506,7 @@ public class ModTemplates : MonoBehaviour
             }
         }
     }
+
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Planes/Make Flap", false, 1003)]
     public static void SetUpPlaneFlap()
     {
@@ -1486,6 +1544,10 @@ public class ModTemplates : MonoBehaviour
         return parts;
     }
 
+    #endregion
+
+    #region TURRETS
+
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Turret/Gun", false, 800)]
     public static void SetUpTurretGun()
     {
@@ -1495,6 +1557,7 @@ public class ModTemplates : MonoBehaviour
             AddGunToTurret(tg);
         }
     }
+
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Turret/MG", false, 801)]
     public static void SetUpTurretMG()
     {
@@ -1546,14 +1609,14 @@ public class ModTemplates : MonoBehaviour
         turretGO.transform.SetParent(firstSelectedmesh.transform.parent);
         turretGO.transform.position = firstSelectedmesh.transform.position;
         Turret turret = (Turret)turretGO.AddComponent(componentToAdd);
-        turret.yAxisBond = turret is TurretCommander?180: 30;
+        turret.yAxisBond = turret is TurretCommander ? 180 : 30;
         turret.xAxisBond = 25;
         turret.xAxisBondDown = 5;
         GameObject YAxis = new GameObject("YAxis");
         YAxis.transform.SetParent(turretGO.transform);
         YAxis.transform.localPosition = Vector3.zero;
         YAxis.AddComponent<BoxCollider>();
-        YAxis.GetComponent<BoxCollider>().center=Vector3.one;
+        YAxis.GetComponent<BoxCollider>().center = Vector3.one;
         YAxis.GetComponent<BoxCollider>().size = new Vector3(1, .5f, 1);
         YAxis.AddComponent<VehicleDamagablePart>().impactType = ImpactType.metal;
 
@@ -1591,12 +1654,11 @@ public class ModTemplates : MonoBehaviour
 
 
         return turret;
-
     }
 
     private static void AddTurretSeat(Seats[] seatsList, Turret turret)
     {
-        foreach(Seats seat in seatsList)
+        foreach (Seats seat in seatsList)
         {
             if (!seat.isDriver && seat.connectedTurret == null)
             {
@@ -1641,12 +1703,13 @@ public class ModTemplates : MonoBehaviour
         newWeapon.fireSound = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Rocket Launcher/rocket_launcher_fire.ogg", typeof(AudioClip));
 
         //Finalize - add new weapon to turret
-        TurretWeapon[] newWeapons = new TurretWeapon[turret.weapons.Length+1];
+        TurretWeapon[] newWeapons = new TurretWeapon[turret.weapons.Length + 1];
         for (int i = 0; i < turret.weapons.Length; i++)
             newWeapons[i] = turret.weapons[i];
         newWeapons[turret.weapons.Length] = newWeapon;
         turret.weapons = newWeapons;
     }
+
     private static void AddMgToTurret(TurretGun turret)
     {
         GameObject firePos = new GameObject("FirePos_mg");
@@ -1674,6 +1737,10 @@ public class ModTemplates : MonoBehaviour
         turret.weapons = newWeapons;
     }
 
+    #endregion
+
+    #region WHEELS / STEERING
+
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Wheels/SetUp Wheels", false, 801)]
     public static void OnSetupWheels()
     {
@@ -1683,25 +1750,20 @@ public class ModTemplates : MonoBehaviour
         EditorWindow.GetWindow(typeof(WheelWindow));
         WheelWindow.Init(Selection.gameObjects);
     }
+
     [MenuItem("GameObject/ER2 TOOLS/Vehicle/Wheels/Simple Wheels SetUp", false, 801)]
     public static void OnSetupWheelsSimple()
     {
         if (!IsNewActionTime())
             return;
 
-        if (Selection.gameObjects.Length>8)
+        if (Selection.gameObjects.Length > 8)
         {
             Debug.Log("You can't set up more than 8 whele colliders in a vehicle.");
             return;
         }
 
         WheelWindow.SetUpWheelsSimple(Selection.gameObjects);
-    }
-
-    public static void UnpackPrefab(GameObject selected)
-    {
-        if (PrefabUtility.IsPartOfAnyPrefab(selected))
-            PrefabUtility.UnpackPrefabInstanceAndReturnNewOutermostRoots(PrefabUtility.GetOutermostPrefabInstanceRoot(selected), PrefabUnpackMode.OutermostRoot);
     }
 
     private static void GenerateVehicleTemplate(GameObject root, float rbMass, bool isPlane)
@@ -1714,7 +1776,6 @@ public class ModTemplates : MonoBehaviour
             root.AddComponent<SyncVehicle>();
         else
             root.AddComponent<SyncVehiclePlane>();
-
     }
 
     private static InternalVehiclePart AddPart(GameObject vehicle, VehicleInternalPart partType)
@@ -1727,14 +1788,14 @@ public class ModTemplates : MonoBehaviour
         return vip;
     }
 
-    public static List<GameObject> GenerateSeatList(GameObject parent, Vehicle rootMVFunction,  int numberOfSeats, bool isAT)
+    public static List<GameObject> GenerateSeatList(GameObject parent, Vehicle rootMVFunction, int numberOfSeats, bool isAT)
     {
         List<GameObject> list = new List<GameObject>();
         rootMVFunction.seats = new Seats[numberOfSeats];
-        for (int i = 0; i<numberOfSeats; i++)
+        for (int i = 0; i < numberOfSeats; i++)
         {
             rootMVFunction.seats[i] = new Seats();
-            GameObject seat = new GameObject("Seat" + (i+1));
+            GameObject seat = new GameObject("Seat" + (i + 1));
             seat.transform.SetParent(parent.transform);
             seat.AddComponent<VehicleSeat>();
             list.Add(seat);
@@ -1792,9 +1853,7 @@ public class ModTemplates : MonoBehaviour
             sw.connectedVeh = mv;
             sw.axis = 2;
             sw.rotationMultiplier = 45;
-            
         }
-
     }
 
     private static Seats GetDriverSeat(Seats[] seats) //SI POTREBBE FARE SIA LA VERSIONE SINGOLA CHE LA VERSIONE CON PIù SEDILI DA PILOTA
@@ -1810,9 +1869,445 @@ public class ModTemplates : MonoBehaviour
         return null;
     }
 
+    #endregion
 
     #endregion
 
+    #region UTIL - WORLD POS COPY/PASTE
+
+    [MenuItem("GameObject/COPY WORLD POS", false, 1710)]
+    private static void Transform_CopyWPos()
+    {
+        if (!IsNewActionTime()) return;
+        if (Selection.gameObjects.Length != 1)
+        {
+            Debug.LogError("Select only 1 destination!");
+            return;
+        }
+        copiedWorldPos = Selection.gameObjects[0].transform.position;
+    }
+
+    [MenuItem("GameObject/PASTE WORLD POS", false, 1720)]
+    private static void Transform_PasteWPos()
+    {
+        if (!IsNewActionTime()) return;
+        if (Selection.gameObjects.Length < 1)
+        {
+            Debug.LogError("Select at least 1 target!");
+            return;
+        }
+        for (int i = 0; i < Selection.gameObjects.Length; i++)
+        {
+            Selection.gameObjects[i].transform.position = copiedWorldPos;
+        }
+    }
+
+    #endregion
+
+    #region ANIMATION HELPERS
+
+    [MenuItem("GameObject/ER2 TOOLS/Animation making/Check Bone Order", false, 1510)]
+    public static void CheckboneOrder()
+    {
+        if (Selection.activeGameObject == null) return;
+        SkinnedMeshRenderer smr = Selection.activeGameObject.GetComponent<SkinnedMeshRenderer>();
+        if (smr == null) return;
+
+        string bone_list = "";
+        int count = 0;
+        Transform[] bones = smr.bones;
+
+        foreach (Transform bone in bones)
+        {
+            count++;
+            bone_list += bone.name + "\n";
+        }
+
+        Debug.Log("Bones (" + count + "):\n" + bone_list);
+    }
+
+    #endregion
+
+    #region WHEEL COLLIDER UPDATER ASSIGNMENT
+
+    // -----------------------------
+    // Menu: Assign wheel meshes
+    // -----------------------------
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Wheel Collider Updater/Assign selected wheel meshes", false, 1580)]
+    public static void AssignWheelMeshes()
+    {
+        var selection = Selection.transforms;
+        if (selection == null || selection.Length == 0) return;
+
+        if (!TryGetSingleVehicleRootFromSelection(selection, out var vehicleRoot, out var vehicle))
+        {
+            EditorUtility.DisplayDialog("ER2 TOOLS",
+                "Selection must belong to a single VehicleWithWheels (same root parent).", "OK");
+            return;
+        }
+
+        // Collect updaters that correspond to wheels in tracks (WheelColliderUpdater sits on the WheelCollider object).
+        var updaters = CollectTrackWheelUpdaters(vehicle);
+        if (updaters.Count == 0)
+        {
+            EditorUtility.DisplayDialog("ER2 TOOLS",
+                "No WheelColliderUpdater found on leftTrack/rightTrack wheel colliders.", "OK");
+            return;
+        }
+
+        // Clean arrays BEFORE assigning
+        foreach (var u in updaters)
+        {
+            Undo.RecordObject(u, "Clean wheel arrays");
+            CleanWheelUpdaterArrays(u);
+        }
+
+        var rootPos = vehicleRoot.position;
+        var rootUp = vehicleRoot.up;
+
+        int assignedSuspension = 0;
+        int assignedRotOnly = 0;
+
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+
+        // Build a filtered list of candidate wheel-mesh transforms from current selection
+        var candidates = new List<Transform>();
+        for (int i = 0; i < selection.Length; i++)
+        {
+            var t = selection[i];
+            if (t == null) continue;
+            if (t.GetComponent<WheelColliderUpdater>() != null) continue;
+            if (t.GetComponent<WheelCollider>() != null) continue;
+            candidates.Add(t);
+        }
+
+        if (candidates.Count == 0) return;
+
+        // Compute heights and find lowest
+        var heights = new List<float>(candidates.Count);
+        float minH = float.MaxValue;
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            float h = HeightAlongUp(candidates[i].position, rootPos, rootUp);
+            heights.Add(h);
+            if (h < minH) minH = h;
+        }
+
+        // Decide band tolerance (adaptive) - or replace with a fixed value if you prefer
+        float groundBandTol = ComputeGroundBandTolerance(heights, minH);
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var t = candidates[i];
+
+            var closestUpdater = FindClosestUpdater(updaters, t.position);
+            if (closestUpdater == null) continue;
+
+            float h = heights[i];
+            bool isGroundWheel = (h - minH) <= groundBandTol;
+
+            if (isGroundWheel)
+            {
+                if (AddUniqueToArray(closestUpdater, "wheelsTransform", t))
+                    assignedSuspension++;
+            }
+            else
+            {
+                if (AddUniqueToArray(closestUpdater, "wheelsTransform_syncOnlyRot", t))
+                    assignedRotOnly++;
+            }
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+    }
+
+    // -----------------------------
+    // Menu: Assign Tracks Bones
+    // -----------------------------
+    [MenuItem("GameObject/ER2 TOOLS/Vehicle/Wheel Collider Updater/Assign selected Tracks Bones", false, 1610)]
+    public static void AssignTrackBones()
+    {
+        var selection = Selection.transforms;
+        if (selection == null || selection.Length == 0) return;
+
+        if (!TryGetSingleVehicleRootFromSelection(selection, out var vehicleRoot, out var vehicle))
+        {
+            EditorUtility.DisplayDialog("ER2 TOOLS",
+                "Selection must belong to a single VehicleWithWheels (same root parent).", "OK");
+            return;
+        }
+
+        var updaters = CollectTrackWheelUpdaters(vehicle);
+        if (updaters.Count == 0)
+        {
+            EditorUtility.DisplayDialog("ER2 TOOLS",
+                "No WheelColliderUpdater found on leftTrack/rightTrack wheel colliders.", "OK");
+            return;
+        }
+
+        foreach (var u in updaters)
+        {
+            Undo.RecordObject(u, "Clean wheel arrays");
+            CleanWheelUpdaterArrays(u);
+        }
+
+        // For bones assignment, selection count must match updater count.
+        // (As requested: "amount of bones selected must match the amount of wheel collider updaters assigned to the vehiclewithwheels component")
+        if (selection.Length != updaters.Count)
+        {
+            EditorUtility.DisplayDialog("ER2 TOOLS",
+                $"Bones selected: {selection.Length}\nWheelColliderUpdaters in tracks: {updaters.Count}\n\nCounts must match.",
+                "OK");
+            return;
+        }
+
+        // Build 1-to-1 pairing: each updater gets its closest unassigned bone.
+        // Greedy with ordering by each updater's nearest distance to reduce conflicts.
+        var bones = new List<Transform>(selection);
+
+        var updaterInfos = new List<(WheelColliderUpdater updater, float nearestDistSq)>(updaters.Count);
+        foreach (var u in updaters)
+            updaterInfos.Add((u, NearestDistanceSq(u.transform.position, bones)));
+
+        updaterInfos.Sort((a, b) => a.nearestDistSq.CompareTo(b.nearestDistSq));
+
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+
+        int assigned = 0;
+        var used = new HashSet<Transform>();
+
+        foreach (var info in updaterInfos)
+        {
+            var u = info.updater;
+            Transform bestBone = null;
+            float bestD = float.MaxValue;
+
+            for (int i = 0; i < bones.Count; i++)
+            {
+                var b = bones[i];
+                if (b == null || used.Contains(b)) continue;
+
+                float d = (b.position - u.transform.position).sqrMagnitude;
+                if (d < bestD)
+                {
+                    bestD = d;
+                    bestBone = b;
+                }
+            }
+
+            if (bestBone == null)
+            {
+                // Should not happen if counts match, but keep safe.
+                continue;
+            }
+
+            used.Add(bestBone);
+
+            // Assign connectedBone via SerializedObject so it properly records and marks dirty.
+            var so = new SerializedObject(u);
+            var prop = so.FindProperty("connectedBone");
+            Undo.RecordObject(u, "Assign selected Tracks Bones");
+            prop.objectReferenceValue = bestBone;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(u);
+
+            assigned++;
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+    }
+
+    // -----------------------------
+    // Helpers
+    // -----------------------------
+    private static bool TryGetSingleVehicleRootFromSelection(
+        Transform[] selection,
+        out Transform vehicleRoot,
+        out VehicleWithWheels vehicle)
+    {
+        vehicleRoot = null;
+        vehicle = null;
+
+        VehicleWithWheels firstVeh = null;
+
+        foreach (var t in selection)
+        {
+            if (t == null) continue;
+
+            var v = t.GetComponentInParent<VehicleWithWheels>();
+            if (v == null) continue;
+
+            if (firstVeh == null)
+                firstVeh = v;
+            else if (v != firstVeh)
+                return false; // multiple vehicles in selection
+        }
+
+        if (firstVeh == null) return false;
+
+        vehicle = firstVeh;
+        vehicleRoot = firstVeh.transform;
+        return true;
+    }
+
+    private static List<WheelColliderUpdater> CollectTrackWheelUpdaters(VehicleWithWheels vehicle)
+    {
+        var result = new List<WheelColliderUpdater>(32);
+        var seen = new HashSet<WheelColliderUpdater>();
+
+        void AddFromTrack(WheelCollider[] track)
+        {
+            if (track == null) return;
+            for (int i = 0; i < track.Length; i++)
+            {
+                var wc = track[i];
+                if (!wc) continue;
+
+                var upd = wc.GetComponent<WheelColliderUpdater>();
+                if (!upd) continue;
+
+                if (seen.Add(upd))
+                    result.Add(upd);
+            }
+        }
+
+        AddFromTrack(vehicle.leftTrack);
+        AddFromTrack(vehicle.rightTrack);
+
+        return result;
+    }
+
+    private static WheelColliderUpdater FindClosestUpdater(List<WheelColliderUpdater> updaters, Vector3 pos)
+    {
+        WheelColliderUpdater best = null;
+        float bestD = float.MaxValue;
+
+        for (int i = 0; i < updaters.Count; i++)
+        {
+            var u = updaters[i];
+            if (!u) continue;
+            float d = (u.transform.position - pos).sqrMagnitude;
+            if (d < bestD)
+            {
+                bestD = d;
+                best = u;
+            }
+        }
+        return best;
+    }
+
+    // Height of a point along an axis (vehicleRoot.up)
+    private static float HeightAlongUp(Vector3 worldPos, Vector3 rootPos, Vector3 rootUp)
+    {
+        return Vector3.Dot(worldPos - rootPos, rootUp.normalized);
+    }
+
+    private static float ComputeGroundBandTolerance(List<float> heights, float minHeight)
+    {
+        // Adaptive tolerance: based on wheel height spread, with sane clamps.
+        // Works when some wheels are slightly above/below ground due to art/pivot offsets.
+        float maxHeight = minHeight;
+        for (int i = 0; i < heights.Count; i++)
+            if (heights[i] > maxHeight) maxHeight = heights[i];
+
+        float spread = maxHeight - minHeight;
+
+        // If spread is small, keep small band; if spread is large, allow a bit more.
+        // Clamp avoids band getting too permissive.
+        return Mathf.Clamp(spread * 0.15f, 0.04f, 0.18f);
+    }
+
+    private static float NearestDistanceSq(Vector3 pos, List<Transform> candidates)
+    {
+        float best = float.MaxValue;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var t = candidates[i];
+            if (!t) continue;
+            float d = (t.position - pos).sqrMagnitude;
+            if (d < best) best = d;
+        }
+        return best;
+    }
+
+    private static bool AddUniqueToArray(UnityEngine.Object targetComponent, string arrayFieldName, Transform value)
+    {
+        if (targetComponent == null || value == null) return false;
+
+        var so = new SerializedObject(targetComponent);
+        var arr = so.FindProperty(arrayFieldName);
+        if (arr == null || !arr.isArray)
+        {
+            Debug.LogWarning($"ER2 TOOLS: Field '{arrayFieldName}' not found or not an array on {targetComponent.name}");
+            return false;
+        }
+
+        // Check duplicates
+        for (int i = 0; i < arr.arraySize; i++)
+        {
+            var el = arr.GetArrayElementAtIndex(i);
+            if (el.objectReferenceValue == value)
+                return false;
+        }
+
+        Undo.RecordObject(targetComponent, "Assign selected wheel meshes");
+
+        int newIndex = arr.arraySize;
+        arr.InsertArrayElementAtIndex(newIndex);
+        arr.GetArrayElementAtIndex(newIndex).objectReferenceValue = value;
+
+        so.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(targetComponent);
+
+        return true;
+    }
+
+    private static void CleanWheelUpdaterArrays(WheelColliderUpdater updater)
+    {
+        if (updater == null) return;
+
+        var so = new SerializedObject(updater);
+
+        CleanArrayProperty(so, "wheelsTransform");
+        CleanArrayProperty(so, "wheelsTransform_syncOnlyRot");
+
+        so.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(updater);
+    }
+
+    private static void CleanArrayProperty(SerializedObject so, string propertyName)
+    {
+        var arr = so.FindProperty(propertyName);
+        if (arr == null || !arr.isArray) return;
+
+        var unique = new HashSet<Object>();
+        var valid = new List<Object>();
+
+        for (int i = 0; i < arr.arraySize; i++)
+        {
+            var el = arr.GetArrayElementAtIndex(i);
+            var obj = el.objectReferenceValue;
+
+            if (obj == null) continue;                // remove nulls
+            if (!unique.Add(obj)) continue;           // remove duplicates
+
+            valid.Add(obj);
+        }
+
+        arr.arraySize = valid.Count;
+
+        for (int i = 0; i < valid.Count; i++)
+        {
+            arr.GetArrayElementAtIndex(i).objectReferenceValue = valid[i];
+        }
+    }
+
+    #endregion
+
+    #region TAG HELPERS
 
     /// <summary>
     /// Adds the tag.
@@ -1846,6 +2341,7 @@ public class ModTemplates : MonoBehaviour
         }
         return false;
     }
+
     private static bool PropertyExists(SerializedProperty property, int start, int end, string value)
     {
         for (int i = start; i < end; i++)
@@ -1871,6 +2367,6 @@ public class ModTemplates : MonoBehaviour
         return name;
     }
 
+    #endregion
 }
-
 #endif
