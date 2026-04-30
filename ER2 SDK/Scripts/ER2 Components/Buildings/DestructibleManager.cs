@@ -1,11 +1,12 @@
 
-#if UNITY_EDITOR
 using System;
 using UnityEngine;
-using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+
+#if UNITY_EDITOR
+using UnityEditor;
 
 #if UNITY_2021_2_OR_NEWER
 using UnityEditor.SceneManagement;
@@ -15,6 +16,7 @@ using UnityEditor.Experimental.SceneManagement;
 
 [ExecuteInEditMode]
 #endif
+
 public partial class DestructibleManager : MapPropIndexable// MapPropIndexable
 {
     [Tooltip("All the individual parts of the building that can recieve damage. Requires DestructableBuilding components")]
