@@ -58,7 +58,8 @@ public class ModMenuUpdater : EditorWindow
         Downloaded,
         DownloadedWithErrors,
         Error,
-        NewUpdateFound
+        NewUpdateFound,
+        NotInstalled
     }
 
     private static CheckStatus checkStatus = CheckStatus.Checking;
@@ -189,6 +190,79 @@ public class ModMenuUpdater : EditorWindow
         req.SetRequestHeader("Pragma", "no-cache");
         return req;
     }
+
+    // ------------------------------------------------------------------
+    // SDK install detection & "not installed" entry points
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Detects whether the ER2 SDK content is present in the project.
+    /// Looks for ModMenu.cs as a sibling of ModMenuUpdater.cs.
+    /// If the updater script itself can't be located (very unusual), assumes installed
+    /// to avoid false positives.
+    /// </summary>
+    public static bool IsSdkInstalled()
+    {
+        string updaterDir = GetUpdaterAssetDirectory();
+        if (string.IsNullOrEmpty(updaterDir)) return true;
+
+        string modMenuPath = Path.Combine(updaterDir, "ModMenu.cs");
+        return File.Exists(modMenuPath);
+    }
+
+    private static string GetUpdaterAssetDirectory()
+    {
+        var guids = AssetDatabase.FindAssets("ModMenuUpdater t:MonoScript");
+        foreach (var guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (Path.GetFileNameWithoutExtension(path) == "ModMenuUpdater")
+                return Path.GetDirectoryName(path);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Opens the updater window in the "SDK not installed" state.
+    /// Idempotent: never overrides an in-progress or just-finished install flow.
+    /// </summary>
+    public static void ShowNotInstalledWindow()
+    {
+        var win = GetWindow<ModMenuUpdater>("ModMenuUpdater");
+
+        // Non disturbare un flusso di install/post-install attivo.
+        if (checkStatus == CheckStatus.Checking ||
+            checkStatus == CheckStatus.Downloading ||
+            checkStatus == CheckStatus.Installing ||
+            checkStatus == CheckStatus.Downloaded ||
+            checkStatus == CheckStatus.DownloadedWithErrors)
+        {
+            win.Focus();
+            return;
+        }
+
+        checkStatus = CheckStatus.NotInstalled;
+        error_str = "";
+        win.Focus();
+        RepaintWindow();
+    }
+
+    /// <summary>
+    /// First-time install: same as ForceUpdate but skips the backup confirmation
+    /// since there is nothing to overwrite when the SDK is not installed.
+    /// </summary>
+    public static void InstallSdk()
+    {
+        ClearSessionState();
+        GetWindow<ModMenuUpdater>("ModMenuUpdater");
+        checkStatus = CheckStatus.Checking;
+        error_str = "";
+        GetVersionAsync(true);
+    }
+
+    // ------------------------------------------------------------------
+    // Update flow
+    // ------------------------------------------------------------------
 
     public static void CheckForUpdatesSilent()
     {
@@ -365,6 +439,19 @@ public class ModMenuUpdater : EditorWindow
                 GUILayout.Label("Current version: " + VersionToString(VERSION));
                 GUILayout.Space(12);
                 if (GUILayout.Button("Update now")) ForceUpdate();
+                if (GUILayout.Button("Open SDK Download page")) OpenSdkUrl();
+                break;
+
+            case CheckStatus.NotInstalled:
+                GUILayout.Label("ER2 SDK not installed", EditorStyles.boldLabel);
+                GUILayout.Space(6);
+                EditorGUILayout.HelpBox(
+                    "The ER2 SDK content was not found in this project. Only the updater bootstrap files are present.\n\n" +
+                    "Click \"Install SDK now\" to download and install the latest version automatically. " +
+                    "If the automatic download fails, use \"Open SDK Download page\" for the manual installer.",
+                    MessageType.Error);
+                GUILayout.Space(8);
+                if (GUILayout.Button("Install SDK now")) InstallSdk();
                 if (GUILayout.Button("Open SDK Download page")) OpenSdkUrl();
                 break;
         }

@@ -6,20 +6,30 @@ using System.IO;
 [InitializeOnLoad]
 public static class ModMenuUpdaterAutoCheck
 {
-    // SessionState persists across domain reloads (recompiles, play mode)
-    // but is cleared when Unity closes -> effectively "once per project open".
+    // SessionState persiste tra domain reload (ricompilazioni, play mode)
+    // ma viene azzerato quando Unity si chiude -> di fatto "una volta a sessione".
     private const string SessionKey_Checked = "ER2SDK_UpdateChecked";
     private const string SessionKey_QualityFixed = "ER2SDK_QualityFixed";
 
     static ModMenuUpdaterAutoCheck()
     {
-        // Defer out of the static constructor to avoid touching EditorWindow
-        // APIs while Unity is still initializing.
+        // Defer fuori dal costruttore statico per non toccare le API EditorWindow
+        // mentre Unity sta ancora inizializzando.
         EditorApplication.delayCall += RunOnceOnProjectOpen;
     }
 
     private static void RunOnceOnProjectOpen()
     {
+        // Check SDK installato: gira a OGNI domain reload (project open, recompile,
+        // import dei due file bootstrap, ecc.). Se l'SDK è installato, IsSdkInstalled
+        // ritorna true e il costo è trascurabile. Se non è installato, la finestra
+        // ricompare finché l'utente non risolve.
+        if (!ModMenuUpdater.IsSdkInstalled())
+        {
+            ModMenuUpdater.ShowNotInstalledWindow();
+            return;
+        }
+
         if (!SessionState.GetBool(SessionKey_QualityFixed, false))
         {
             SessionState.SetBool(SessionKey_QualityFixed, true);
