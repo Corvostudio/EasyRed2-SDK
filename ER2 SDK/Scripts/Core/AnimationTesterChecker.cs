@@ -151,7 +151,8 @@ public static class AnimationTesterTool
         // Lock: tutto NotEditable, poi sblocca CenterSpine2_BJ + figli (per animare),
         // poi rilocka l'arma (figlia di CenterSpine) e gli SkinnedMeshRenderer
         SetHideFlagsRecursive(animRoot.transform, HideFlags.NotEditable);
-        SetHideFlagsRecursive(centerSpine, HideFlags.None);
+        foreach (Transform child in centerSpine.parent)
+            SetHideFlagsRecursive(child, HideFlags.None);
         weapClone.gameObject.hideFlags = HideFlags.NotEditable;
         //SetHideFlagsRecursive(weapClone.transform, HideFlags.NotEditable);
         foreach (var smr in animRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true))
