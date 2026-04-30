@@ -10,7 +10,6 @@ using UnityEngine.SceneManagement;
 
 public partial class AmmoBeltsFPSManager : MonoBehaviour
 {
-    private short currentlyInstalled = -1;
     public FPSMagManager[] compatibleMagazines;
 }
 
