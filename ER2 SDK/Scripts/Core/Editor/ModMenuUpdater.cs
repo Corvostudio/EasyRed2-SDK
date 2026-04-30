@@ -224,25 +224,25 @@ public class ModMenuUpdater : EditorWindow
 
     /// <summary>
     /// Opens the updater window in the "SDK not installed" state.
-    /// Idempotent: never overrides an in-progress or just-finished install flow.
+    /// Wipes any persisted state from a previous install run: by definition the SDK
+    /// is now missing, so old "Downloaded" stats and failure lists are stale.
     /// </summary>
     public static void ShowNotInstalledWindow()
     {
-        var win = GetWindow<ModMenuUpdater>("ModMenuUpdater");
-
-        // Non disturbare un flusso di install/post-install attivo.
-        if (checkStatus == CheckStatus.Checking ||
-            checkStatus == CheckStatus.Downloading ||
-            checkStatus == CheckStatus.Installing ||
-            checkStatus == CheckStatus.Downloaded ||
-            checkStatus == CheckStatus.DownloadedWithErrors)
-        {
-            win.Focus();
-            return;
-        }
+        // L'SDK è mancante: qualsiasi stato persistito da un'install precedente è
+        // obsoleto. Pulisci PRIMA di GetWindow, così se la finestra viene creata
+        // adesso il suo OnEnable -> RestoreSessionState non ripristina nulla.
+        ClearSessionState();
+        failures.Clear();
+        copiedFiles = 0;
+        skippedFiles = 0;
+        deletedFiles = 0;
+        newVersion = 0;
+        error_str = "";
 
         checkStatus = CheckStatus.NotInstalled;
-        error_str = "";
+
+        var win = GetWindow<ModMenuUpdater>("ModMenuUpdater");
         win.Focus();
         RepaintWindow();
     }
