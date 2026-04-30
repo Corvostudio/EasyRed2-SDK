@@ -1,17 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using UnityEngine;
 
 #if UNITY_EDITOR
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
-using UnityEditor.SceneManagement;
-using UnityEditor;
 
 #if UNITY_2021_2_OR_NEWER
 using UnityEditor.SceneManagement;
