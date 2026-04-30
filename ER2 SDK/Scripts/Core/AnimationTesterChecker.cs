@@ -152,6 +152,7 @@ public static class AnimationTesterTool
         // poi rilocka l'arma (figlia di CenterSpine) e gli SkinnedMeshRenderer
         SetHideFlagsRecursive(animRoot.transform, HideFlags.NotEditable);
         SetHideFlagsRecursive(centerSpine, HideFlags.None);
+        weapClone.gameObject.hideFlags = HideFlags.NotEditable;
         //SetHideFlagsRecursive(weapClone.transform, HideFlags.NotEditable);
         foreach (var smr in animRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             smr.gameObject.hideFlags = HideFlags.NotEditable;
