@@ -21,11 +21,11 @@ public class HandsPlacementChecker : MonoBehaviour
         {
             right_hand.transform.localPosition = Vector3.zero;
             right_hand.transform.localScale = left_hand.transform.localScale = transform.localScale = Vector3.one;
-            transform.position = attached_weapon.transform.position;
+            transform.position = attached_weapon.transform.position + attached_weapon.transform.TransformDirection(attached_weapon.tpsAnims.localPosInHands);
 
             if (attached_weapon.leftHandHoldPosition)
             {
-                left_hand.transform.position = attached_weapon.leftHandHoldPosition.position;
+                left_hand.transform.position = attached_weapon.leftHandHoldPosition.position + attached_weapon.transform.TransformDirection(attached_weapon.tpsAnims.localPosInHands);
                 left_hand.transform.rotation = attached_weapon.leftHandHoldPosition.rotation;
                 if (!left_hand.gameObject.activeSelf)
                     left_hand.gameObject.SetActive(true);
