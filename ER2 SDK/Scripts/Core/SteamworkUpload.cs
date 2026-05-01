@@ -59,7 +59,7 @@ public class SteamworkUpload : MonoBehaviour
         Scene tempScene = SceneManager.CreateScene("ER2_UploadTempScene");
         SceneManager.SetActiveScene(tempScene);
 
-        EnsureUploadCamera();
+        //EnsureUploadCamera();
 
         for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
         {
@@ -82,6 +82,7 @@ public class SteamworkUpload : MonoBehaviour
         instance = this;
         Application.logMessageReceived += HandleLog;
         BuildUI();
+        EnsureUploadCamera(); 
 
         createWSItem_result = CallResult<CreateItemResult_t>.Create(OnWorkshopFileCreated);
         submitItemUpdate_result = CallResult<SubmitItemUpdateResult_t>.Create(OnModUploadedWorkshop);
@@ -143,17 +144,39 @@ public class SteamworkUpload : MonoBehaviour
 
         prevStatus = status;
     }
-    private static void EnsureUploadCamera()
-    {
-        if (Camera.main != null) return;
+    private static Camera _uploadCam;
 
-        var camGo = new GameObject("ER2_UploadCamera");
-        var cam = camGo.AddComponent<Camera>();
-        cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.06f, 0.06f, 0.08f, 1f);
-        cam.nearClipPlane = 0.01f;
-        cam.farClipPlane = 10f;
-        cam.tag = "MainCamera";
+    private void EnsureUploadCamera()
+    {
+        // Disabilita camere preesistenti per evitare conflitti.
+        foreach (var c in FindObjectsOfType<Camera>(true))
+        {
+            if (c == null || c == _uploadCam) continue;
+            try { c.enabled = false; c.gameObject.SetActive(false); } catch { }
+        }
+
+        if (_uploadCam == null)
+        {
+            var camGo = new GameObject("ER2_UploadCamera");
+            DontDestroyOnLoad(camGo);
+            try { camGo.tag = "MainCamera"; } catch { }
+
+            _uploadCam = camGo.AddComponent<Camera>();
+            _uploadCam.clearFlags = CameraClearFlags.SolidColor;
+            _uploadCam.backgroundColor = new Color(0.06f, 0.06f, 0.08f, 1f);
+            _uploadCam.cullingMask = ~0;
+            _uploadCam.depth = 1000;
+            _uploadCam.targetDisplay = 0;
+            _uploadCam.nearClipPlane = 0.01f;
+            _uploadCam.farClipPlane = 10f;
+            _uploadCam.allowHDR = false;
+            _uploadCam.allowMSAA = false;
+            _uploadCam.orthographic = true;
+            _uploadCam.orthographicSize = 1f;
+        }
+
+        _uploadCam.enabled = true;
+        _uploadCam.gameObject.SetActive(true);
     }
 
     private static string StatusLabel(EItemUpdateStatus s)
@@ -209,8 +232,7 @@ public class SteamworkUpload : MonoBehaviour
         scaler.referenceResolution = new Vector2(1920, 1080);
         scaler.matchWidthOrHeight = 0.5f;
 
-        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
-                  ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+        Font font = Resources.Load<Font>("UploaderFont");
 
         // Full-screen dim
         var dim = MakeImage("Dim", canvasGo.transform, new Color(0.06f, 0.06f, 0.08f, 0.97f));
