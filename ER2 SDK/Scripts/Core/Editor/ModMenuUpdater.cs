@@ -33,7 +33,16 @@ public class ModMenuUpdater : EditorWindow
         "Steam SDK"
     };
 
+    private static readonly string[] CLEANUP_FOLDERS =
+    {
+        "Steam SDK/com.rlabrecque.steamworks.net",
+        "Steam SDK/Steamworks.NET",
+        "ER2 SDK/Scripts/Core",
+        "ER2 SDK/Scripts/ER2 Components"
+    };
+
     private static readonly string SYNC_FOLDERS_LIST = string.Join(", ", SYNC_FOLDERS);
+    private static readonly string CLEANUP_FOLDERS_LIST = string.Join("\n  • ", CLEANUP_FOLDERS);
 
     private static readonly HashSet<string> SKIP_ROOT_FILES = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
@@ -312,34 +321,62 @@ public class ModMenuUpdater : EditorWindow
         GetVersionAsync(true);
     }
 
+    private static string _currentBackupFolder;
     private static bool ConfirmBackupBeforeUpdate()
     {
-        string protectedPathWarning = "";
+        bool zh = IsChineseSystem();
+
+        string protectedWarning = "";
         if (IsProjectInProtectedPath(out string detectedPath))
         {
-            protectedPathWarning =
-                "\n\n⚠ WARNING: this Unity project is located inside a protected system folder:\n" +
-                "  " + detectedPath + "\n" +
-                "Updates from there usually fail unless Unity is launched as Administrator. " +
-                "It is strongly recommended to move the project to a normal user folder " +
-                "(e.g. Documents or a dedicated Dev folder on your disk) before updating.";
+            protectedWarning = zh
+                ? "\n\n⚠ 项目位于受保护的系统文件夹中 (" + detectedPath + ")。请在更新前将项目移动到普通用户文件夹，或以管理员身份运行 Unity。"
+                : "\n\n⚠ Project is in a protected system folder (" + detectedPath + "). Move it to a normal user folder before updating, or run Unity as Administrator.";
         }
 
-        string message =
-            "The updater will overwrite and delete files inside these SDK folders:\n\n" +
-            "  " + SYNC_FOLDERS_LIST + "\n\n" +
-            "Before continuing, please make sure that:\n" +
-            "  • You have a backup of your project (or it is on version control).\n" +
-            "  • Any personal assets, mods or work-in-progress files are stored OUTSIDE the folders listed above. " +
-            "Anything inside those folders that does not belong to the official SDK will be removed." +
-            protectedPathWarning +
-            "\n\nDo you want to proceed with the update?";
+        string title;
+        string message;
+        string ok;
+        string cancel;
 
-        return EditorUtility.DisplayDialog(
-            "ER2 SDK Update — confirm",
-            message,
-            "I have a backup, update now",
-            "Cancel");
+        if (zh)
+        {
+            title = "ER2 SDK 更新";
+            message =
+                "更新程序将覆盖以下文件夹中的 SDK 文件：" + SYNC_FOLDERS_LIST + "\n" +
+                "并删除以下子文件夹中的过时文件：\n  • " + CLEANUP_FOLDERS_LIST + "\n\n" +
+                "所有被覆盖或删除的文件都会被移动到：\n" +
+                "  Library/ER2_SDK_Backups/<时间戳>/\n" +
+                "不会永久丢失任何文件 — 你可以随时从该目录恢复。\n\n" +
+                "上述文件夹之外的文件绝不会被修改。" +
+                protectedWarning;
+            ok = "更新";
+            cancel = "取消";
+        }
+        else
+        {
+            title = "ER2 SDK Update";
+            message =
+                "The updater will overwrite SDK files in: " + SYNC_FOLDERS_LIST + "\n" +
+                "and remove obsolete files in:\n  • " + CLEANUP_FOLDERS_LIST + "\n\n" +
+                "EVERY file that gets overwritten or removed is moved to:\n" +
+                "  Library/ER2_SDK_Backups/<timestamp>/\n" +
+                "so nothing is permanently lost — you can restore any file from there.\n\n" +
+                "Files outside the folders listed above are never touched." +
+                protectedWarning;
+            ok = "Update";
+            cancel = "Cancel";
+        }
+
+        return EditorUtility.DisplayDialog(title, message, ok, cancel);
+    }
+
+    private static bool IsChineseSystem()
+    {
+        var lang = Application.systemLanguage;
+        return lang == SystemLanguage.Chinese
+            || lang == SystemLanguage.ChineseSimplified
+            || lang == SystemLanguage.ChineseTraditional;
     }
 
     [MenuItem("ER2 TOOLS/Update/Open SDK Download page")]
@@ -588,6 +625,8 @@ public class ModMenuUpdater : EditorWindow
             SetProgress(0.58f, "Validating update contents...");
             ValidateRepoContents(repoRoot);
 
+            InitBackupSession();
+
             try
             {
                 AssetDatabase.StartAssetEditing();
@@ -606,9 +645,8 @@ public class ModMenuUpdater : EditorWindow
                 AssetDatabase.StopAssetEditing();
             }
 
-            // Imposta lo stato finale PRIMA del Refresh: il Refresh può scatenare
-            // uno script reload che azzera gli static. Salviamo su SessionState e in
-            // OnEnable (dopo il reload) ricarichiamo questi valori.
+            PruneOldBackupSessions(5);
+
             checkStatus = failures.Count == 0
                 ? CheckStatus.Downloaded
                 : CheckStatus.DownloadedWithErrors;
@@ -677,12 +715,9 @@ public class ModMenuUpdater : EditorWindow
     // ---------------- Robust file ops ----------------
 
     /// <summary>
-    /// Sostituisce un file in modo robusto.
-    /// Su Windows i DLL caricati da Unity (es. steam_api64.dll) sono lockati per la SCRITTURA
-    /// ma NON per la cancellazione: LoadLibrary apre l'immagine con FILE_SHARE_DELETE, quindi
-    /// File.Delete riesce anche con la DLL caricata. Cancelliamo prima e ricopiamo da capo.
-    /// L'editor in esecuzione continua a usare la vecchia immagine in RAM fino al prossimo avvio,
-    /// ma il file su disco è già aggiornato.
+    /// Sostituisce un file in modo robusto. Prima di sovrascrivere, sposta il file
+    /// vecchio in Library/ER2_SDK_Backups/<sessione>/ così l'utente può sempre
+    /// recuperarlo (incluso il suo .meta).
     /// </summary>
     private static void SafeReplaceFile(string srcFile, string dstFile)
     {
@@ -690,23 +725,12 @@ public class ModMenuUpdater : EditorWindow
         if (!Directory.Exists(dstDir))
             Directory.CreateDirectory(dstDir);
 
-        RunWithRetry(() =>
-        {
-            if (File.Exists(dstFile))
-            {
-                try
-                {
-                    FileAttributes attr = File.GetAttributes(dstFile);
-                    if ((attr & FileAttributes.ReadOnly) != 0)
-                        File.SetAttributes(dstFile, attr & ~FileAttributes.ReadOnly);
-                }
-                catch { /* best-effort */ }
+        // 1) Sposta il vecchio in backup (se presente). Il move sposta anche il .meta.
+        if (File.Exists(dstFile))
+            MoveToBackup(dstFile);
 
-                File.Delete(dstFile);
-            }
-
-            File.Copy(srcFile, dstFile, false);
-        });
+        // 2) Copia il nuovo file in posizione.
+        RunWithRetry(() => File.Copy(srcFile, dstFile, false));
     }
 
     private const int RETRY_ATTEMPTS = 3;
@@ -871,11 +895,19 @@ public class ModMenuUpdater : EditorWindow
 
     private static void RemoveObsoleteFiles(string repoRoot, string projectAssetsFolder)
     {
-        foreach (string folder in SYNC_FOLDERS)
+        foreach (string folder in CLEANUP_FOLDERS)
         {
             string srcRoot = Path.Combine(repoRoot, folder);
             string dstRoot = Path.Combine(projectAssetsFolder, folder);
             if (!Directory.Exists(dstRoot)) continue;
+
+            // Se la cartella non è nel nuovo zip, non rimuoviamo nulla: meglio file
+            // vecchi che cancellazioni in massa su un'assunzione sbagliata.
+            if (!Directory.Exists(srcRoot))
+            {
+                Debug.LogWarning("ER2 SDK: cleanup folder '" + folder + "' missing from update package, skipping cleanup for it.");
+                continue;
+            }
 
             HashSet<string> sourceFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (string srcFile in Directory.GetFiles(srcRoot, "*", SearchOption.AllDirectories))
@@ -887,31 +919,245 @@ public class ModMenuUpdater : EditorWindow
             foreach (string dstFile in Directory.GetFiles(dstRoot, "*", SearchOption.AllDirectories))
             {
                 if (ShouldSkipFile(dstFile)) continue;
+                // I .meta sono gestiti automaticamente da MoveToBackup insieme al file principale.
+                if (dstFile.EndsWith(".meta", StringComparison.OrdinalIgnoreCase)) continue;
 
                 string rel = NormalizeRelativePath(GetRelativePath(dstRoot, dstFile));
                 if (sourceFiles.Contains(rel)) continue;
 
                 try
                 {
-                    RunWithRetry(() =>
-                    {
-                        FileAttributes attr = File.GetAttributes(dstFile);
-                        if ((attr & FileAttributes.ReadOnly) != 0)
-                            File.SetAttributes(dstFile, attr & ~FileAttributes.ReadOnly);
-
-                        File.Delete(dstFile);
-                    });
+                    MoveToBackup(dstFile);
                     deletedFiles++;
                 }
                 catch (Exception e)
                 {
-                    RecordFailure(dstFile, "Delete obsolete file", e);
+                    RecordFailure(dstFile, "Move obsolete file to backup", e);
                 }
+            }
+
+            // Pulizia .meta orfani residui (file principale già rimosso in run precedenti).
+            foreach (string dstFile in Directory.GetFiles(dstRoot, "*.meta", SearchOption.AllDirectories))
+            {
+                string main = dstFile.Substring(0, dstFile.Length - ".meta".Length);
+                if (File.Exists(main) || Directory.Exists(main)) continue;
+                try { File.Delete(dstFile); } catch { /* best-effort */ }
             }
 
             try { DeleteEmptyDirectories(dstRoot); }
             catch { /* best-effort */ }
         }
+    }
+
+    /// <summary>
+    /// Inizializza la cartella di backup per la sessione di update corrente.
+    /// La cartella viene creata lazily al primo file backuppato.
+    /// </summary>
+    private static void InitBackupSession()
+    {
+        string backupRoot = Path.Combine(
+            Directory.GetParent(Application.dataPath).FullName,
+            "Library", "ER2_SDK_Backups");
+
+        string sessionName = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + "_v" + VERSION;
+        _currentBackupFolder = Path.Combine(backupRoot, sessionName);
+    }
+
+    /// <summary>
+    /// Sposta un file (e il suo .meta) nella cartella di backup della sessione,
+    /// preservando la struttura di path relativa alla root del progetto.
+    /// Throws on failure: il chiamante decide se considerarlo un fallimento dell'operazione.
+    /// </summary>
+    private static void MoveToBackup(string fullPath)
+    {
+        if (string.IsNullOrEmpty(_currentBackupFolder))
+            throw new InvalidOperationException("Backup session not initialized.");
+
+        string projectRoot = Path.GetFullPath(Directory.GetParent(Application.dataPath).FullName);
+        string normalized = Path.GetFullPath(fullPath);
+        if (!normalized.StartsWith(projectRoot, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Path outside project root: " + fullPath);
+
+        string rel = normalized
+            .Substring(projectRoot.Length)
+            .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        string backupPath = Path.Combine(_currentBackupFolder, rel);
+        Directory.CreateDirectory(Path.GetDirectoryName(backupPath));
+
+        RunWithRetry(() =>
+        {
+            try
+            {
+                FileAttributes attr = File.GetAttributes(fullPath);
+                if ((attr & FileAttributes.ReadOnly) != 0)
+                    File.SetAttributes(fullPath, attr & ~FileAttributes.ReadOnly);
+            }
+            catch { /* best-effort */ }
+
+            if (File.Exists(backupPath)) File.Delete(backupPath);
+            File.Move(fullPath, backupPath);
+        });
+
+        // Sposta anche il .meta in backup, così il file e il suo .meta restano accoppiati.
+        string meta = fullPath + ".meta";
+        if (File.Exists(meta))
+        {
+            try
+            {
+                string metaBackup = backupPath + ".meta";
+                if (File.Exists(metaBackup)) File.Delete(metaBackup);
+                File.Move(meta, metaBackup);
+            }
+            catch { /* best-effort: il .meta orfano verrà comunque ripulito */ }
+        }
+    }
+
+    /// <summary>
+    /// Mantiene solo le ultime N sessioni di backup in Library/ER2_SDK_Backups/
+    /// per evitare che la cartella cresca all'infinito tra mille update.
+    /// </summary>
+    private static void PruneOldBackupSessions(int keep)
+    {
+        try
+        {
+            string backupRoot = Path.Combine(
+                Directory.GetParent(Application.dataPath).FullName,
+                "Library", "ER2_SDK_Backups");
+            if (!Directory.Exists(backupRoot)) return;
+
+            var sessions = new DirectoryInfo(backupRoot).GetDirectories();
+            Array.Sort(sessions, (a, b) => b.CreationTimeUtc.CompareTo(a.CreationTimeUtc));
+
+            for (int i = keep; i < sessions.Length; i++)
+            {
+                try { sessions[i].Delete(true); } catch { /* best-effort */ }
+            }
+        }
+        catch { /* best-effort */ }
+    }
+
+    /// <summary>
+    /// Sposta un file nel Cestino di sistema usando AssetDatabase.MoveAssetToTrash
+    /// (gestisce automaticamente il .meta). Fallback a File.Delete + .meta delete
+    /// se MoveAssetToTrash fallisce, ad esempio per file appena copiati e non ancora
+    /// indicizzati nell'AssetDatabase.
+    /// </summary>
+    private static void TryTrashFile(string fullPath)
+    {
+        string projectRoot = Path.GetFullPath(Directory.GetParent(Application.dataPath).FullName);
+        string normalized = Path.GetFullPath(fullPath);
+
+        if (normalized.StartsWith(projectRoot, StringComparison.OrdinalIgnoreCase))
+        {
+            string assetPath = normalized
+                .Substring(projectRoot.Length)
+                .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .Replace('\\', '/');
+
+            if (AssetDatabase.MoveAssetToTrash(assetPath))
+                return;
+        }
+
+        // Fallback: delete diretto
+        RunWithRetry(() =>
+        {
+            try
+            {
+                FileAttributes attr = File.GetAttributes(fullPath);
+                if ((attr & FileAttributes.ReadOnly) != 0)
+                    File.SetAttributes(fullPath, attr & ~FileAttributes.ReadOnly);
+            }
+            catch { /* best-effort */ }
+            File.Delete(fullPath);
+        });
+
+        string meta = fullPath + ".meta";
+        if (File.Exists(meta))
+        {
+            try { File.Delete(meta); } catch { /* best-effort */ }
+        }
+    }
+
+    /// <summary>
+    /// Crea uno zip delle cleanup folder in Library/ER2_SDK_Backups/ prima di rimuovere
+    /// qualsiasi file. Library/ è esclusa dal progetto Unity (ignorata da git, non viene
+    /// importata, non gonfia le build) ma resta sul disco dell'utente, quindi è un
+    /// safety net immediato senza essere invasivo.
+    /// </summary>
+    private static void BackupCleanupFolders(string projectAssetsFolder)
+    {
+        try
+        {
+            string backupRoot = Path.Combine(
+                Directory.GetParent(Application.dataPath).FullName,
+                "Library", "ER2_SDK_Backups");
+            Directory.CreateDirectory(backupRoot);
+
+            string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string backupZip = Path.Combine(backupRoot, "pre_update_v" + VERSION + "_" + stamp + ".zip");
+
+            // Stage in una cartella temporanea per zippare in un colpo solo
+            string staging = Path.Combine(Application.temporaryCachePath, "er2_sdk_backup_stage");
+            if (Directory.Exists(staging)) Directory.Delete(staging, true);
+            Directory.CreateDirectory(staging);
+
+            bool anything = false;
+            foreach (string folder in CLEANUP_FOLDERS)
+            {
+                string src = Path.Combine(projectAssetsFolder, folder);
+                if (!Directory.Exists(src)) continue;
+
+                string dst = Path.Combine(staging, folder);
+                Directory.CreateDirectory(dst);
+                CopyDirectoryRecursive(src, dst);
+                anything = true;
+            }
+
+            if (anything)
+            {
+                ZipFile.CreateFromDirectory(staging, backupZip);
+                Debug.Log("ER2 SDK: pre-update backup written to " + backupZip);
+            }
+
+            try { Directory.Delete(staging, true); } catch { }
+
+            // Conserva solo gli ultimi 5 backup per non far crescere Library/ all'infinito
+            PruneOldBackups(backupRoot, 5);
+        }
+        catch (Exception e)
+        {
+            // Il fallimento del backup non deve bloccare l'update, ma va loggato.
+            Debug.LogWarning("ER2 SDK: pre-update backup failed: " + e.Message);
+        }
+    }
+
+    private static void CopyDirectoryRecursive(string src, string dst)
+    {
+        foreach (string dir in Directory.GetDirectories(src, "*", SearchOption.AllDirectories))
+        {
+            string rel = GetRelativePath(src, dir);
+            Directory.CreateDirectory(Path.Combine(dst, rel));
+        }
+        foreach (string file in Directory.GetFiles(src, "*", SearchOption.AllDirectories))
+        {
+            string rel = GetRelativePath(src, file);
+            File.Copy(file, Path.Combine(dst, rel), true);
+        }
+    }
+
+    private static void PruneOldBackups(string backupRoot, int keep)
+    {
+        try
+        {
+            var files = new DirectoryInfo(backupRoot).GetFiles("pre_update_*.zip");
+            Array.Sort(files, (a, b) => b.LastWriteTimeUtc.CompareTo(a.LastWriteTimeUtc));
+            for (int i = keep; i < files.Length; i++)
+            {
+                try { files[i].Delete(); } catch { }
+            }
+        }
+        catch { /* best-effort */ }
     }
 
     private static void DeleteEmptyDirectories(string root)
