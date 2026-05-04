@@ -184,7 +184,7 @@ public class ChangeAssetGUID : EditorWindow
 
 public class ReplaceGuidReferences : EditorWindow
 {
-    private const string MenuPath = "ER2 TOOLS/Tools/Replace GUID References...";
+    private const string MenuPath = "ER2 TOOLS/Tools/GUIDs/Replace GUID References...";
 
     private UnityEngine.Object oldAsset;
     private UnityEngine.Object newAsset;
