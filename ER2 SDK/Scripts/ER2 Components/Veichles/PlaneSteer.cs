@@ -1,6 +1,5 @@
 using UnityEditor;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 public partial class PlaneSteer : MonoBehaviour
 {
