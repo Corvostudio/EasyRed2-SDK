@@ -1,4 +1,8 @@
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
+#endif
 
 
 public partial class TurretGun : Turret
@@ -42,6 +46,27 @@ public partial class TurretGun : Turret
         [Tooltip("ID of the shell to spawn")]
         public string shellPropID = "ShellAnimProp_75";
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        // SetDirty/MarkSceneDirty non sono sicuri dentro OnValidate (gira in deserializzazione).
+        EditorApplication.delayCall += DeferredMigrateFirePos;
+    }
+
+    private void DeferredMigrateFirePos()
+    {
+        if (this == null) return;          // distrutto/ricaricato nel frattempo
+        if (Application.isPlaying) return; // niente migrazione in play mode
+
+        if (!FixFirePositionsArrays()) return;
+
+        EditorUtility.SetDirty(this);
+        var scene = gameObject.scene;
+        if (scene.IsValid() && !string.IsNullOrEmpty(scene.path))
+            EditorSceneManager.MarkSceneDirty(scene);
+    }
+#endif
 }
 
 
@@ -57,8 +82,8 @@ public partial class TurretWeapon
     [Tooltip("Bundle that contains the FXs")]
     public string fireFx_bundle = "er2fxs";
 
-    [Tooltip("Transform position and direction to spawn the bullet from")]
-    public Transform firePos;
+    //[Tooltip("Transform position and direction to spawn the bullet from")]
+    [HideInInspector]public Transform firePos;
     [Tooltip("If this weapon has multiple barrels, you can configure multiple fire positions")]
     public Transform[] firePosMulti;
     [Tooltip("Volume of fire sound")]
