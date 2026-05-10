@@ -67,6 +67,41 @@ public partial class TurretGun : Turret
             EditorSceneManager.MarkSceneDirty(scene);
     }
 #endif
+
+    private bool FixFirePositionsArrays()
+    {
+        bool changed = false;
+        foreach (TurretWeapon tw in weapons)
+        {
+            if (tw == null || tw.firePos == null) continue;
+
+            // già contenuta?
+            bool isInArray = false;
+            Transform[] arr = tw.firePosMulti;
+            if (arr != null)
+            {
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    if (arr[i] == tw.firePos) { isInArray = true; break; }
+                }
+            }
+
+            // append se non c'è
+            if (!isInArray)
+            {
+                int oldLen = arr != null ? arr.Length : 0;
+                Transform[] newArr = new Transform[oldLen + 1];
+                for (int i = 0; i < oldLen; i++) newArr[i] = arr[i];
+                newArr[oldLen] = tw.firePos;
+                tw.firePosMulti = newArr;
+            }
+
+            // unassign del campo deprecato
+            tw.firePos = null;
+            changed = true;
+        }
+        return changed;
+    }
 }
 
 
