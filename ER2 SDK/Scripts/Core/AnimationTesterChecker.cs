@@ -155,6 +155,8 @@ public static class AnimationTesterTool
             SetHideFlagsRecursive(child, HideFlags.None);
         weapClone.hideFlags = HideFlags.None;
         weapClone.transform.hideFlags = HideFlags.None;
+        if(weapClone.GetComponent<Animation>())
+            GameObject.DestroyImmediate(weapClone.GetComponent<Animation>());
         //SetHideFlagsRecursive(weapClone.transform, HideFlags.NotEditable);
         foreach (var smr in animRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             smr.gameObject.hideFlags = HideFlags.NotEditable;
