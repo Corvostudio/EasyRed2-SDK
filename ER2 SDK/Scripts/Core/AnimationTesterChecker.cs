@@ -153,7 +153,7 @@ public static class AnimationTesterTool
         SetHideFlagsRecursive(animRoot.transform, HideFlags.NotEditable);
         foreach (Transform child in centerSpine.parent)
             SetHideFlagsRecursive(child, HideFlags.None);
-        weapClone.hideFlags = HideFlags.NotEditable;
+        weapClone.hideFlags = HideFlags.None;
         weapClone.transform.hideFlags = HideFlags.None;
         //SetHideFlagsRecursive(weapClone.transform, HideFlags.NotEditable);
         foreach (var smr in animRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true))
