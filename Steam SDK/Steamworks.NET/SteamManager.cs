@@ -1,184 +1,171 @@
-// The SteamManager is designed to work with Steamworks.NET
-// This file is released into the public domain.
-// Where that dedication is not recognized you are granted a perpetual,
-// irrevocable license to copy and modify this file as you see fit.
-//
-// Version: 1.0.13
-
+// SteamManager.cs - Unity 2022.3 LTS + Steamworks.NET 20.2.0+
 #if !(UNITY_STANDALONE_WIN || UNITY_STANDALONE_LINUX || UNITY_STANDALONE_OSX || STEAMWORKS_WIN || STEAMWORKS_LIN_OSX)
 #define DISABLESTEAMWORKS
 #endif
-
 using UnityEngine;
 #if !DISABLESTEAMWORKS
-using System.Collections;
 using Steamworks;
 #endif
 
-//
-// The SteamManager provides a base implementation of Steamworks.NET on which you can build upon.
-// It handles the basics of starting up and shutting down the SteamAPI for use.
-//
+[DefaultExecutionOrder(-10000)]
 [DisallowMultipleComponent]
-public class SteamManager : MonoBehaviour {
+public sealed class SteamManager : MonoBehaviour
+{
 #if !DISABLESTEAMWORKS
-	protected static bool s_EverInitialized = false;
+    public const uint APP_ID = 1324780;
 
-    public static readonly uint APP_ID = 1324780;
+    private static SteamManager _instance;
+    private static bool _initializationAttempted;
+    private static bool _everInitialized;
+    private bool _initialized;
+    private SteamAPIWarningMessageHook_t _warningHook;
 
-    protected static SteamManager s_instance;
-	protected static SteamManager Instance {
-		get {
-			if (s_instance == null) {
-				return new GameObject("SteamManager").AddComponent<SteamManager>();
-			}
-			else {
-				return s_instance;
-			}
-		}
-	}
+    public static bool Initialized => _instance != null && _instance._initialized;
+    public static bool InitializationAttempted => _initializationAttempted;
+    public static string LastInitError { get; private set; } = "";
+    public static ESteamAPIInitResult LastInitResult { get; private set; } = ESteamAPIInitResult.k_ESteamAPIInitResult_OK;
 
-	protected bool m_bInitialized = false;
-	public static bool Initialized {
-		get {
-			return Instance.m_bInitialized;
-		}
-	}
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        _instance = null;
+        _initializationAttempted = false;
+        _everInitialized = false;
+        LastInitError = "";
+        LastInitResult = ESteamAPIInitResult.k_ESteamAPIInitResult_OK;
+    }
 
-	protected SteamAPIWarningMessageHook_t m_SteamAPIWarningMessageHook;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void Bootstrap()
+    {
+        if (_instance != null) return;
+        var go = new GameObject(nameof(SteamManager));
+        DontDestroyOnLoad(go);
+        _instance = go.AddComponent<SteamManager>();
+    }
 
-	[AOT.MonoPInvokeCallback(typeof(SteamAPIWarningMessageHook_t))]
-	protected static void SteamAPIDebugTextHook(int nSeverity, System.Text.StringBuilder pchDebugText) {
-		Debug.LogWarning(pchDebugText);
-	}
+    private void Awake()
+    {
+        if (_instance != null && _instance != this) { Destroy(gameObject); return; }
+        _instance = this;
+        DontDestroyOnLoad(gameObject);
+        InitializeSteam();
+    }
 
-#if UNITY_2019_3_OR_NEWER
-	// In case of disabled Domain Reload, reset static members before entering Play Mode.
-	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-	private static void InitOnPlayMode()
-	{
-		s_EverInitialized = false;
-		s_instance = null;
-	}
-#endif
+    public static bool TryInitializeAgain()
+    {
+        if (_instance == null) Bootstrap();
+        if (_instance._initialized) return true;
+        Debug.Log("[Steam] Retrying SteamAPI initialization...");
+        return _instance.InitializeSteam();
+    }
 
-	protected virtual void Awake() {
-		// Only one instance of SteamManager at a time!
-		if (s_instance != null) {
-			Destroy(gameObject);
-			return;
-		}
-		s_instance = this;
+    private bool InitializeSteam()
+    {
+        if (_initialized) return true;
+        if (_everInitialized)
+        {
+            Debug.LogError("[Steam] SteamAPI was already initialized once this session.");
+            return false;
+        }
+        _initializationAttempted = true;
 
-		if(s_EverInitialized) {
-			// This is almost always an error.
-			// The most common case where this happens is when SteamManager gets destroyed because of Application.Quit(),
-			// and then some Steamworks code in some other OnDestroy gets called afterwards, creating a new SteamManager.
-			// You should never call Steamworks functions in OnDestroy, always prefer OnDisable if possible.
-			throw new System.Exception("Tried to Initialize the SteamAPI twice in one session!");
-		}
+        if (!Packsize.Test()) Debug.LogError("[Steam] Packsize.Test failed.");
+        if (!DllCheck.Test()) Debug.LogError("[Steam] DllCheck.Test failed.");
 
-		// We want our SteamManager Instance to persist across scenes.
-		DontDestroyOnLoad(gameObject);
+        // RestartAppIfNecessary protetto. Se l'exe viene lanciato fuori da Steam,
+        // questo lo rilancia tramite Steam. In build di release (senza steam_appid.txt
+        // accanto all'exe) NON crea loop.
+        try
+        {
+            if (SteamAPI.RestartAppIfNecessary(new AppId_t(APP_ID)))
+            {
+                Debug.Log("[Steam] RestartAppIfNecessary returned true. Quitting to relaunch via Steam.");
+                Application.Quit();
+                return false;
+            }
+        }
+        catch (System.DllNotFoundException e)
+        {
+            Debug.LogError("[Steam] steam_api DLL not found.\n" + e);
+            LastInitError = "steam_api DLL not found";
+            return false;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[Steam] Exception during RestartAppIfNecessary.\n" + e);
+            // non-fatal, proseguo verso Init
+        }
 
-		if (!Packsize.Test()) {
-			Debug.LogError("[Steamworks.NET] Packsize Test returned false, the wrong version of Steamworks.NET is being run in this platform.", this);
-		}
+        // InitEx -> codice di errore esatto. Indispensabile per diagnosi (case Cina/AV).
+        try
+        {
+            LastInitResult = SteamAPI.InitEx(out string errMsg);
+            LastInitError = errMsg ?? "";
+            _initialized = LastInitResult == ESteamAPIInitResult.k_ESteamAPIInitResult_OK;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[Steam] Exception during SteamAPI.InitEx()\n" + e);
+            LastInitError = e.Message;
+            _initialized = false;
+        }
 
-		if (!DllCheck.Test()) {
-			Debug.LogError("[Steamworks.NET] DllCheck Test returned false, One or more of the Steamworks binaries seems to be the wrong version.", this);
-		}
+        if (!_initialized)
+        {
+            DumpDiagnostics();
+            return false;
+        }
+        _everInitialized = true;
 
-		try {
-			// If Steam is not running or the game wasn't started through Steam, SteamAPI_RestartAppIfNecessary starts the
-			// Steam client and also launches this game again if the User owns it. This can act as a rudimentary form of DRM.
-			// Note that this will run which ever version you have installed in steam. Which may not be the precise executable
-			// we were currently running.
+        try
+        {
+            _warningHook = SteamAPIDebugTextHook;
+            SteamClient.SetWarningMessageHook(_warningHook);
+        }
+        catch { }
 
-			// Once you get a Steam AppID assigned by Valve, you need to replace AppId_t.Invalid with it and
-			// remove steam_appid.txt from the game depot. eg: "(AppId_t)480" or "new AppId_t(480)".
-			// See the Valve documentation for more information: https://partner.steamgames.com/doc/sdk/api#initialization_and_shutdown
-			if (SteamAPI.RestartAppIfNecessary(new Steamworks.AppId_t(APP_ID))) {
-				Debug.Log("[Steamworks.NET] Shutting down because RestartAppIfNecessary returned true. Steam will restart the application.");
+        Debug.Log($"[Steam] SteamAPI initialized. User: {SteamFriends.GetPersonaName()} | AppID: {SteamUtils.GetAppID()}");
+        return true;
+    }
 
-				Application.Quit();
-				return;
-			}
-		}
-		catch (System.DllNotFoundException e) { // We catch this exception here, as it will be the first occurrence of it.
-			Debug.LogError("[Steamworks.NET] Could not load [lib]steam_api.dll/so/dylib. It's likely not in the correct location. Refer to the README for more details.\n" + e, this);
+    private static void DumpDiagnostics()
+    {
+        Debug.LogError(
+            $"[Steam] Init failed. Result={LastInitResult} | Msg=\"{LastInitError}\"\n" +
+            $"OS: {SystemInfo.operatingSystem}\n" +
+            $"Lang: {Application.systemLanguage}\n" +
+            $"Path: {Application.dataPath}\n" +
+            $"CWD: {System.Environment.CurrentDirectory}\n" +
+            $"AppId: {APP_ID}"
+        );
+    }
 
-			Application.Quit();
-			return;
-		}
+    [AOT.MonoPInvokeCallback(typeof(SteamAPIWarningMessageHook_t))]
+    private static void SteamAPIDebugTextHook(int severity, System.Text.StringBuilder text)
+        => Debug.LogWarning("[SteamAPI] " + text);
 
-		// Initializes the Steamworks API.
-		// If this returns false then this indicates one of the following conditions:
-		// [*] The Steam client isn't running. A running Steam client is required to provide implementations of the various Steamworks interfaces.
-		// [*] The Steam client couldn't determine the App ID of game. If you're running your application from the executable or debugger directly then you must have a [code-inline]steam_appid.txt[/code-inline] in your game directory next to the executable, with your app ID in it and nothing else. Steam will look for this file in the current working directory. If you are running your executable from a different directory you may need to relocate the [code-inline]steam_appid.txt[/code-inline] file.
-		// [*] Your application is not running under the same OS user context as the Steam client, such as a different user or administration access level.
-		// [*] Ensure that you own a license for the App ID on the currently active Steam account. Your game must show up in your Steam library.
-		// [*] Your App ID is not completely set up, i.e. in Release State: Unavailable, or it's missing default packages.
-		// Valve's documentation for this is located here:
-		// https://partner.steamgames.com/doc/sdk/api#initialization_and_shutdown
-		m_bInitialized = SteamAPI.Init();
-		if (!m_bInitialized) {
-			Debug.LogError("[Steamworks.NET] SteamAPI_Init() failed. Refer to Valve's documentation or the comment above this line for more information.", this);
+    private void Update()
+    {
+        if (_initialized) SteamAPI.RunCallbacks();
+    }
 
-			return;
-		}
+    private void OnApplicationQuit() => ShutdownSteam();
+    private void OnDestroy()
+    {
+        if (_instance == this) { ShutdownSteam(); _instance = null; }
+    }
 
-		s_EverInitialized = true;
-	}
-
-	// This should only ever get called on first load and after an Assembly reload, You should never Disable the Steamworks Manager yourself.
-	protected virtual void OnEnable() {
-		if (s_instance == null) {
-			s_instance = this;
-		}
-
-		if (!m_bInitialized) {
-			return;
-		}
-
-		if (m_SteamAPIWarningMessageHook == null) {
-			// Set up our callback to receive warning messages from Steam.
-			// You must launch with "-debug_steamapi" in the launch args to receive warnings.
-			m_SteamAPIWarningMessageHook = new SteamAPIWarningMessageHook_t(SteamAPIDebugTextHook);
-			SteamClient.SetWarningMessageHook(m_SteamAPIWarningMessageHook);
-		}
-	}
-
-	// OnApplicationQuit gets called too early to shutdown the SteamAPI.
-	// Because the SteamManager should be persistent and never disabled or destroyed we can shutdown the SteamAPI here.
-	// Thus it is not recommended to perform any Steamworks work in other OnDestroy functions as the order of execution can not be garenteed upon Shutdown. Prefer OnDisable().
-	protected virtual void OnDestroy() {
-		if (s_instance != this) {
-			return;
-		}
-
-		s_instance = null;
-
-		if (!m_bInitialized) {
-			return;
-		}
-
-		SteamAPI.Shutdown();
-	}
-
-	protected virtual void Update() {
-		if (!m_bInitialized) {
-			return;
-		}
-
-		// Run Steam client callbacks
-		SteamAPI.RunCallbacks();
-	}
+    private void ShutdownSteam()
+    {
+        if (!_initialized) return;
+        try { SteamAPI.Shutdown(); } catch { }
+        _initialized = false;
+    }
 #else
-	public static bool Initialized {
-		get {
-			return false;
-		}
-	}
-#endif // !DISABLESTEAMWORKS
+    public static bool Initialized => false;
+    public static bool InitializationAttempted => false;
+    public static string LastInitError => "";
+    public static bool TryInitializeAgain() => false;
+#endif
 }
