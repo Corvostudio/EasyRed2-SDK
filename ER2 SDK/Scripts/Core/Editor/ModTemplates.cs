@@ -591,7 +591,7 @@ public class ModTemplates : MonoBehaviour
 
     private static void AdjustAccessoryPosition(Transform transform, List<GameObject> selectedGameObjects)
     {
-        transform.position = selectedGameObjects.Count > 0 && IsInstance(selectedGameObjects[0]) ?//se è selezionato una mesh di uno scope, ed è attiva nell'hierarchy
+        transform.position = selectedGameObjects.Count > 0 && IsInstance(selectedGameObjects[0]) ?//se ï¿½ selezionato una mesh di uno scope, ed ï¿½ attiva nell'hierarchy
             selectedGameObjects[0].transform.position ://usala come posizione
             Vector3.zero;//mettila al centro del mondo
     }
@@ -1138,8 +1138,8 @@ public class ModTemplates : MonoBehaviour
         Rigidbody rb = root.AddComponent<Rigidbody>();
         rb.mass = 5000;
         rb.isKinematic = true;
-        rb.angularDrag = 0.1f;
-        rb.drag = 0.1f;
+        rb.SetAngularDamping(0.1f);
+        rb.SetLinearDamping(0.1f);
         BoxCollider[] box = new BoxCollider[4];
         box[0] = root.AddComponent<BoxCollider>();
         box[0].center = new Vector3(0.01767862f, 1.853587f, 1.798799f);
@@ -1261,8 +1261,8 @@ public class ModTemplates : MonoBehaviour
         GameObject root = GenerateBaseRoot("My Plane", Selection.activeGameObject);
         GenerateVehicleTemplate(root, 3000, true);
         Rigidbody rb = root.GetComponent<Rigidbody>();
-        rb.drag = 0.06f;
-        rb.angularDrag = 0.2f;
+        rb.SetLinearDamping(0.06f);
+        rb.SetAngularDamping(0.2f);
         BoxCollider[] box = new BoxCollider[2];
         box[0] = root.AddComponent<BoxCollider>();
         box[0].center = new Vector3(0.01660877f, 1.228153f, 0.0699932f);
@@ -1856,7 +1856,7 @@ public class ModTemplates : MonoBehaviour
         }
     }
 
-    private static Seats GetDriverSeat(Seats[] seats) //SI POTREBBE FARE SIA LA VERSIONE SINGOLA CHE LA VERSIONE CON PIù SEDILI DA PILOTA
+    private static Seats GetDriverSeat(Seats[] seats) //SI POTREBBE FARE SIA LA VERSIONE SINGOLA CHE LA VERSIONE CON PIï¿½ SEDILI DA PILOTA
     {
         foreach (Seats seat in seats)
         {
