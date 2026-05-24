@@ -6,24 +6,21 @@ public sealed class EditorSteamworksNETSettingsElement : VisualElement
 {
     private readonly EditorSteamworksNETSettings _settings;
 
-    // This represents the GUID for com.rlabrecque.steamworks.net/Editor/Settings/EditorSteamworksNETSettingsStyleSheet.uss
-    // If this changes, update this value to match.
-    private const string UssFileGuid = "fcba6a16ac8056e418e5f791a8bbb67c";
+    private const string UssFilePath =
+        "Packages/com.rlabrecque.steamworks.net/Editor/Settings/EditorSteamworksNETSettingsStyleSheet.uss";
 
     public EditorSteamworksNETSettingsElement()
     {
         _settings = EditorSteamworksNETSettings.Instance;
-        
-        string ussFilePath = AssetDatabase.GUIDToAssetPath(UssFileGuid);
-        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(ussFilePath);
-        
+        var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(UssFilePath);
+
         if (styleSheet)
         {
             styleSheets.Add(styleSheet);
         }
         else
         {
-            throw new FileNotFoundException($"File not found: {ussFilePath}");
+            throw new FileNotFoundException($"File not found: {UssFilePath}");
         }
 
         var root = new VisualElement();
@@ -72,7 +69,6 @@ public sealed class EditorSteamworksNETSettingsElement : VisualElement
         var sectionHeader = new Label { text = title };
         sectionHeader.AddToClassList("steamworks-section__header");
 
-#if UNITY_2021_1_OR_NEWER
         var helpBox = new HelpBox();
         helpBox.AddToClassList("steamworks-section__description");
         var helpBoxIcon = new VisualElement();
@@ -82,10 +78,6 @@ public sealed class EditorSteamworksNETSettingsElement : VisualElement
         helpBoxLabel.AddToClassList("unity-help-box__label");
         helpBox.Add(helpBoxIcon);
         helpBox.Add(helpBoxLabel);
-#else
-        var helpBox = new Label { text = description };
-        helpBox.AddToClassList("steamworks-section__description");
-#endif
 
         content.AddToClassList("steamworks-section__content");
 
