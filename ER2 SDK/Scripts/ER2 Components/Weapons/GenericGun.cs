@@ -261,6 +261,9 @@ public partial class SupportedAttachment
 
     [Tooltip("If true, the player can still use iron sights even with this attachment installed (e.g. low-profile / co-witness scopes).")]
     public bool allowIronSight = false;
+
+    [Tooltip("Force gun shift when this attachment is installed. Meant to be used to prevent scope clippings with camera.")]
+    public Vector3 fpsShift = Vector3.zero;
 }
 
 public enum AttachmentType
