@@ -49,6 +49,7 @@ public partial class VehiclePlane : MovableVehicle
 
     [Tooltip("Registered bombs for the plane")]
     public BombBay[] bombBay = new BombBay[0];
+    [SerializeField] private BombBayAnimator bombBayAnim;
 
 
     [Tooltip("Left detachable wing")]
@@ -77,4 +78,11 @@ public enum PlaneType
 {
     Fighter,
     Bomber
+}
+
+[System.Serializable]
+public partial class BombBayAnimator
+{
+    public Animation animationComponent;
+    public string animationName;
 }

@@ -714,6 +714,7 @@ public class ItemIdAutoAssignPostprocessor : AssetPostprocessor
         {
             var item = instance.GetComponent<ItemObject>();
             if (item == null || item.item_id == newId) return;
+            Debug.Log($"[ItemId AutoSync] '{path}': '{item.item_id}' → '{newId}'");
             item.item_id = newId;
             PrefabUtility.SaveAsPrefabAsset(instance, path);
         }
