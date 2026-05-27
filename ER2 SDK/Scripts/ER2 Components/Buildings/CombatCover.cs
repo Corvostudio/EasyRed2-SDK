@@ -28,6 +28,7 @@ public partial class CombatCover : MonoBehaviour
     }
 
 
+#if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
         if (!enabled)
@@ -64,6 +65,7 @@ public partial class CombatCover : MonoBehaviour
             }
         }
     }
+#endif
 }
 
 public enum SoldierPose
