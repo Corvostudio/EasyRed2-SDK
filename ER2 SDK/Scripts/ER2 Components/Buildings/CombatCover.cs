@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -33,16 +35,33 @@ public partial class CombatCover : MonoBehaviour
 
         CombatCover[] covers = GetComponents<CombatCover>();
 
-        for (int i = 0; i < covers.Length; i++)
+        if (Selection.gameObjects.Contains(gameObject))
         {
-            CombatCover cover = covers[i];
-            if (cover == null || !cover.enabled)
-                continue;
+            for (int i = 0; i < covers.Length; i++)
+            {
+                CombatCover cover = covers[i];
+                if (cover == null || !cover.enabled)
+                    continue;
 
-            Vector3 center = cover.GetCoverPosition();
+                Vector3 center = cover.GetCoverPosition();
 
-            Gizmos.color = new Color(1f, 1f, 0f, 0.75f);
-            Gizmos.DrawSphere(center, .7f);
+                Gizmos.color = new Color(1f, 1f, 0f, 0.75f);
+                Gizmos.DrawSphere(center, .7f);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < covers.Length; i++)
+            {
+                CombatCover cover = covers[i];
+                if (cover == null || !cover.enabled)
+                    continue;
+
+                Vector3 center = cover.GetCoverPosition();
+
+                Gizmos.color = new Color(1f, 1f, 0f, 0.5f);
+                Gizmos.DrawSphere(center, .15f);
+            }
         }
     }
 }
