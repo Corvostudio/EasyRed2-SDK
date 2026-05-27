@@ -399,21 +399,51 @@ public class DestructibleManagerEditor : Editor
             if (string.IsNullOrEmpty(phased.onPhaseChangeEffect))
                 msgs.Add(new VMsg(MessageType.Info, $"[{i}] <b>{phased.name}</b>: <b>onPhaseChangeEffect</b> is empty (not always a bug, but usually set).", phased));
 
-            // Colliders (non-trigger)
-            var colls = phased.GetComponentsInChildren<Collider>(true);
-            bool hasSolidCollider = false;
-            foreach (var c in colls)
-            {
-                if (c == null) continue;
-                if (!c.isTrigger) { hasSolidCollider = true; break; }
-            }
-            if (!hasSolidCollider)
-                msgs.Add(new VMsg(MessageType.Warning, $"[{i}] <b>{phased.name}</b>: No <b>non-trigger colliders</b> found in children.", phased));
-
-            // BuildingImpact scripts
+            // BuildingImpact + Collider pairing check
             var impacts = phased.GetComponentsInChildren<BuildingImpact>(true);
             if (impacts == null || impacts.Length == 0)
-                msgs.Add(new VMsg(MessageType.Warning, $"[{i}] <b>{phased.name}</b>: No <b>BuildingImpact</b> found in children.", phased));
+            {
+                msgs.Add(new VMsg(MessageType.Warning,
+                    $"[{i}] <b>{phased.name}</b>: No <b>BuildingImpact</b> found in children.", phased));
+            }
+            else
+            {
+                int validPairs = 0;
+                foreach (var imp in impacts)
+                {
+                    if (imp == null) continue;
+
+                    bool hasSolidCollider = false;
+                    var localColls = imp.GetComponents<Collider>();
+                    for (int c = 0; c < localColls.Length; c++)
+                    {
+                        if (localColls[c] == null) continue;
+                        if (!localColls[c].isTrigger) { hasSolidCollider = true; break; }
+                    }
+
+                    if (!hasSolidCollider)
+                    {
+                        msgs.Add(new VMsg(
+                            MessageType.Error,
+                            $"[{i}] <b>{phased.name}</b>: <b>BuildingImpact</b> on '<b>{GetPath(imp.transform, phased.transform)}</b>' has <b>no non-trigger Collider</b> on the same GameObject. Without a collider it cannot receive hits and is a setup mistake.",
+                            imp
+                        ));
+                    }
+                    else
+                    {
+                        validPairs++;
+                    }
+                }
+
+                if (validPairs == 0)
+                {
+                    msgs.Add(new VMsg(
+                        MessageType.Error,
+                        $"[{i}] <b>{phased.name}</b>: No child GameObject has <b>BuildingImpact</b> + <b>Collider</b> together. At least one valid pair is required.",
+                        phased
+                    ));
+                }
+            }
 
             // Mesh / material / importer checks (strict)
             ValidateMeshesAndMaterials_Strict(phased.gameObject, $"[{i}] <b>{phased.name}</b>", msgs);
