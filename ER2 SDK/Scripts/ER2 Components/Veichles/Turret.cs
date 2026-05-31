@@ -47,17 +47,6 @@ public partial class Turret : MonoBehaviour
 
     public static readonly byte MAX_TURRET_ROTATION = 180;
 
-
-    public virtual Vector3 LookPos()
-    {
-        if (lookPosition != null)
-            return lookPosition.position + transform.up * .15f;
-        else if (scopePosition != null)
-            return scopePosition.position + transform.up * .25f;
-        else
-            return transform.position + Vector3.up * 1.5f + Vector3.forward * 1f;
-    }
-
 #if UNITY_EDITOR
     protected virtual void OnDrawGizmosSelected()
     {
