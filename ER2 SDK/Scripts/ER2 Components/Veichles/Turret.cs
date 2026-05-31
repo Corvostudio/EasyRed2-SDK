@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
+using UnityEditor;
 using UnityEngine;
 
 public partial class Turret : MonoBehaviour
@@ -50,6 +52,9 @@ public partial class Turret : MonoBehaviour
 #if UNITY_EDITOR
     protected virtual void OnDrawGizmosSelected()
     {
+        if (!Selection.gameObjects.Contains(gameObject))
+            return;
+
         // reference frames (most accurate at rest pose; in play mode the arcs follow the live traverse)
         Vector3 turretUp = transform.up;
         Vector3 yawPivot = yAxis != null ? yAxis.transform.position : transform.position;

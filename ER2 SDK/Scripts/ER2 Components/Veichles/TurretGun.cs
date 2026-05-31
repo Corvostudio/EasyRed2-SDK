@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Linq;
+
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -106,6 +108,9 @@ public partial class TurretGun : Turret
 #if UNITY_EDITOR
     protected override void OnDrawGizmosSelected()
     {
+        if (!Selection.gameObjects.Contains(gameObject))
+            return;
+
         base.OnDrawGizmosSelected();
 
         if (weapons == null) return;
