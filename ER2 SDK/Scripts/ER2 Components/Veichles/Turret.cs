@@ -45,6 +45,8 @@ public partial class Turret : MonoBehaviour
     [Tooltip("Rotation turn sound")]
     public AudioClip turnSoundLoop_outside;
 
+    public static readonly byte MAX_TURRET_ROTATION = 180;
+
 
     public virtual Vector3 LookPos()
     {
