@@ -45,4 +45,85 @@ public partial class Turret : MonoBehaviour
     [Tooltip("Rotation turn sound")]
     public AudioClip turnSoundLoop_outside;
 
+
+    public virtual Vector3 LookPos()
+    {
+        if (lookPosition != null)
+            return lookPosition.position + transform.up * .15f;
+        else if (scopePosition != null)
+            return scopePosition.position + transform.up * .25f;
+        else
+            return transform.position + Vector3.up * 1.5f + Vector3.forward * 1f;
+    }
+
+#if UNITY_EDITOR
+    protected virtual void OnDrawGizmosSelected()
+    {
+        // reference frames (most accurate at rest pose; in play mode the arcs follow the live traverse)
+        Vector3 turretUp = transform.up;
+        Vector3 yawPivot = yAxis != null ? yAxis.transform.position : transform.position;
+        Vector3 pitchPivot = xAxis != null ? xAxis.transform.position : yawPivot;
+
+        Vector3 yawFwd = transform.forward;                                   // neutral traverse reference
+        Vector3 elevRef = yAxis != null ? yAxis.transform.forward : transform.forward; // traverse-only forward (no elevation baked in)
+        Vector3 pitchAxis = xAxis != null ? xAxis.transform.right
+                                          : (yAxis != null ? yAxis.transform.right : transform.right);
+
+        float traverseRadius = 3.5f;   // tweak to your turret scale
+        float elevationRadius = 2.5f;
+
+        // --- traverse (yaw) limits ---
+        bool full360 = yAxisBond >= MAX_TURRET_ROTATION;
+        Vector3 yawFrom = full360 ? yawFwd : Quaternion.AngleAxis(-yAxisBond, turretUp) * yawFwd;
+        float yawSweep = full360 ? 360f : 2f * yAxisBond;
+
+        UnityEditor.Handles.color = new Color(1f, 0.85f, 0.1f, 0.10f);
+        UnityEditor.Handles.DrawSolidArc(yawPivot, turretUp, yawFrom, yawSweep, traverseRadius);
+        UnityEditor.Handles.color = new Color(1f, 0.85f, 0.1f, 1f);
+        UnityEditor.Handles.DrawWireArc(yawPivot, turretUp, yawFrom, yawSweep, traverseRadius);
+        if (!full360)
+        {
+            UnityEditor.Handles.DrawLine(yawPivot, yawPivot + (Quaternion.AngleAxis(-yAxisBond, turretUp) * yawFwd) * traverseRadius);
+            UnityEditor.Handles.DrawLine(yawPivot, yawPivot + (Quaternion.AngleAxis(yAxisBond, turretUp) * yawFwd) * traverseRadius);
+        }
+        UnityEditor.Handles.Label(yawPivot + yawFwd * traverseRadius, full360 ? "Traverse 360°" : $"Traverse ±{yAxisBond}°");
+
+        // --- elevation / depression limits ---
+        Vector3 upLimit = Quaternion.AngleAxis(-xAxisBond, pitchAxis) * elevRef; // nose up   (-xAxisBond)
+        Vector3 downLimit = Quaternion.AngleAxis(xAxisBondDown, pitchAxis) * elevRef; // nose down (+xAxisBondDown)
+        float elevSweep = xAxisBond + xAxisBondDown;
+
+        UnityEditor.Handles.color = new Color(0.1f, 0.8f, 1f, 0.12f);
+        UnityEditor.Handles.DrawSolidArc(pitchPivot, pitchAxis, upLimit, elevSweep, elevationRadius);
+        UnityEditor.Handles.color = new Color(0.1f, 0.8f, 1f, 1f);
+        UnityEditor.Handles.DrawWireArc(pitchPivot, pitchAxis, upLimit, elevSweep, elevationRadius);
+        UnityEditor.Handles.DrawLine(pitchPivot, pitchPivot + upLimit * elevationRadius);
+        UnityEditor.Handles.DrawLine(pitchPivot, pitchPivot + downLimit * elevationRadius);
+        UnityEditor.Handles.Label(pitchPivot + upLimit * elevationRadius, $"Elev {xAxisBond}°");
+        UnityEditor.Handles.Label(pitchPivot + downLimit * elevationRadius, $"Dep {xAxisBondDown}°");
+
+        // --- standard zeroing direction ---
+        if (zeroingAngle > 0.01f)
+        {
+            Vector3 zeroDir = Quaternion.AngleAxis(-zeroingAngle, pitchAxis) * elevRef;
+            UnityEditor.Handles.color = new Color(1f, 0.2f, 0.6f, 1f);
+            UnityEditor.Handles.DrawLine(pitchPivot, pitchPivot + zeroDir * (elevationRadius + 0.5f));
+            UnityEditor.Handles.Label(pitchPivot + zeroDir * (elevationRadius + 0.6f), $"Zeroing {zeroingAngle:0.#}°");
+        }
+
+        // --- camera / scope markers ---
+        if (lookPosition != null)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawSphere(lookPosition.position, 0.12f);
+        }
+        if (scopePosition != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(scopePosition.position, 0.12f);
+            Gizmos.DrawLine(scopePosition.position, scopePosition.position + scopePosition.forward * 0.5f);
+        }
+    }
+#endif
+
 }

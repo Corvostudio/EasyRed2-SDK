@@ -102,6 +102,38 @@ public partial class TurretGun : Turret
         }
         return changed;
     }
+
+#if UNITY_EDITOR
+    protected override void OnDrawGizmosSelected()
+    {
+        base.OnDrawGizmosSelected();
+
+        if (weapons == null) return;
+
+        for (int w = 0; w < weapons.Length; w++)
+        {
+            TurretWeapon tw = weapons[w];
+            if (tw == null || tw.firePosMulti == null) continue;
+
+            for (int b = 0; b < tw.firePosMulti.Length; b++)
+            {
+                Transform fp = tw.firePosMulti[b];
+                if (fp == null) continue;
+
+                Gizmos.color = (w == 0) ? Color.red : new Color(1f, 0.5f, 0f); // main weapon red, secondary (coax MG, etc.) orange
+                Gizmos.DrawSphere(fp.position, 0.06f);
+
+                // muzzle direction + small arrow head
+                Vector3 tip = fp.position + fp.forward * 3f;
+                Gizmos.DrawLine(fp.position, tip);
+                Gizmos.DrawLine(tip, tip + (-fp.forward + fp.up * 0.5f).normalized * 0.25f);
+                Gizmos.DrawLine(tip, tip + (-fp.forward - fp.up * 0.5f).normalized * 0.25f);
+
+                UnityEditor.Handles.Label(fp.position, $"W{w} barrel {b}");
+            }
+        }
+    }
+#endif
 }
 
 
