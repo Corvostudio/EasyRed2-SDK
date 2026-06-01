@@ -1,4 +1,9 @@
+using System.Linq;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public partial class InternalVehiclePart : MonoBehaviour
 {
@@ -23,12 +28,18 @@ public partial class InternalVehiclePart : MonoBehaviour
         return new Bounds(transform.position, new Vector3(width, height, width));
     }
 
+#if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
+
+        if (!Selection.gameObjects.Contains(gameObject))
+            return;
+
         // Draw a yellow sphere at the transform's position
         Gizmos.color = Color.yellow;
         Gizmos.DrawCube(GetBounds().center, GetBounds().size);
     }
+#endif
 }
 
 public enum VehicleInternalPart

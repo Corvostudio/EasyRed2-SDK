@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Resources;
 using UnityEngine;
+using System.Linq;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -42,6 +44,8 @@ public partial class WheelColliderUpdater : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
+        if (!Selection.gameObjects.Contains(gameObject))
+            return;
 
         bool isCameraVeryClose = IsSceneCameraClose(transform.position, 50f);
         if (!isCameraVeryClose)
