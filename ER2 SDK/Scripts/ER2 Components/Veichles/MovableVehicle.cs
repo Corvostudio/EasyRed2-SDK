@@ -8,10 +8,6 @@ public partial class MovableVehicle : Vehicle
     [Range(3, 520)]
     public float maxKmhSpeed = 40;
 
-    //[Tooltip("Max hear distance for engine sound")]
-    //[Range(5, 1000)]
-    //public float maxEngineSoundDistance = 200;
-
     [Tooltip("Sound of the starting engine")]
     public AudioClip engine_start;
     [Tooltip("Sound of the engine shutting down")]

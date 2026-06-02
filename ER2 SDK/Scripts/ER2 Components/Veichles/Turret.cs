@@ -44,6 +44,10 @@ public partial class Turret : MonoBehaviour
 
     [Tooltip("When true it will prioritize attacking planes with any of it's weapons. However for the case of bombers, it will prioritize them anyway if the gun has Time Fuse Flak ammos.")]
     public bool isAA = false;//when isAA=true AI will target planes first, other later, when isAA=false AI will not target planes at all
+
+    [Tooltip("Increased night time AI visibility on this turret")]
+    [Range(0, 1)] public float minimumNightVision = 0;
+
     [Tooltip("Rotation turn sound")]
     public AudioClip turnSoundLoop_outside;
 

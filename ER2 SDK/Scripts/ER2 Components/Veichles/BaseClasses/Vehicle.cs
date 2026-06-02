@@ -29,6 +29,9 @@ public partial class Vehicle : MonoBehaviour, Damagable
 
     [Tooltip("Parts to detach in case of explosion")]
     public GameObject[] loosePartsOnInternalExplosion = new GameObject[0];
+
+    [Tooltip("Auto Transport Drivers")]
+    public AutoTransportDriverUniform[] autoTransportDrivers = new AutoTransportDriverUniform[0];
 }
 
 [System.Serializable]

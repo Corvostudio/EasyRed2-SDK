@@ -198,6 +198,13 @@ public partial class TurretWeapon
     [Tooltip("Show tracer every X shots. 0 means always use normal bullet FXs.")]
     [Range(0, 40)]
     public byte specifiedTracersRatio;//0: use normal tracer behaviour; >0: show a tracer every X shots
+
+    [Tooltip("ID of the base game sound. Not available in modding SDK yet.")]
+    public string reload_sound = "";
+    [Tooltip("Prevent aim down sight while reloading")]
+    public bool preventAimWhenReloading = false;
+    [Tooltip("ID of the base game animation. Not available in modding SDK yet.")]
+    public TurretWeaponAnimation onFireAnimation = null;
 }
 
 [System.Serializable]

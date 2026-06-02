@@ -14,6 +14,8 @@ public partial class Inventory
     [Tooltip("Defines the max weight carriable by the vehicle")]
     [Range(1, 10000)]
     public int maxWeight = 30;//Soldati aggiornano questo valore basato anche sulle borse che hanno
+
+    public List<VirtualItem> items = new List<VirtualItem>();
 }
     
 [System.Serializable]

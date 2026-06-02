@@ -184,7 +184,6 @@ public class ModTemplates : MonoBehaviour
         HG.compatibleAmmo = "ammo_9mm";
         HG.leftHandHoldPosition = null;
         HG.tpsAnims.userController = "CCV2_pistol";
-        //HG.tpsAnims.fpsAnimSet = HandheldItem.FPSAnimationSetID.pistolRun;
         HG.tpsAnims.IKWhenSprinting = false;
         HG.weaponPose = WeaponPose.pistol;
         HG.fireSound = (AudioClip)AssetDatabase.LoadAssetAtPath("Assets/ER2 SDK/Sounds/WeaponTemplate/Handgun/handgun_fire.mp3", typeof(AudioClip));
