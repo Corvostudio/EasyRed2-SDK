@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Linq;
+using System.Collections.Generic;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -145,6 +147,9 @@ public partial class TurretGun : Turret
 [System.Serializable]
 public partial class TurretWeapon
 {
+    [Tooltip("Optional shared weapon definition. When assigned, ammo/RPM/reload/dispersion/tracer/fire-FX/sounds are taken from this asset at runtime, and they are hidden + cleared on the prefab to keep builds light.")]
+    public TurretWeaponData data;
+
     [Tooltip("Ammo type of the weapon")]
     public TurretWeaponBullet[] ammos = new TurretWeaponBullet[1];
     [Tooltip("Fire FX when shooting the gun")]
@@ -205,6 +210,41 @@ public partial class TurretWeapon
     public bool preventAimWhenReloading = false;
     [Tooltip("ID of the base game animation. Not available in modding SDK yet.")]
     public TurretWeaponAnimation onFireAnimation = null;
+
+
+    /// <summary>
+    /// If a TurretWeaponData asset is assigned, copy its values onto this instance.
+    /// Called once from TurretGun.Awake before anything reads the weapon fields.
+    /// Mounting-specific fields (firePosMulti, reload_sound, preventAimWhenReloading,
+    /// onFireAnimation) are left untouched. Prefabs without an asset keep their inline values.
+    /// </summary>
+    public void ApplyData()
+    {
+        if (data == null)
+            return;
+
+        ammos = (data.ammos != null) ? (TurretWeaponBullet[])data.ammos.Clone() : new TurretWeaponBullet[0];
+
+        fireFx_id = data.fireFx_id;
+        fireFxContinuous_id = data.fireFxContinuous_id;
+        fireFx_bundle = data.fireFx_bundle;
+
+        fireSoundVolume = data.fireSoundVolume;
+        fireSound = data.fireSound;
+        fireSound_start = data.fireSound_start;
+        fireSound_loop = data.fireSound_loop;
+        fireSound_tail = data.fireSound_tail;
+        fireSound_distance = data.fireSound_distance;
+        fireSound_distance_loop = data.fireSound_distance_loop;
+        fireSound_distance_tail = data.fireSound_distance_tail;
+
+        isRecoilless = data.isRecoilless;
+        roundPerMinute = data.roundPerMinute;
+        reloadWhenFiring = data.reloadWhenFiring;
+        reloadTime = data.reloadTime;
+        dispersionAngle = data.dispersionAngle;
+        specifiedTracersRatio = data.specifiedTracersRatio;
+    }
 }
 
 [System.Serializable]
@@ -218,3 +258,246 @@ public partial struct TurretWeaponBullet
     [Range(0, 2500)]
     public int start_ammo_count;// = 25;
 }
+
+#if UNITY_EDITOR
+
+/// <summary>
+/// Dynamic inspector for <see cref="TurretWeapon"/> elements.
+///
+/// When a <see cref="TurretWeaponData"/> asset is assigned to "data":
+///   - the fields the asset owns (ammo, RPM, reload, dispersion, tracer, fire FX,
+///     sounds) are hidden, and
+///   - they are also CLEARED on the instance so they don't stay serialized in the
+///     prefab (no stale AudioClip / value references adding weight to the build).
+///
+/// When no asset is assigned the full authoring layout is shown (legacy workflow),
+/// plus a one-click button to extract the current values into a new asset.
+///
+/// Editor-only file: the whole thing is wrapped in UNITY_EDITOR so it never ends
+/// up in a player build, regardless of which folder you drop it in.
+/// </summary>
+[CustomPropertyDrawer(typeof(TurretWeapon))]
+public class TurretWeaponDrawer : PropertyDrawer
+{
+    // Owned by TurretWeaponData -> hidden & cleared on the instance when data != null.
+    static readonly string[] dataBackedFields =
+    {
+        "ammos",
+        "fireFx_id", "fireFxContinuous_id", "fireFx_bundle",
+        "fireSoundVolume",
+        "fireSound", "fireSound_start", "fireSound_loop", "fireSound_tail",
+        "fireSound_distance", "fireSound_distance_loop", "fireSound_distance_tail",
+        "isRecoilless", "roundPerMinute", "reloadWhenFiring",
+        "reloadTime", "dispersionAngle", "specifiedTracersRatio",
+    };
+
+    // Mounting / scene specific -> always shown. ("firePos" is [HideInInspector].)
+    static readonly string[] mountingFields =
+    {
+        "firePosMulti",
+        "reload_sound", "preventAimWhenReloading", "onFireAnimation",
+    };
+
+    const float Pad = 2f;
+
+    static bool HasData(SerializedProperty property)
+    {
+        var dataProp = property.FindPropertyRelative("data");
+        return dataProp != null && dataProp.objectReferenceValue != null;
+    }
+
+    static IEnumerable<SerializedProperty> VisibleChildren(SerializedProperty property, bool hasData)
+    {
+        var ordered = new List<string> { "data" };
+        if (!hasData)
+            ordered.AddRange(dataBackedFields);
+        ordered.AddRange(mountingFields);
+
+        foreach (var name in ordered)
+        {
+            var p = property.FindPropertyRelative(name);
+            if (p != null) yield return p;
+        }
+    }
+
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+    {
+        if (!property.isExpanded)
+            return EditorGUIUtility.singleLineHeight;
+
+        float h = EditorGUIUtility.singleLineHeight + Pad; // foldout
+        bool hasData = HasData(property);
+
+        if (hasData)
+            h += EditorGUIUtility.singleLineHeight * 2f + Pad; // info help box
+        else
+            h += EditorGUIUtility.singleLineHeight + Pad;      // "extract" button
+
+        foreach (var child in VisibleChildren(property, hasData))
+            h += EditorGUI.GetPropertyHeight(child, true) + Pad;
+
+        return h;
+    }
+
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        EditorGUI.BeginProperty(position, label, property);
+
+        // strip the SO-owned fields from the serialized prefab so they don't bloat the build.
+        // edit-time only: in play mode these fields hold the values ApplyData() copied from the asset.
+        if (!Application.isPlaying && HasData(property))
+            ClearDataBackedFields(property);
+
+        Rect line = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+        property.isExpanded = EditorGUI.Foldout(line, property.isExpanded, label, true);
+
+        if (property.isExpanded)
+        {
+            EditorGUI.indentLevel++;
+            float y = line.y + EditorGUIUtility.singleLineHeight + Pad;
+            bool hasData = HasData(property);
+
+            if (hasData)
+            {
+                // keep the prefab clean: strip everything the asset now provides
+                ClearDataBackedFields(property);
+
+                Rect info = new Rect(position.x, y, position.width, EditorGUIUtility.singleLineHeight * 2f);
+                EditorGUI.HelpBox(info,
+                    "Ammo, RPM, reload, dispersion, tracer, fire FX and sounds come from the assigned data asset. " +
+                    "Remove the asset to edit them inline again.", MessageType.Info);
+                y += EditorGUIUtility.singleLineHeight * 2f + Pad;
+            }
+            else
+            {
+                Rect btn = new Rect(position.x, y, position.width, EditorGUIUtility.singleLineHeight);
+                if (GUI.Button(btn, "Extract these values to a Turret Weapon Data asset…"))
+                    CreateAssetFromInline(property);
+                y += EditorGUIUtility.singleLineHeight + Pad;
+            }
+
+            foreach (var child in VisibleChildren(property, hasData))
+            {
+                float ch = EditorGUI.GetPropertyHeight(child, true);
+                Rect r = new Rect(position.x, y, position.width, ch);
+                EditorGUI.PropertyField(r, child, true);
+                y += ch + Pad;
+            }
+
+            EditorGUI.indentLevel--;
+        }
+
+        EditorGUI.EndProperty();
+    }
+
+    // ---- clearing ---------------------------------------------------------
+
+    static void ClearDataBackedFields(SerializedProperty property)
+    {
+        foreach (var name in dataBackedFields)
+        {
+            var p = property.FindPropertyRelative(name);
+            if (p != null) ClearProperty(p);
+        }
+    }
+
+    static void ClearProperty(SerializedProperty p)
+    {
+        if (p.isArray && p.propertyType == SerializedPropertyType.Generic)
+        {
+            if (p.arraySize != 0) p.arraySize = 0;
+            return;
+        }
+
+        switch (p.propertyType)
+        {
+            case SerializedPropertyType.ObjectReference:
+                if (p.objectReferenceValue != null) p.objectReferenceValue = null;
+                break;
+            case SerializedPropertyType.String:
+                if (!string.IsNullOrEmpty(p.stringValue)) p.stringValue = string.Empty;
+                break;
+            case SerializedPropertyType.Integer:
+                if (p.intValue != 0) p.intValue = 0;
+                break;
+            case SerializedPropertyType.Float:
+                if (p.floatValue != 0f) p.floatValue = 0f;
+                break;
+            case SerializedPropertyType.Boolean:
+                if (p.boolValue) p.boolValue = false;
+                break;
+        }
+    }
+
+    // ---- extract to asset -------------------------------------------------
+
+    static void CreateAssetFromInline(SerializedProperty property)
+    {
+        string path = EditorUtility.SaveFilePanelInProject(
+            "Create Turret Weapon Data", "TurretWeaponData", "asset",
+            "Choose where to save the new weapon data asset");
+        if (string.IsNullOrEmpty(path)) return;
+
+        var so = ScriptableObject.CreateInstance<TurretWeaponData>();
+        var dst = new SerializedObject(so);
+
+        foreach (var name in dataBackedFields)
+        {
+            var src = property.FindPropertyRelative(name);
+            var d = dst.FindProperty(name);
+            if (src != null && d != null) CopyProperty(src, d);
+        }
+        dst.ApplyModifiedPropertiesWithoutUndo();
+
+        AssetDatabase.CreateAsset(so, path);
+        AssetDatabase.SaveAssets();
+
+        // assign it; the inline fields get auto-cleared on the next repaint
+        property.FindPropertyRelative("data").objectReferenceValue = so;
+        EditorGUIUtility.PingObject(so);
+    }
+
+    // generic, recursive value copy between two SerializedProperties of the same shape
+    static void CopyProperty(SerializedProperty src, SerializedProperty dst)
+    {
+        if (src.propertyType == SerializedPropertyType.Generic)
+        {
+            if (src.isArray)
+            {
+                dst.arraySize = src.arraySize;
+                for (int i = 0; i < src.arraySize; i++)
+                    CopyProperty(src.GetArrayElementAtIndex(i), dst.GetArrayElementAtIndex(i));
+            }
+            else
+            {
+                var child = src.Copy();
+                var end = src.GetEndProperty();
+                bool enter = true;
+                while (child.NextVisible(enter) && !SerializedProperty.EqualContents(child, end))
+                {
+                    enter = false;
+                    var dChild = dst.FindPropertyRelative(child.name);
+                    if (dChild != null) CopyProperty(child, dChild);
+                }
+            }
+            return;
+        }
+
+        switch (src.propertyType)
+        {
+            case SerializedPropertyType.Integer: dst.intValue = src.intValue; break;
+            case SerializedPropertyType.Boolean: dst.boolValue = src.boolValue; break;
+            case SerializedPropertyType.Float: dst.floatValue = src.floatValue; break;
+            case SerializedPropertyType.String: dst.stringValue = src.stringValue; break;
+            case SerializedPropertyType.Enum: dst.enumValueIndex = src.enumValueIndex; break;
+            case SerializedPropertyType.Color: dst.colorValue = src.colorValue; break;
+            case SerializedPropertyType.ObjectReference: dst.objectReferenceValue = src.objectReferenceValue; break;
+            case SerializedPropertyType.Vector2: dst.vector2Value = src.vector2Value; break;
+            case SerializedPropertyType.Vector3: dst.vector3Value = src.vector3Value; break;
+            case SerializedPropertyType.Vector4: dst.vector4Value = src.vector4Value; break;
+            case SerializedPropertyType.Rect: dst.rectValue = src.rectValue; break;
+            case SerializedPropertyType.Bounds: dst.boundsValue = src.boundsValue; break;
+        }
+    }
+}
+#endif

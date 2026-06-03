@@ -577,7 +577,7 @@ namespace Corvostudio.EditorTools
             {
                 var wheelScript = go.AddComponent(wheelScriptType);
                 var so = new SerializedObject(wheelScript);
-                TryGetProp(so, "antiRollBar")?.SetValue(true);
+                //TryGetProp(so, "antiRollBar")?.SetValue(true);
                 TryGetProp(so, "steer_angle")?.SetValue(0f);
                 TrySetByte(so, "side", (byte)side);
                 var wt = so.FindProperty("wheelsTransform");
