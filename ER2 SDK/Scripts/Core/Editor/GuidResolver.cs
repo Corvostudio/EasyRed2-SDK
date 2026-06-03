@@ -248,7 +248,7 @@ public class GuidResolverWindow : EditorWindow
                 GUILayout.Label(StatusIcon(e.Status), _statusStyles[(int)e.Status], GUILayout.Width(20));
 
                 string title =
-                    $"GUID {e.MissingGuid.Substring(0, 8)}…   " +
+                    $"GUID {e.MissingGuid.Substring(0, 8)}...   " +
                     $"{e.UsedInFiles.Count} file(s)   " +
                     $"{e.ObservedFields.Count} field(s)";
                 GUILayout.Label(title, EditorStyles.boldLabel);
@@ -270,7 +270,7 @@ public class GuidResolverWindow : EditorWindow
             for (int i = 0; i < filesShown; i++)
                 EditorGUILayout.LabelField("  • " + e.UsedInFiles[i], EditorStyles.miniLabel);
             if (e.UsedInFiles.Count > filesShown)
-                EditorGUILayout.LabelField($"  … and {e.UsedInFiles.Count - filesShown} more", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField($"  ... and {e.UsedInFiles.Count - filesShown} more", EditorStyles.miniLabel);
 
             EditorGUILayout.Space(2);
 
@@ -324,13 +324,13 @@ public class GuidResolverWindow : EditorWindow
                     if (c.UnknownInScript != null && c.UnknownInScript.Count > 0)
                     {
                         string preview = c.UnknownInScript.Count > 8
-                            ? string.Join(", ", c.UnknownInScript.Take(8)) + $", … (+{c.UnknownInScript.Count - 8})"
+                            ? string.Join(", ", c.UnknownInScript.Take(8)) + $", ... (+{c.UnknownInScript.Count - 8})"
                             : string.Join(", ", c.UnknownInScript);
                         EditorGUILayout.LabelField("    not in script: " + preview, EditorStyles.miniLabel);
                     }
                 }
                 if (e.Candidates.Count > show)
-                    EditorGUILayout.LabelField($"  … {e.Candidates.Count - show} weaker candidate(s) hidden", EditorStyles.miniLabel);
+                    EditorGUILayout.LabelField($"  ... {e.Candidates.Count - show} weaker candidate(s) hidden", EditorStyles.miniLabel);
             }
 
             EditorGUILayout.Space(2);
@@ -436,15 +436,15 @@ public class GuidResolverWindow : EditorWindow
     {
         try
         {
-            EditorUtility.DisplayProgressBar("GUID Resolver", "Indexing project scripts…", 0f);
+            EditorUtility.DisplayProgressBar("GUID Resolver", "Indexing project scripts...", 0f);
             BuildScriptIndex();
 
-            EditorUtility.DisplayProgressBar("GUID Resolver", "Enumerating asset files…", 0.05f);
+            EditorUtility.DisplayProgressBar("GUID Resolver", "Enumerating asset files...", 0.05f);
             var files = Directory.EnumerateFiles(Application.dataPath, "*", SearchOption.AllDirectories)
                 .Where(p => ScanExtensions.Contains(Path.GetExtension(p)))
                 .ToList();
 
-            EditorUtility.DisplayProgressBar("GUID Resolver", $"Scanning {files.Count} files…", 0.1f);
+            EditorUtility.DisplayProgressBar("GUID Resolver", $"Scanning {files.Count} files...", 0.1f);
 
             // guid -> bag of (file, fieldsInThatBlock)
             var perGuid = new ConcurrentDictionary<string, ConcurrentBag<(string file, HashSet<string> fields)>>();
@@ -463,7 +463,7 @@ public class GuidResolverWindow : EditorWindow
                 }
             });
 
-            EditorUtility.DisplayProgressBar("GUID Resolver", "Matching against project scripts…", 0.7f);
+            EditorUtility.DisplayProgressBar("GUID Resolver", "Matching against project scripts...", 0.7f);
 
             _entries = new List<MissingScriptEntry>();
             foreach (var kv in perGuid)
@@ -775,7 +775,7 @@ public class GuidResolverWindow : EditorWindow
 
         int modified = 0, errors = 0;
 
-        EditorUtility.DisplayProgressBar("GUID Resolver", $"Patching {files.Count} files…", 0.1f);
+        EditorUtility.DisplayProgressBar("GUID Resolver", $"Patching {files.Count} files...", 0.1f);
         AssetDatabase.StartAssetEditing();
         try
         {

@@ -78,7 +78,7 @@ public partial class GenericGun : Weapon
     // ═════════════════════════════════════════════════════════════════════════
     [Header("⏺ Bolt / Manual Action")]
 
-    [Tooltip("True for bolt-action / pump-action weapons that require a manual cycle between shots (Kar98, Mosin, shotguns, PzB39…).")]
+    [Tooltip("True for bolt-action / pump-action weapons that require a manual cycle between shots (Kar98, Mosin, shotguns, PzB39...).")]
     public bool isManualBoltOperated = false;
 
     [Tooltip("If true, bolt action is performed BEFORE firing (e.g. PzB39: cycle, then shoot). If false (default), the bolt is cycled AFTER firing.")]
@@ -193,7 +193,7 @@ public partial class GenericGun : Weapon
     // ═════════════════════════════════════════════════════════════════════════
     [Header("⏺ Attachments & Scope")]
 
-    [Tooltip("List of attachment slots this weapon supports (scope, bipod, bayonet…). Each entry defines the attachment id and the transform where it gets parented.")]
+    [Tooltip("List of attachment slots this weapon supports (scope, bipod, bayonet...). Each entry defines the attachment id and the transform where it gets parented.")]
     public SupportedAttachment[] supportedAttachments;
 
     [Tooltip("Optional built-in scope (a scope that's part of the weapon and not a separate attachment, e.g. a sniper variant with a permanently mounted scope).")]
