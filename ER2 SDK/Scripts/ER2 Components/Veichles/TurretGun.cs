@@ -371,7 +371,7 @@ public class TurretWeaponDrawer : PropertyDrawer
             else
             {
                 Rect btn = new Rect(position.x, y, position.width, EditorGUIUtility.singleLineHeight);
-                if (GUI.Button(btn, "Extract these values to a Turret Weapon Data asset…"))
+                if (GUI.Button(btn, "Extract these values to a Turret Weapon Data asset..."))
                     CreateAssetFromInline(property);
                 y += EditorGUIUtility.singleLineHeight + Pad;
             }
