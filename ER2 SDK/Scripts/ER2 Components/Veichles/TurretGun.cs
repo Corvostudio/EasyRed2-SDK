@@ -434,7 +434,7 @@ public class TurretWeaponDrawer : PropertyDrawer
     static void CreateAssetFromInline(SerializedProperty property)
     {
         string path = EditorUtility.SaveFilePanelInProject(
-            "Create Turret Weapon Data", "TurretWeaponData", "asset",
+            "Create Turret Weapon Data", DefaultAssetName(property), "asset",
             "Choose where to save the new weapon data asset");
         if (string.IsNullOrEmpty(path)) return;
 
@@ -455,6 +455,34 @@ public class TurretWeaponDrawer : PropertyDrawer
         // assign it; the inline fields get auto-cleared on the next repaint
         property.FindPropertyRelative("data").objectReferenceValue = so;
         EditorGUIUtility.PingObject(so);
+    }
+
+    static string DefaultAssetName(SerializedProperty property)
+    {
+        string ammo = "noammo";
+        var ammos = property.FindPropertyRelative("ammos");
+        if (ammos != null && ammos.isArray && ammos.arraySize > 0)
+        {
+            var id = ammos.GetArrayElementAtIndex(0).FindPropertyRelative("bullet_id");
+            if (id != null && !string.IsNullOrEmpty(id.stringValue)) ammo = id.stringValue;
+        }
+
+        int fpc = 0;
+        var fpm = property.FindPropertyRelative("firePosMulti");
+        if (fpm != null && fpm.isArray)
+            for (int i = 0; i < fpm.arraySize; i++)
+                if (fpm.GetArrayElementAtIndex(i).objectReferenceValue != null) fpc++;
+        var firePos = property.FindPropertyRelative("firePos");
+        if (firePos != null && firePos.objectReferenceValue != null) fpc = Mathf.Max(fpc, 1);
+
+        string fp = fpc > 1 ? "_x" + fpc : "";
+        return Sanitize("TWD_" + ammo + fp);
+    }
+
+    static string Sanitize(string s)
+    {
+        foreach (char c in System.IO.Path.GetInvalidFileNameChars()) s = s.Replace(c, '_');
+        return s.Replace(' ', '_');
     }
 
     // generic, recursive value copy between two SerializedProperties of the same shape
