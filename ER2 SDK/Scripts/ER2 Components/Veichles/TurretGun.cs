@@ -239,7 +239,7 @@ public partial class TurretWeapon
         fireSound_distance_tail = data.fireSound_distance_tail;
 
         isRecoilless = data.isRecoilless;
-        roundPerMinute = data.roundPerMinute;
+        roundPerMinute = data.roundPerMinute/ firePosMulti.Length;
         reloadWhenFiring = data.reloadWhenFiring;
         reloadTime = data.reloadTime;
         dispersionAngle = data.dispersionAngle;

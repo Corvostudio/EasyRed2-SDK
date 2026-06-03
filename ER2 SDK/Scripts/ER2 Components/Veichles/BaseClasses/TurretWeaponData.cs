@@ -54,7 +54,7 @@ public partial class TurretWeaponData : ScriptableObject
     [Tooltip("Enable / disable recoil when firing")]
     public bool isRecoilless = false;
 
-    [Tooltip("Rounds per minute")]
+    [Tooltip("Rounds per minute (on each gun)")]
     [Range(1, 2000)]
     public int roundPerMinute = 300;
 
