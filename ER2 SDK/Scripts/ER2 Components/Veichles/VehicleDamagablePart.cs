@@ -33,24 +33,6 @@ public partial class VehicleDamagablePart : Interagible, ImpactSpecifier
 #if UNITY_EDITOR
 public partial class VehicleDamagablePart
 {
-    // ---- Global toggle (anti-clutter): Tools menu, persisted in EditorPrefs ----
-    const string kLabelMenu = "Tools/Vehicle Armor/Show Thickness Labels";
-
-    static bool LabelsEnabled
-    {
-        get => EditorPrefs.GetBool(kLabelMenu, true);
-        set => EditorPrefs.SetBool(kLabelMenu, value);
-    }
-
-    [MenuItem(kLabelMenu)]
-    static void ToggleLabels() => LabelsEnabled = !LabelsEnabled;
-
-    [MenuItem(kLabelMenu, true)]
-    static bool ToggleLabelsValidate()
-    {
-        Menu.SetChecked(kLabelMenu, LabelsEnabled);
-        return true;
-    }
 
     // ---- Gizmo entry points ----
     //void OnDrawGizmos() => DrawArmor(false);
@@ -65,7 +47,7 @@ public partial class VehicleDamagablePart
         if (col == null) return;
 
         // Always show a compact label when enabled; full stats only when selected.
-        if (!selected && !LabelsEnabled) return;
+        if (!selected) return;
         Handles.Label(col.bounds.center, BuildLabel(selected), GetLabelStyle());
     }
 
