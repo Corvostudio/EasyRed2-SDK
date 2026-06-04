@@ -103,6 +103,10 @@ public partial class VehicleSeatEditor : Editor
 
         //editor part
         OnInspectorGUIPrivate();
+
+        // Tester IK mani: chiamato qui (editor pubblico) così resta disponibile
+        // anche nell'SDK modding quando la partial .Runtime non è presente.
+        DrawHandsIKTester();
     }
 
     // Keep this minimal since your gizmo already draws direction.
@@ -113,5 +117,174 @@ public partial class VehicleSeatEditor : Editor
         // Your VehicleSeat gizmo+label already does the job without extra clutter.
     }
 
+    private void DrawHandsIKTester()
+    {
+        // Solo selezione singola: il multi-edit del resto dell'inspector continua a funzionare,
+        // ma questo pulsante deve comparire solo con UNA seat selezionata.
+        if (targets == null || targets.Length != 1)
+            return;
+
+        VehicleSeat seat = target as VehicleSeat;
+        if (seat == null)
+            return;
+
+        // Il pulsante esiste solo se la seat è registrata in un Vehicle padre (a qualunque livello)
+        // E quella entry ha entrambi gli IK delle mani assegnati.
+        if (!SeatHasUsableIK(seat))
+            return;
+
+        EditorGUILayout.Space(10);
+        GUILayout.Label("HANDS IK TESTER", EditorStyles.boldLabel);
+
+        HandsPlacementCheckerSeat active = FindActiveTesterForSeat(seat);
+
+        if (active == null)
+        {
+            if (GUILayout.Button("Spawn Hands IK Tester"))
+                SpawnHandsTester(seat);
+        }
+        else
+        {
+            if (GUILayout.Button("Remove Hands IK Tester"))
+                RemoveHandsTester(active);
+        }
+
+        EditorGUILayout.HelpBox(
+            "Preview editor-only: istanzia il prefab esistente del placement-checker delle mani e lo aggancia " +
+            "agli IK di questa seat. Si pulisce da solo in Play / cambio scena / ricompilazione.",
+            MessageType.None);
+    }
+
+    private static bool SeatHasUsableIK(VehicleSeat seat)
+    {
+        if (seat == null)
+            return false;
+
+        Vehicle veh = seat.GetComponentInParent<Vehicle>(true);
+        if (veh == null || veh.seats == null)
+            return false;
+
+        foreach (Seats s in veh.seats)
+        {
+            if (s != null && s.seat == seat)
+                return s.lefthandIsIK != null && s.rightHandIK != null;
+        }
+        return false;
+    }
+
+    private static HandsPlacementCheckerSeat FindActiveTesterForSeat(VehicleSeat seat)
+    {
+        foreach (var c in Resources.FindObjectsOfTypeAll<HandsPlacementCheckerSeat>())
+        {
+            if (c == null) continue;
+            if (EditorUtility.IsPersistent(c)) continue; // ignora i prefab asset
+            if (c.attached_seat == seat) return c;
+        }
+        return null;
+    }
+
+    private void SpawnHandsTester(VehicleSeat seat)
+    {
+        GameObject prefab = FindHandsCheckerPrefab();
+        if (prefab == null)
+        {
+            EditorUtility.DisplayDialog(
+                "Hands IK Tester",
+                "Nessun prefab di placement-checker delle mani trovato nel progetto.\n\n" +
+                "Assicurati che esista il prefab delle mani (root con un componente " +
+                "HandsPlacementCheckerSteeringWheel / HandsPlacementCheckerPlaneSteer / HandsPlacementChecker " +
+                "e i transform Left/Right hand assegnati).",
+                "OK");
+            return;
+        }
+
+        // Clone disconnesso (nessun link al prefab): posso togliere/aggiungere componenti e non viene mai salvato.
+        GameObject inst = (GameObject)Object.Instantiate(prefab);
+        inst.name = prefab.name + " (Seat IK Tester)";
+
+        if (!TryGetHandRefs(inst, out Transform left, out Transform right))
+        {
+            Object.DestroyImmediate(inst);
+            EditorUtility.DisplayDialog(
+                "Hands IK Tester",
+                "Il prefab trovato non ha i transform Left/Right hand assegnati sul suo componente checker.",
+                "OK");
+            return;
+        }
+
+        // Rimuovo i componenti checker originali così non auto-distruggono il clone.
+        StripComponent<HandsPlacementCheckerSteeringWheel>(inst);
+        StripComponent<HandsPlacementCheckerPlaneSteer>(inst);
+        StripComponent<HandsPlacementChecker>(inst);
+
+        var checker = inst.AddComponent<HandsPlacementCheckerSeat>();
+        checker.attached_seat = seat;
+        checker.left_hand = left;
+        checker.right_hand = right;
+
+        inst.transform.SetParent(null); // il checker richiede parent == null
+
+        Undo.RegisterCreatedObjectUndo(inst, "Spawn Hands IK Tester");
+        SceneView.RepaintAll();
+    }
+
+    private void RemoveHandsTester(HandsPlacementCheckerSeat tester)
+    {
+        if (tester == null) return;
+        Undo.DestroyObjectImmediate(tester.gameObject);
+        SceneView.RepaintAll();
+    }
+
+    private static void StripComponent<T>(GameObject go) where T : Component
+    {
+        var c = go.GetComponent<T>();
+        if (c != null) Object.DestroyImmediate(c);
+    }
+
+    private static bool TryGetHandRefs(GameObject root, out Transform left, out Transform right)
+    {
+        left = right = null;
+
+        var sw = root.GetComponent<HandsPlacementCheckerSteeringWheel>();
+        if (sw != null) { left = sw.left_hand; right = sw.right_hand; }
+
+        if (left == null || right == null)
+        {
+            var ps = root.GetComponent<HandsPlacementCheckerPlaneSteer>();
+            if (ps != null) { left = ps.left_hand; right = ps.right_hand; }
+        }
+
+        if (left == null || right == null)
+        {
+            var hp = root.GetComponent<HandsPlacementChecker>();
+            if (hp != null) { left = hp.left_hand; right = hp.right_hand; }
+        }
+
+        return left != null && right != null;
+    }
+
+    private static GameObject FindHandsCheckerPrefab()
+    {
+        // Restringo per nome (token) per non caricare ogni prefab, poi verifico per componente.
+        string[] tokens = { "Steering", "Hand", "Placement", "Checker" };
+
+        foreach (string token in tokens)
+        {
+            foreach (string guid in AssetDatabase.FindAssets($"{token} t:Prefab"))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                GameObject go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (go == null) continue;
+
+                if (go.GetComponent<HandsPlacementCheckerSteeringWheel>() != null ||
+                    go.GetComponent<HandsPlacementCheckerPlaneSteer>() != null ||
+                    go.GetComponent<HandsPlacementChecker>() != null)
+                {
+                    return go;
+                }
+            }
+        }
+        return null;
+    }
 }
 #endif

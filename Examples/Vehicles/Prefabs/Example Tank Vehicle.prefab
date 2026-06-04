@@ -6123,7 +6123,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 352ad75e17359364bbfbf7ec35d8df8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  antiRollBar: 1
   steer_angle: 0
   wheelsTransform:
   - {fileID: 5266589961633625984}
@@ -6494,7 +6493,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 352ad75e17359364bbfbf7ec35d8df8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  antiRollBar: 1
   steer_angle: 0
   wheelsTransform:
   - {fileID: 4084398402636478301}
@@ -6663,10 +6661,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inventoryInteractionDistance: 2.3
   inventory:
-    items: []
     maxPrimary: 1
     maxSecondary: 1
     maxWeight: 30
+    items: []
   inventoryPos: {fileID: 0}
 --- !u!114 &5362956789165342641
 MonoBehaviour:
@@ -6721,14 +6719,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   locked: 0
   physicsDisabled: 0
-  peopleInside: 0
-  autoTransportDrivers: []
   param_version: 10
   life: 700
   icon: {fileID: 21300000, guid: 2b02b6b72f66ac148927030b3ca8c37e, type: 3}
   seats:
-  - unitSet: {fileID: 0}
-    seat: {fileID: 8709723902290357320}
+  - seat: {fileID: 8709723902290357320}
     connectedTurret: {fileID: 0}
     isDriver: 1
     forceHideWeaponWhenHere: 1
@@ -6737,8 +6732,7 @@ MonoBehaviour:
     rightHandIK: {fileID: 0}
     lefthandIsIK: {fileID: 0}
     visionPort: {fileID: 0}
-  - unitSet: {fileID: 0}
-    seat: {fileID: 2036453269728384206}
+  - seat: {fileID: 2036453269728384206}
     connectedTurret: {fileID: 5697282134318786910}
     isDriver: 0
     forceHideWeaponWhenHere: 1
@@ -6747,8 +6741,7 @@ MonoBehaviour:
     rightHandIK: {fileID: 0}
     lefthandIsIK: {fileID: 0}
     visionPort: {fileID: 0}
-  - unitSet: {fileID: 0}
-    seat: {fileID: 962056052236806668}
+  - seat: {fileID: 962056052236806668}
     connectedTurret: {fileID: 0}
     isDriver: 0
     forceHideWeaponWhenHere: 0
@@ -6761,7 +6754,7 @@ MonoBehaviour:
   rotationSpeed: 0.3
   playerCanDriveFromAnySeat: 1
   loosePartsOnInternalExplosion: []
-  maxEngineSoundDistance: 200
+  autoTransportDrivers: []
   maxKmhSpeed: 30
   engine_start: {fileID: 8300000, guid: 34d0a08fa78b60d4484fdab803218d97, type: 3}
   engine_stop: {fileID: 8300000, guid: 29d5468e72f209d46989c250fb5d5e0d, type: 3}
@@ -7209,7 +7202,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 352ad75e17359364bbfbf7ec35d8df8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  antiRollBar: 1
   steer_angle: 0
   wheelsTransform:
   - {fileID: 5710978587471473766}
@@ -8101,7 +8093,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 352ad75e17359364bbfbf7ec35d8df8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  antiRollBar: 1
   steer_angle: 0
   wheelsTransform:
   - {fileID: 6039544721117536487}
@@ -8444,7 +8435,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 352ad75e17359364bbfbf7ec35d8df8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  antiRollBar: 1
   steer_angle: 0
   wheelsTransform:
   - {fileID: 2200286494978347154}
@@ -8744,7 +8734,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 352ad75e17359364bbfbf7ec35d8df8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  antiRollBar: 1
   steer_angle: 0
   wheelsTransform:
   - {fileID: 902786455402073244}
@@ -8913,7 +8902,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32dbf62de992cc142a9a20ae57372c96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minimumNightVision: 0
   yAxisBond: 180
   yAxis: {fileID: 5221768338829168549}
   xAxisBond: 25
@@ -8927,26 +8915,19 @@ MonoBehaviour:
   rotationSpeed: 8
   independentLookRotation: 0
   isAA: 0
+  minimumNightVision: 0
   turnSoundLoop_outside: {fileID: 0}
   weapons:
-  - reload_sound: 
-    preventAimWhenReloading: 0
-    onFireAnimation: {fileID: 0}
-    ammos:
-    - bullet_id: 75mm_l48_he
-      start_ammo_count: 30
-    - bullet_id: 75mm_l48_ap
-      start_ammo_count: 25
-    - bullet_id: 75mm_l48_smoke
-      start_ammo_count: 10
-    fireFx_id: gunFireFX
+  - data: {fileID: 11400000, guid: ba1f70016af24af4f97bc08965510a78, type: 2}
+    ammos: []
+    fireFx_id: 
     fireFxContinuous_id: 
-    fireFx_bundle: er2fxs
+    fireFx_bundle: 
     firePos: {fileID: 0}
     firePosMulti:
     - {fileID: 1145481922125045211}
-    fireSoundVolume: 0.5
-    fireSound: {fileID: 8300000, guid: 43483f1fb3ac8e5419b6f7b1b61f4430, type: 3}
+    fireSoundVolume: 0
+    fireSound: {fileID: 0}
     fireSound_start: {fileID: 0}
     fireSound_loop: {fileID: 0}
     fireSound_tail: {fileID: 0}
@@ -8954,14 +8935,15 @@ MonoBehaviour:
     fireSound_distance_loop: {fileID: 0}
     fireSound_distance_tail: {fileID: 0}
     isRecoilless: 0
-    roundPerMinute: 300
+    roundPerMinute: 0
     reloadWhenFiring: 0
-    reloadTime: 5
-    dispersionAngle: 0.1
+    reloadTime: 0
+    dispersionAngle: 0
     specifiedTracersRatio: 0
-  - reload_sound: 
+    reload_sound: 
     preventAimWhenReloading: 0
     onFireAnimation: {fileID: 0}
+  - data: {fileID: 0}
     ammos:
     - bullet_id: mg42_belt
       start_ammo_count: 300
@@ -8986,6 +8968,9 @@ MonoBehaviour:
     reloadTime: 5
     dispersionAngle: 0.1
     specifiedTracersRatio: 3
+    reload_sound: 
+    preventAimWhenReloading: 0
+    onFireAnimation: {fileID: 0}
   connectedAim: {fileID: 0}
   connectedReloadAnim: {fileID: 0}
   forceAnimAtLowRate: 0
@@ -9282,7 +9267,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 352ad75e17359364bbfbf7ec35d8df8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  antiRollBar: 1
   steer_angle: 0
   wheelsTransform:
   - {fileID: 5983374324461462516}
@@ -14695,7 +14679,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 352ad75e17359364bbfbf7ec35d8df8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  antiRollBar: 1
   steer_angle: 0
   wheelsTransform:
   - {fileID: 7306577992831879358}

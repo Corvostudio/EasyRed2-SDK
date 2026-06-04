@@ -647,10 +647,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inventoryInteractionDistance: 2.3
   inventory:
-    items: []
     maxPrimary: 1
     maxSecondary: 1
     maxWeight: 30
+    items: []
   inventoryPos: {fileID: 0}
 --- !u!114 &8036734353581246692
 MonoBehaviour:
@@ -689,14 +689,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   locked: 0
   physicsDisabled: 0
-  peopleInside: 0
-  autoTransportDrivers: []
   param_version: 10
   life: 700
   icon: {fileID: 21300000, guid: d84bef8f2cde36b41af325ca227dafc8, type: 3}
   seats:
-  - unitSet: {fileID: 0}
-    seat: {fileID: 9004112884130922823}
+  - seat: {fileID: 9004112884130922823}
     connectedTurret: {fileID: 3700069534715536388}
     isDriver: 0
     forceHideWeaponWhenHere: 1
@@ -705,8 +702,7 @@ MonoBehaviour:
     rightHandIK: {fileID: 0}
     lefthandIsIK: {fileID: 0}
     visionPort: {fileID: 0}
-  - unitSet: {fileID: 0}
-    seat: {fileID: 4397009058763179936}
+  - seat: {fileID: 4397009058763179936}
     connectedTurret: {fileID: 0}
     isDriver: 1
     forceHideWeaponWhenHere: 0
@@ -719,6 +715,7 @@ MonoBehaviour:
   rotationSpeed: 0.3
   playerCanDriveFromAnySeat: 1
   loosePartsOnInternalExplosion: []
+  autoTransportDrivers: []
 --- !u!65 &8587598902070517563
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1268,7 +1265,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32dbf62de992cc142a9a20ae57372c96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minimumNightVision: 0
   yAxisBond: 0
   yAxis: {fileID: 1061851242357690472}
   xAxisBond: 25
@@ -1282,26 +1278,19 @@ MonoBehaviour:
   rotationSpeed: 8
   independentLookRotation: 0
   isAA: 0
+  minimumNightVision: 0
   turnSoundLoop_outside: {fileID: 0}
   weapons:
-  - reload_sound: 
-    preventAimWhenReloading: 0
-    onFireAnimation: {fileID: 0}
-    ammos:
-    - bullet_id: 75mm_l48_he
-      start_ammo_count: 30
-    - bullet_id: 75mm_l48_ap
-      start_ammo_count: 25
-    - bullet_id: 75mm_l48_smoke
-      start_ammo_count: 10
-    fireFx_id: gunFireFX
+  - data: {fileID: 11400000, guid: ba1f70016af24af4f97bc08965510a78, type: 2}
+    ammos: []
+    fireFx_id: 
     fireFxContinuous_id: 
-    fireFx_bundle: er2fxs
+    fireFx_bundle: 
     firePos: {fileID: 0}
     firePosMulti:
     - {fileID: 5438948024420542680}
-    fireSoundVolume: 0.5
-    fireSound: {fileID: 8300000, guid: 43483f1fb3ac8e5419b6f7b1b61f4430, type: 3}
+    fireSoundVolume: 0
+    fireSound: {fileID: 0}
     fireSound_start: {fileID: 0}
     fireSound_loop: {fileID: 0}
     fireSound_tail: {fileID: 0}
@@ -1309,11 +1298,14 @@ MonoBehaviour:
     fireSound_distance_loop: {fileID: 0}
     fireSound_distance_tail: {fileID: 0}
     isRecoilless: 0
-    roundPerMinute: 10
+    roundPerMinute: 0
     reloadWhenFiring: 0
-    reloadTime: 5
-    dispersionAngle: 0.1
+    reloadTime: 0
+    dispersionAngle: 0
     specifiedTracersRatio: 0
+    reload_sound: 
+    preventAimWhenReloading: 0
+    onFireAnimation: {fileID: 0}
   connectedAim: {fileID: 0}
   connectedReloadAnim: {fileID: 0}
   forceAnimAtLowRate: 0

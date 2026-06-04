@@ -76,6 +76,7 @@ public static class PlacementCheckersCleanup
         Clean<HandsPlacementChecker>();
         Clean<HandsPlacementCheckerSteeringWheel>();
         Clean<HeadPlacementChecker>();
+        Clean<HandsPlacementCheckerSeat>();
     }
 
     private static void Clean<T>() where T : MonoBehaviour
