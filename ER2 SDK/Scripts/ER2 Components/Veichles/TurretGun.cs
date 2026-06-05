@@ -220,7 +220,7 @@ public partial class TurretWeapon
     /// </summary>
     public void ApplyData()
     {
-        if (data == null)
+        if (data == null || !Application.isPlaying)
             return;
 
         ammos = (data.ammos != null) ? (TurretWeaponBullet[])data.ammos.Clone() : new TurretWeaponBullet[0];
@@ -239,11 +239,12 @@ public partial class TurretWeapon
         fireSound_distance_tail = data.fireSound_distance_tail;
 
         isRecoilless = data.isRecoilless;
-        roundPerMinute = data.roundPerMinute/ firePosMulti.Length;
+        roundPerMinute = data.roundPerMinute;
         reloadWhenFiring = data.reloadWhenFiring;
         reloadTime = data.reloadTime;
         dispersionAngle = data.dispersionAngle;
         specifiedTracersRatio = data.specifiedTracersRatio;
+        //data = null;
     }
 }
 
