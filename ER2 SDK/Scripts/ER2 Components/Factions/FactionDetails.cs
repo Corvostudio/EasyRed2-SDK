@@ -13,6 +13,9 @@ public partial class FactionDetails : ScriptableObject
     //public string faction_name;
     [Header("Id name of the faction anthem audio clip")]
     public string anthem_id;
+    public string anthem_id_win;
+    public string anthem_id_lose;
+
     [Header("Faction flag")]
     public Sprite flag;
     [Header("Id names of the ViceManagers created")]
