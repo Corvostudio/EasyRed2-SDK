@@ -3,6 +3,8 @@ using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.TerrainTools;
+
 #endif
 using UnityEngine;
 
@@ -16,6 +18,7 @@ public class TPSRigPreviewManager : MonoBehaviour
     public SkinnedMeshRenderer body;
     public SkinnedMeshRenderer body_fps;
     public Transform headgear_pos;
+    public Transform headgear_pos_lod;
 
     public Mesh fps_longsleeve;
     public Mesh fps_shortleeve;
@@ -23,6 +26,10 @@ public class TPSRigPreviewManager : MonoBehaviour
     public Mesh tps_longsleeve_shortpants;
     public Mesh tps_shortleeve_longpants;
     public Mesh tps_shortleeve_shortpants;
+
+    public Transform lod0_label_pos;
+    public Transform lod1_label_pos;
+    public Transform fps_label_pos;
 
 
 #if UNITY_EDITOR
@@ -176,6 +183,9 @@ public static class TPSRigTesterManager
     private static GameObject s_spawnedHelmet;
     private static int s_spawnedHelmetSourceHash;
 
+    private static GameObject s_spawnedHelmetLod1;
+    private static int s_spawnedHelmetLod1SourceHash;
+
     private static double s_lastSync;
     private static bool s_registered;
 
@@ -188,6 +198,7 @@ public static class TPSRigTesterManager
         EditorApplication.playModeStateChanged += OnPlayModeChanged;
         UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
         UnityEditor.SceneManagement.EditorSceneManager.sceneOpening += OnSceneOpening;
+        SceneView.duringSceneGui += OnSceneGUI;
 
         // Clean any leftover testers/checkers from a previous editor state
         EditorApplication.delayCall += () =>
@@ -195,6 +206,44 @@ public static class TPSRigTesterManager
             DisableTester();
             DestroyAllPlacementCheckers();
         };
+    }
+
+    private const float LABEL_MAX_DISTANCE = 100f;
+    private static GUIStyle s_sceneLabelStyle;
+
+    private static void OnSceneGUI(SceneView sceneView)
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+        if (sceneView == null || sceneView.camera == null) return;
+
+        var tester = FindTester();
+        if (tester == null) return;
+
+        Camera cam = sceneView.camera;
+
+        DrawSceneLabel(cam, tester.lod0_label_pos, "LOD0");
+        DrawSceneLabel(cam, tester.lod1_label_pos, "LOD1");
+        DrawSceneLabel(cam, tester.fps_label_pos, "FPS");
+    }
+
+    private static void DrawSceneLabel(Camera cam, Transform pos, string text)
+    {
+        if (pos == null) return;
+
+        float sqrDist = (cam.transform.position - pos.position).sqrMagnitude;
+        if (sqrDist > LABEL_MAX_DISTANCE * LABEL_MAX_DISTANCE) return;
+
+        if (s_sceneLabelStyle == null)
+        {
+            s_sceneLabelStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 14
+            };
+            s_sceneLabelStyle.normal.textColor = Color.white;
+        }
+
+        Handles.Label(pos.position, text, s_sceneLabelStyle);
     }
 
     private static void OnPlayModeChanged(PlayModeStateChange state)
@@ -208,6 +257,7 @@ public static class TPSRigTesterManager
 
     private static void OnBeforeAssemblyReload()
     {
+        SceneView.duringSceneGui -= OnSceneGUI;
         DisableTester();
         DestroyAllPlacementCheckers();
     }
@@ -554,27 +604,70 @@ public static class TPSRigTesterManager
     private static void SyncHelmet(TPSRigPreviewManager tester)
     {
         var h = GetHelmet(s_helmetID);
-        if (h == null) { s_helmetID = 0; DespawnHelmet(); return; }
-        if (tester.headgear_pos == null)
+        if (h == null)
         {
-            Debug.LogWarning("[TPS Tester] headgear_pos is not assigned on TPSRigPreviewManager.");
+            s_helmetID = 0;
+            DespawnHelmet();
             return;
         }
 
         int sourceHash = ComputeRendererHash(h.gameObject);
-        if (s_spawnedHelmet == null || sourceHash != s_spawnedHelmetSourceHash)
+
+        // Normal helmet preview
+        if (tester.headgear_pos == null)
         {
-            DespawnHelmet();
-            GameObject inst = Object.Instantiate(h.gameObject);
-            inst.name = "[TESTER] " + h.gameObject.name;
-            inst.transform.SetParent(tester.headgear_pos, false);
-            inst.transform.localPosition = Vector3.zero;
-            inst.transform.localRotation = Quaternion.identity;
-            inst.transform.localScale = Vector3.one;
-            EnforceDontSaveFlags(inst);
-            s_spawnedHelmet = inst;
+            Debug.LogWarning("[TPS Tester] headgear_pos is not assigned on TPSRigPreviewManager.");
+        }
+        else if (s_spawnedHelmet == null || sourceHash != s_spawnedHelmetSourceHash)
+        {
+            if (s_spawnedHelmet != null)
+                Object.DestroyImmediate(s_spawnedHelmet);
+
+            s_spawnedHelmet = SpawnHelmetInstance(h.gameObject, tester.headgear_pos);
             s_spawnedHelmetSourceHash = sourceHash;
         }
+
+        // LOD0-forced helmet preview, only if source root has a real LOD setup
+        bool hasRootLodWithMultipleLevels = false;
+        LODGroup sourceLodGroup = h.gameObject.GetComponent<LODGroup>();
+        if (sourceLodGroup != null)
+            hasRootLodWithMultipleLevels = sourceLodGroup.GetLODs().Length >= 2;
+
+        if (!hasRootLodWithMultipleLevels || tester.headgear_pos_lod == null)
+        {
+            if (s_spawnedHelmetLod1 != null)
+            {
+                Object.DestroyImmediate(s_spawnedHelmetLod1);
+                s_spawnedHelmetLod1 = null;
+                s_spawnedHelmetLod1SourceHash = 0;
+            }
+            return;
+        }
+
+        if (s_spawnedHelmetLod1 == null || sourceHash != s_spawnedHelmetLod1SourceHash)
+        {
+            if (s_spawnedHelmetLod1 != null)
+                Object.DestroyImmediate(s_spawnedHelmetLod1);
+
+            s_spawnedHelmetLod1 = SpawnHelmetInstance(h.gameObject, tester.headgear_pos_lod);
+            s_spawnedHelmetLod1SourceHash = sourceHash;
+
+            LODGroup lodGroup = s_spawnedHelmetLod1.GetComponent<LODGroup>();
+            if (lodGroup != null && lodGroup.GetLODs().Length >= 2)
+                lodGroup.ForceLOD(1);
+        }
+    }
+
+    private static GameObject SpawnHelmetInstance(GameObject source, Transform parent)
+    {
+        GameObject inst = Object.Instantiate(source);
+        inst.name = "[TESTER] " + source.name;
+        inst.transform.SetParent(parent, false);
+        inst.transform.localPosition = Vector3.zero;
+        inst.transform.localRotation = Quaternion.identity;
+        inst.transform.localScale = Vector3.one;
+        EnforceDontSaveFlags(inst);
+        return inst;
     }
 
     private static int ComputeRendererHash(GameObject src)
@@ -608,8 +701,15 @@ public static class TPSRigTesterManager
     {
         if (s_spawnedHelmet != null)
             Object.DestroyImmediate(s_spawnedHelmet);
+
+        if (s_spawnedHelmetLod1 != null)
+            Object.DestroyImmediate(s_spawnedHelmetLod1);
+
         s_spawnedHelmet = null;
         s_spawnedHelmetSourceHash = 0;
+
+        s_spawnedHelmetLod1 = null;
+        s_spawnedHelmetLod1SourceHash = 0;
     }
 
     private static void ClearUniformOnTester()
