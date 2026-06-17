@@ -20,21 +20,27 @@ public partial class ItemHelmetEditor : Editor
         GUILayout.Space(8);
         GUILayout.Label(" --- TPS Rig Tester ---");
 
-        if (GUILayout.Button("Test on Rig"))
-            TPSRigTesterManager.LinkHelmet(helmet);
+        if (!TPSRigTesterAutoSelection.DrawInspectorUI())
+        {
+            if (GUILayout.Button("Test on Rig"))
+                TPSRigTesterManager.LinkHelmet(helmet);
 
-        EditorGUILayout.BeginHorizontal();
-        if (TPSRigTesterManager.IsHelmetLinked(helmet))
-        {
-            /*if (GUILayout.Button("Detach from Rig"))
-                TPSRigTesterManager.UnlinkHelmet();*/
+            EditorGUILayout.BeginHorizontal();
+            if (TPSRigTesterManager.IsHelmetLinked(helmet))
+            {
+                /*if (GUILayout.Button("Detach from Rig"))
+                    TPSRigTesterManager.UnlinkHelmet();*/
+            }
+            EditorGUILayout.EndHorizontal();
         }
-        if (TPSRigTesterManager.FindTester() != null)
+        else
         {
-            if (GUILayout.Button("Disable Tester"))
-                TPSRigTesterManager.DisableTester();
+            if (TPSRigTesterManager.FindTester() != null)
+            {
+                if (GUILayout.Button("Disable Tester"))
+                    TPSRigTesterManager.DisableTester();
+            }
         }
-        EditorGUILayout.EndHorizontal();
 
         GUILayout.Space(8);
 

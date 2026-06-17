@@ -375,6 +375,7 @@ public static class TPSRigTesterManager
     public static void DisableTester()
     {
         DespawnHelmet();
+        TPSRigTesterAutoSelection.Enabled = false;
         var tester = FindTester();
         if (tester != null)
             Object.DestroyImmediate(tester.gameObject);

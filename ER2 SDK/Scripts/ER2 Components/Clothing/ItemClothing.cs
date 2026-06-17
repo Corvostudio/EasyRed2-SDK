@@ -346,41 +346,33 @@ public class ItemClothingEditor : Editor
         GUILayout.Space(8);
         GUILayout.Label(" --- TPS Rig Tester ---");
 
-        if (clothing.type == WearableType.uniform)
+        if (!TPSRigTesterAutoSelection.DrawInspectorUI())
         {
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Test (Long Sleeve)"))
-                TPSRigTesterManager.LinkUniform(clothing, SleeveMode.unrolled);
-            GUI.enabled = clothing.mesh_short_sleeve != null;
-            if (GUILayout.Button("Test (Short Sleeve)"))
-                TPSRigTesterManager.LinkUniform(clothing, SleeveMode.rolled);
-            GUI.enabled = true;
-            EditorGUILayout.EndHorizontal();
-        }
-        else
-        {
-            if (GUILayout.Button("Test in Rig"))
-                TPSRigTesterManager.LinkGear(clothing);
+            if (clothing.type == WearableType.uniform)
+            {
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Test (Long Sleeve)"))
+                    TPSRigTesterManager.LinkUniform(clothing, SleeveMode.unrolled);
+                GUI.enabled = clothing.mesh_short_sleeve != null;
+                if (GUILayout.Button("Test (Short Sleeve)"))
+                    TPSRigTesterManager.LinkUniform(clothing, SleeveMode.rolled);
+                GUI.enabled = true;
+                EditorGUILayout.EndHorizontal();
+            }
+            else
+            {
+                if (GUILayout.Button("Test in Rig"))
+                    TPSRigTesterManager.LinkGear(clothing);
+            }
+
+            bool isLinked = TPSRigTesterManager.IsUniformLinked(clothing) || TPSRigTesterManager.IsGearLinked(clothing);
         }
 
-        bool isLinked = TPSRigTesterManager.IsUniformLinked(clothing) || TPSRigTesterManager.IsGearLinked(clothing);
-        EditorGUILayout.BeginHorizontal();
-        if (isLinked)
-        {
-            /*if (GUILayout.Button("Detach from Tester"))
-            {
-                if (TPSRigTesterManager.IsUniformLinked(clothing))
-                    TPSRigTesterManager.UnlinkUniform();
-                else
-                    TPSRigTesterManager.UnlinkGear(clothing);
-            }*/
-        }
         if (TPSRigTesterManager.FindTester() != null)
         {
             if (GUILayout.Button("Disable Tester"))
                 TPSRigTesterManager.DisableTester();
         }
-        EditorGUILayout.EndHorizontal();
 
         GUILayout.Space(10);
         DrawDefaultInspector();
