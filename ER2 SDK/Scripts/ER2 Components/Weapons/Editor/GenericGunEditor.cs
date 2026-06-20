@@ -100,7 +100,7 @@ public partial class GenericGunEditor : Editor
                     else
                         AttachAttachmentByItemId(slot.attachment_id, slot.attachmentPos, "Attach " + slot.attachment_id);
 
-                    gun.RefreshSightPosition();
+                    gun.TestSightPosition();
                     EditorUtility.SetDirty(gun);
                 }
             }

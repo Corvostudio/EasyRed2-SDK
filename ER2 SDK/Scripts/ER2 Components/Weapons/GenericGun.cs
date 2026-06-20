@@ -243,9 +243,13 @@ public partial class GenericGun : Weapon
     public GameObject installedMagazine { get { return magazinePosition && magazinePosition.childCount > 0 ? magazinePosition.GetChild(0).gameObject : null; } }
     public Magazine currentMagazine { get { return installedMagazine != null ? installedMagazine.GetComponent<Magazine>() : null; } }
 
-
-
-    public partial void RefreshSightPosition();
+#if UNITY_EDITOR
+    public void TestSightPosition()
+    {
+        RefreshSightPosition();
+    }
+#endif
+    partial void RefreshSightPosition();
 }
 
 
