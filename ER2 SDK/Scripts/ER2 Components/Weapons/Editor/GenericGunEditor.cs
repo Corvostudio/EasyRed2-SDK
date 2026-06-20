@@ -99,6 +99,9 @@ public partial class GenericGunEditor : Editor
                         DestroyAllChildrenWithUndo(slot.attachmentPos);
                     else
                         AttachAttachmentByItemId(slot.attachment_id, slot.attachmentPos, "Attach " + slot.attachment_id);
+
+                    gun.RefreshSightPosition();
+                    EditorUtility.SetDirty(gun);
                 }
             }
         }

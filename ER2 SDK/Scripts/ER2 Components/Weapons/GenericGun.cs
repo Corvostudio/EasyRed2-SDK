@@ -242,6 +242,10 @@ public partial class GenericGun : Weapon
 
     public GameObject installedMagazine { get { return magazinePosition && magazinePosition.childCount > 0 ? magazinePosition.GetChild(0).gameObject : null; } }
     public Magazine currentMagazine { get { return installedMagazine != null ? installedMagazine.GetComponent<Magazine>() : null; } }
+
+
+
+    public partial void RefreshSightPosition();
 }
 
 
@@ -264,6 +268,12 @@ public partial class SupportedAttachment
 
     [Tooltip("Force gun shift when this attachment is installed. Meant to be used to prevent scope clippings with camera.")]
     public Vector3 fpsShift = Vector3.zero;
+
+    [Tooltip("Optional GameObject enabled when this specific attachment is installed.")]
+    public GameObject enableWhenInstalled;
+
+    [Tooltip("Optional GameObject disabled when this specific attachment is installed.")]
+    public GameObject disableWhenInstalled;
 }
 
 public enum AttachmentType
