@@ -25,4 +25,9 @@ public sealed partial class RoadSignUvBaker : MonoBehaviour
     public bool autoApplyInEditor = true;
 
     public List<SignTarget> targets = new List<SignTarget>();
+
+
+    public partial void ApplyAll();
+    public partial void ClearAll();
+    public partial bool ApplyTarget(int targetIndex);
 }
