@@ -28,6 +28,8 @@ public partial class DestructibleManager : MapPropIndexable// MapPropIndexable
     //doors management
     [HideInInspector] public InteragibleDoor[] registeredDoors = new InteragibleDoor[0];
 
+    // DestructibleManager.cs, accanto a registeredDoors / fornitureSpawners
+    [HideInInspector] public RoadSignUvBaker[] roadSignBakers = new RoadSignUvBaker[0];
 
 #if UNITY_EDITOR
     private void Awake()
@@ -37,9 +39,15 @@ public partial class DestructibleManager : MapPropIndexable// MapPropIndexable
             CaptureFurnitureSpawners();
             AcquireDestructibleParts();
             CaptureDoors();
+            CaptureRoadSignBakers();
         }
     }
 
+
+    public void CaptureRoadSignBakers()
+    {
+        roadSignBakers = GetComponentsInChildren<RoadSignUvBaker>(true);
+    }
 
     public void AcquireDestructibleParts()
     {
@@ -637,6 +645,7 @@ public static class DestructibleManagerEditorHooks
         manager.AcquireDestructibleParts();
         manager.CaptureFurnitureSpawners();
         manager.CaptureDoors();
+        manager.CaptureRoadSignBakers();
         EditorUtility.SetDirty(manager);
     }
 
@@ -667,6 +676,7 @@ public class DestructibleManagerSaveProcessor : AssetModificationProcessor
             manager.AcquireDestructibleParts();
             manager.CaptureFurnitureSpawners();
             manager.CaptureDoors();
+            manager.CaptureRoadSignBakers();
             EditorUtility.SetDirty(manager);
         }
 
