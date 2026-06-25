@@ -38,6 +38,8 @@ public class LODBakeProfile
     public float aperture = 7.5f;
     [Tooltip("Pan applied to the camera to center the prop (pivot is rarely the visual center).")]
     public Vector3 shiftCenter = new Vector3(0, 3, 0);
+    [Tooltip("Multiplies the brightness of the saved image. 1 = unchanged, >1 brighter, <1 darker.")]
+    public float brightness = 1f;
 
     [Header("Options")]
     public bool allowAlpha = false;
@@ -74,7 +76,7 @@ public class PropLODBakerEditor : Editor
 
         if (GUILayout.Button("Auto Setup (scan children)"))
         {
-            AutoSetup(baker);
+            AutoSetup(baker, serializedObject);
             GUIUtility.ExitGUI();
         }
 
@@ -96,9 +98,11 @@ public class PropLODBakerEditor : Editor
         EditorGUILayout.Space();
         if (GUILayout.Button("+ Add empty section"))
         {
-            Undo.RecordObject(baker, "Add LOD section");
-            baker.profiles.Add(new LODBakeProfile());
-            EditorUtility.SetDirty(baker);
+            var arr = serializedObject.FindProperty("profiles");
+            int idx = arr.arraySize;
+            arr.InsertArrayElementAtIndex(idx);
+            InitProfileProperty(arr.GetArrayElementAtIndex(idx), null);
+            serializedObject.ApplyModifiedProperties();
             GUIUtility.ExitGUI();
         }
 
@@ -132,9 +136,8 @@ public class PropLODBakerEditor : Editor
                 foldout.boolValue = EditorGUILayout.Foldout(foldout.boolValue, matName + tags, true);
                 if (GUILayout.Button("X", GUILayout.Width(22)))
                 {
-                    Undo.RecordObject(baker, "Remove LOD section");
-                    baker.profiles.RemoveAt(index);
-                    EditorUtility.SetDirty(baker);
+                    serializedObject.FindProperty("profiles").DeleteArrayElementAtIndex(index);
+                    serializedObject.ApplyModifiedProperties();
                     return true;
                 }
             }
@@ -147,6 +150,7 @@ public class PropLODBakerEditor : Editor
             EditorGUILayout.PropertyField(prof.FindPropertyRelative("objectSize"));
             EditorGUILayout.PropertyField(prof.FindPropertyRelative("aperture"));
             EditorGUILayout.PropertyField(prof.FindPropertyRelative("shiftCenter"));
+            EditorGUILayout.PropertyField(prof.FindPropertyRelative("brightness"));
 
             EditorGUILayout.PropertyField(prof.FindPropertyRelative("allowAlpha"));
             EditorGUILayout.PropertyField(prof.FindPropertyRelative("flipY"));
@@ -178,48 +182,65 @@ public class PropLODBakerEditor : Editor
 
     // ---------------------------------------------------------------- auto setup / preview
 
-    static void AutoSetup(PropLODBaker baker)
+    static void AutoSetup(PropLODBaker baker, SerializedObject so)
     {
-        // keep settings of sections whose material already exists
-        var existingByMat = new Dictionary<Material, LODBakeProfile>();
-        foreach (var p in baker.profiles)
-            if (p.material != null && !existingByMat.ContainsKey(p.material))
-                existingByMat[p.material] = p;
-
+        // distinct LOD materials in the children, in deterministic hierarchy order
+        var currentMats = new List<Material>();
         var seen = new HashSet<Material>();
-        var result = new List<LODBakeProfile>();
-
         foreach (var r in baker.GetComponentsInChildren<MeshRenderer>(true))
-        {
             foreach (var m in r.sharedMaterials)
-            {
-                if (!UsesLodShader(m) || !seen.Add(m)) continue; // one section per distinct material
+                if (UsesLodShader(m) && seen.Add(m))
+                    currentMats.Add(m);
 
-                if (existingByMat.TryGetValue(m, out var old))
-                {
-                    result.Add(old);                            // keep saved settings
-                }
-                else
-                {
-                    string ln = m.name.ToLowerInvariant();
-                    result.Add(new LODBakeProfile
-                    {
-                        material = m,
-                        isTree = IsTreeMaterial(m),
-                        isDestroyed = ln.Contains("dst") || ln.Contains("destr") ||
-                                      ln.Contains("distrut") || ln.Contains("rubble") || ln.Contains("ruin")
-                    });
-                }
-            }
+        if (currentMats.Count == 0)
+        {
+            Debug.LogWarning($"PropLODBaker: no child renderer uses '{FarLodShaderName}' or " +
+                             $"'{TreeBillboardShaderName}'.", baker);
+            return;
         }
 
-        Undo.RecordObject(baker, "Auto Setup LOD Baker");
-        baker.profiles = result;
-        EditorUtility.SetDirty(baker);
+        var arr = so.FindProperty("profiles");
 
-        if (result.Count == 0)
-            Debug.LogWarning($"PropLODBaker: no child renderer uses '{FarLodShaderName}' or " +
-                             $"'{TreeBillboardShaderName}'. Add a section and assign a material manually.", baker);
+        // 1) remap existing sections by position — write ONLY material, and only when it changed.
+        //    On a prefab variant this overrides just 'material'; framing stays inherited from the base.
+        int common = Mathf.Min(arr.arraySize, currentMats.Count);
+        for (int i = 0; i < common; i++)
+        {
+            var matProp = arr.GetArrayElementAtIndex(i).FindPropertyRelative("material");
+            if (matProp.objectReferenceValue != currentMats[i])
+                matProp.objectReferenceValue = currentMats[i];
+        }
+
+        // 2) append sections only for genuinely extra LOD materials (more than existing sections)
+        int oldSize = arr.arraySize;
+        if (currentMats.Count > oldSize)
+        {
+            arr.arraySize = currentMats.Count;
+            for (int i = oldSize; i < currentMats.Count; i++)
+                InitProfileProperty(arr.GetArrayElementAtIndex(i), currentMats[i]);
+        }
+
+        so.ApplyModifiedProperties();
+    }
+
+    /// <summary>Init a freshly inserted array element to clean defaults (Insert/resize copies the previous element, so set every field explicitly).</summary>
+    static void InitProfileProperty(SerializedProperty e, Material m)
+    {
+        e.FindPropertyRelative("material").objectReferenceValue = m;
+        e.FindPropertyRelative("texSize").intValue = 256;
+        e.FindPropertyRelative("objectSize").floatValue = 20f;
+        e.FindPropertyRelative("aperture").floatValue = 7.5f;
+        e.FindPropertyRelative("shiftCenter").vector3Value = new Vector3(0, 3, 0);
+        e.FindPropertyRelative("brightness").floatValue = 1f;
+        e.FindPropertyRelative("allowAlpha").boolValue = false;
+        e.FindPropertyRelative("flipY").boolValue = false;
+        e.FindPropertyRelative("isTree").boolValue = IsTreeMaterial(m);
+        e.FindPropertyRelative("includeTopView").boolValue = false;
+        e.FindPropertyRelative("foldout").boolValue = true;
+
+        string ln = m != null ? m.name.ToLowerInvariant() : "";
+        e.FindPropertyRelative("isDestroyed").boolValue =
+            ln.Contains("dst") || ln.Contains("destr") || ln.Contains("distrut") || ln.Contains("rubble") || ln.Contains("ruin");
     }
 
     static void SetPreviewLOD(PropLODBaker baker, bool lastLevel)
@@ -407,6 +428,7 @@ public class PropLODBakerEditor : Editor
             Object.DestroyImmediate(right);
             Object.DestroyImmediate(left);
         }
+        MultiplyBrightness(finalTex, p.brightness);
         return finalTex;
     }
 
@@ -461,6 +483,21 @@ public class PropLODBakerEditor : Editor
                 _texture.SetPixel(x, y, color);
             }
         }
+    }
+
+    static void MultiplyBrightness(Texture2D tex, float mult)
+    {
+        if (mult < 0f) mult = 0f;
+        if (Mathf.Approximately(mult, 1f)) return;
+        var px = tex.GetPixels32();
+        for (int i = 0; i < px.Length; i++)
+        {
+            px[i].r = (byte)Mathf.Clamp(px[i].r * mult, 0f, 255f);
+            px[i].g = (byte)Mathf.Clamp(px[i].g * mult, 0f, 255f);
+            px[i].b = (byte)Mathf.Clamp(px[i].b * mult, 0f, 255f);
+        }
+        tex.SetPixels32(px);
+        tex.Apply();
     }
 
     // ---------------------------------------------------------------- compose (layouts preserved 1:1)
