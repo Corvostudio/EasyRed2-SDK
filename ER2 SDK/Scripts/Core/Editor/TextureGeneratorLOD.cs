@@ -1,10 +1,11 @@
-﻿using UnityEngine;
-using UnityEditor;
-using System.IO;
-using Corvostudio.SuperDayNightCycle;
-using UnityEngine.Rendering.Universal;
+﻿using NUnit.Framework;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Unity.Mathematics;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public class TextureGeneratorLOD : EditorWindow
 {
@@ -115,10 +116,15 @@ public class TextureGeneratorLOD : EditorWindow
         Vector3 originalPos = highPolyModel.transform.position;
         highPolyModel.transform.position = new Vector3(0, 1000, 1000);
 
-
-        DayNightCycle sdnc = FindObjectOfType<DayNightCycle>();
-        if (sdnc)
-            sdnc.gameObject.SetActive(false);
+        List<Light> lights = new List<Light>();
+        foreach (var l in FindObjectsOfType<Light>())
+        {
+            if (l.gameObject.activeSelf)
+            {
+                lights.Add(l);
+                l.gameObject.SetActive(false);
+            }
+        }
         UnityEngine.Rendering.Volume volume = FindObjectOfType<UnityEngine.Rendering.Volume>();
         bool volumeWasActive = volume && volume.gameObject.activeSelf;
         if (volumeWasActive)
@@ -206,8 +212,8 @@ public class TextureGeneratorLOD : EditorWindow
         }
 
         //re enable stuff
-        if (sdnc)
-            sdnc.gameObject.SetActive(true);
+        foreach (var l in lights)
+            l.gameObject.SetActive(true);
         if (volumeWasActive)
             volume.gameObject.SetActive(true);
 
