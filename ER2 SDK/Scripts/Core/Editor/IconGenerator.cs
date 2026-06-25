@@ -11,7 +11,7 @@ public class IconGenerator : EditorWindow
     private static int TEX_SIZE = 256;
     private bool overrideTexSize = false;
 
-    private TextureGeneratorParameters overrideParameters = null;
+    //private TextureGeneratorParameters overrideParameters = null;
     [Range(1, 200)]
     private float objectSize = 20;
     [Range(.2f, 50)]
@@ -40,21 +40,11 @@ public class IconGenerator : EditorWindow
             TEX_SIZE = FINAL_TEX_SIZE;
 
         //inputs
-        if (!overrideParameters)
-        {
-            //objectSize = EditorGUILayout.FloatField("Camera Distance", objectSize);
-            objectSize = 50;
-            aperture = EditorGUILayout.FloatField("Shot Size", aperture);
-            exposure = EditorGUILayout.FloatField("Exposure", exposure);
-            shiftCenter = EditorGUILayout.Vector3Field("ShiftCenter", shiftCenter);
-        }
-        else
-        {
-            objectSize = overrideParameters.objectSize;
-            aperture = overrideParameters.aperture;
-            exposure = overrideParameters.exposure;
-            shiftCenter = overrideParameters.shiftCenter;
-        }
+        //objectSize = EditorGUILayout.FloatField("Camera Distance", objectSize);
+        objectSize = 50;
+        aperture = EditorGUILayout.FloatField("Shot Size", aperture);
+        exposure = EditorGUILayout.FloatField("Exposure", exposure);
+        shiftCenter = EditorGUILayout.Vector3Field("ShiftCenter", shiftCenter);
         allowAlpha = EditorGUILayout.Toggle("Allow Alpha", allowAlpha);
         iconizedModel = EditorGUILayout.ObjectField("Item/Vehicle to make icon for", iconizedModel, typeof(GameObject), true) as GameObject;
 
