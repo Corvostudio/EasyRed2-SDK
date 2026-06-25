@@ -2,9 +2,9 @@
 using UnityEngine;
 
 // Use the CreateAssetMenu attribute to allow creating instances of this ScriptableObject from the Unity Editor.
-[CreateAssetMenu(fileName = "Data", menuName = "ScriptableObjects/VehicleCamoPreset", order = 1)]
+[CreateAssetMenu(fileName = "Data", menuName = "ScriptableObjects/CamouflagePreset", order = 1)]
 [System.Serializable]
-public partial class VehicleCamoPreset : ScriptableObject
+public partial class CamouflagePreset : ScriptableObject
 {
     public string camoName;
 

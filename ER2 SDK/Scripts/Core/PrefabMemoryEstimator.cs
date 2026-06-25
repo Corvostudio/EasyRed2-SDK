@@ -13,7 +13,7 @@ public static class ER2MemoryEstimateMenu_Shared
 
     public static readonly HashSet<System.Type> BlacklistedComponentTypes = new HashSet<System.Type>
     {
-        typeof(AlternativeVehicleCamos_V2),
+        typeof(CamouflageManager),
     };
 
     private static void EstimateSelection_Internal()

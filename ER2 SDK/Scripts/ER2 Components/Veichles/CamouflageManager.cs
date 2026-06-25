@@ -9,7 +9,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
-public partial class AlternativeVehicleCamos_V2 : MonoBehaviour
+public partial class CamouflageManager : MonoBehaviour
 {
     [Range(0f, 10f)]
     [Tooltip("Basic camo scale (measure on camo 1, then all camos will adapt to this scale.")]
@@ -31,7 +31,7 @@ public partial class AlternativeVehicleCamos_V2 : MonoBehaviour
     public partial class CamoSet
     {
         [Header("Camo Configuration")]
-        public VehicleCamoPreset camoPreset;
+        public CamouflagePreset camoPreset;
 
 
         [Range(0f, 10f)]
