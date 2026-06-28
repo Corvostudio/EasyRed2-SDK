@@ -1,397 +1,141 @@
-#if UNITY_EDITOR
-using System.Collections.Generic;
-using System.IO;
+﻿#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 
+// =====================================================================================
+//  These two windows replace the old Icon Generator. Both baking tools are now
+//  components (PropIconBaker / PropLODBaker), so framing settings live on the prefab
+//  and re-baking is a single button. The menu items just explain the workflow and let
+//  you drop the right component on the current selection.
+// =====================================================================================
+
+internal static class ER2BakeDocs
+{
+    public static GUIStyle Body
+    {
+        get
+        {
+            if (_body == null)
+                _body = new GUIStyle(EditorStyles.label) { richText = true, wordWrap = true };
+            return _body;
+        }
+    }
+    static GUIStyle _body;
+
+    public static void Paragraph(string richText)
+    {
+        GUILayout.Label(richText, Body);
+        EditorGUILayout.Space(4);
+    }
+
+    /// <summary>Adds T to the selected GameObject (or just pings it if already there).</summary>
+    public static void AddComponentButton<T>(string label) where T : Component
+    {
+        var go = Selection.activeGameObject;
+        using (new EditorGUI.DisabledScope(go == null))
+        {
+            if (GUILayout.Button(label, GUILayout.Height(26)))
+            {
+                var comp = go.GetComponent<T>();
+                if (comp == null) comp = Undo.AddComponent<T>(go);
+                Selection.activeObject = go;
+                EditorGUIUtility.PingObject(comp);
+            }
+        }
+        if (go == null)
+            EditorGUILayout.LabelField("Select a GameObject (scene or prefab) to enable.", EditorStyles.miniLabel);
+    }
+}
+
+// -------------------------------------------------------------------------------------
+//  ER2 TOOLS/Tools/Texture/Icon Generator
+// -------------------------------------------------------------------------------------
 public class IconGenerator : EditorWindow
 {
-    private static int FINAL_TEX_SIZE = 256;
-
-    private static int TEX_SIZE = 256;
-    private bool overrideTexSize = false;
-
-    //private TextureGeneratorParameters overrideParameters = null;
-    [Range(1, 200)]
-    private float objectSize = 20;
-    [Range(.2f, 50)]
-    private float aperture = 1;
-    [Range(.5f, 2)]
-    private float exposure = 1;
-    private Vector3 shiftCenter = new Vector3(0, 0, 0);
-    private GameObject iconizedModel;
-    private GameObject objectCopy;
-
-    private bool allowAlpha = true;
-    //private GameObject lowPolyModel;
+    Vector2 _scroll;
 
     [MenuItem("ER2 TOOLS/Tools/Texture/Icon Generator")]
     public static void ShowWindow()
     {
-        EditorWindow.GetWindow<IconGenerator>("Icon Generator");
+        var w = GetWindow<IconGenerator>("Icon Generator");
+        w.minSize = new Vector2(380, 320);
     }
 
-    private void OnGUI()
+    void OnGUI()
     {
-        overrideTexSize = EditorGUILayout.Toggle("Override Tex Size", overrideTexSize);
-        if (overrideTexSize)
-            TEX_SIZE = EditorGUILayout.IntField("Custom Tex Size", TEX_SIZE);
-        else
-            TEX_SIZE = FINAL_TEX_SIZE;
+        _scroll = EditorGUILayout.BeginScrollView(_scroll);
 
-        //inputs
-        //objectSize = EditorGUILayout.FloatField("Camera Distance", objectSize);
-        objectSize = 50;
-        aperture = EditorGUILayout.FloatField("Shot Size", aperture);
-        exposure = EditorGUILayout.FloatField("Exposure", exposure);
-        shiftCenter = EditorGUILayout.Vector3Field("ShiftCenter", shiftCenter);
-        allowAlpha = EditorGUILayout.Toggle("Allow Alpha", allowAlpha);
-        iconizedModel = EditorGUILayout.ObjectField("Item/Vehicle to make icon for", iconizedModel, typeof(GameObject), true) as GameObject;
+        EditorGUILayout.Space(4);
+        ER2BakeDocs.Paragraph(
+            "<b>The Icon Generator is now a component: <i>Prop Icon Baker</i>.</b>");
 
+        ER2BakeDocs.Paragraph(
+            "Add it to the same GameObject that has the <b>Vehicle</b> or <b>ItemObject</b> " +
+            "(Add Component ▸ ER2/Texture/Prop Icon Baker). The framing — shot size, exposure, " +
+            "shift center, resolution — is saved <b>on the prefab</b>, so you tune it once and it stays put.");
 
-        //error wrong item selected
-        if (iconizedModel && !iconizedModel.GetComponent<Vehicle>() && !iconizedModel.GetComponent<ItemObject>())
-        {
-            GUILayout.Label("!Selected object is not a Vehicle nor an Item Object!");
-            return;
-        }
+        ER2BakeDocs.Paragraph(
+            "<b>Update icon</b> re-shoots straight over the currently assigned sprite, in place. " +
+            "Same file, same GUID, every reference stays intact — updating an icon is one click.");
 
+        ER2BakeDocs.Paragraph(
+            "<b>Save as new icon…</b> writes a fresh PNG, imports it as a Sprite and assigns it. " +
+            "The save dialog opens on the <b>current icon's folder</b> when one is already assigned.");
 
-        //buttons
-        if (iconizedModel)
-        {
-            if (GUILayout.Button("Generate Icon"))
-                GenerateTexture();
+        ER2BakeDocs.Paragraph(
+            "Camera framing is chosen automatically from the target type (vehicle / weapon / item), " +
+            "exactly like the old window. Best done in <b>Prefab Mode</b> or on a root-level scene instance.");
 
-            Vehicle veh = iconizedModel.GetComponent<Vehicle>();
-            if (veh != null && veh.icon != null && GUILayout.Button("Override " + veh.icon.name))
-            {
-                string path = Application.dataPath.Substring(0, Application.dataPath.Length - 6) + AssetDatabase.GetAssetPath(veh.icon);
-                GenerateTexture(path);
-            }
+        EditorGUILayout.Space(6);
+        ER2BakeDocs.AddComponentButton<PropIconBaker>("Add Prop Icon Baker to selection");
 
-            ItemObject item = iconizedModel.GetComponent<ItemObject>();
-            if (item != null && item.icon != null && GUILayout.Button("Override " + item.icon.name))
-            {
-                string path = Application.dataPath.Substring(0, Application.dataPath.Length - 6) + AssetDatabase.GetAssetPath(item.icon);
-                GenerateTexture(path);
-            }
-        }
+        EditorGUILayout.EndScrollView();
+    }
+}
+
+// -------------------------------------------------------------------------------------
+//  ER2 TOOLS/Tools/Texture/LOD Texture Generator
+// -------------------------------------------------------------------------------------
+public class LODTextureGenerator : EditorWindow
+{
+    Vector2 _scroll;
+
+    [MenuItem("ER2 TOOLS/Tools/Texture/LOD Texture Generator")]
+    public static void ShowWindow()
+    {
+        var w = GetWindow<LODTextureGenerator>("LOD Texture Generator");
+        w.minSize = new Vector2(380, 320);
     }
 
-
-
-    private GameObject CreateLightGo(Vector3 rotation, float lightMult = 1)
+    void OnGUI()
     {
-        GameObject go = new GameObject("LIGHT");
-        Light light = go.gameObject.AddComponent<Light>();
-        light.type = LightType.Directional;
-        light.color = Color.white;
-        light.intensity = exposure * lightMult * .75f;
-        go.transform.eulerAngles = rotation;
-        return go;
-    }
-    private GameObject CreateLightGo()
-    {
-        GameObject lightsRoot = new GameObject("LIGHTS");
-        CreateLightGo(new Vector3(0, 0, 0)).transform.SetParent(lightsRoot.transform);
-        CreateLightGo(new Vector3(0, 90, 0)).transform.SetParent(lightsRoot.transform);
-        CreateLightGo(new Vector3(0, 180, 0)).transform.SetParent(lightsRoot.transform);
-        CreateLightGo(new Vector3(0, 270, 0)).transform.SetParent(lightsRoot.transform);
-        CreateLightGo(new Vector3(90, 0, 0), .5f).transform.SetParent(lightsRoot.transform);
+        _scroll = EditorGUILayout.BeginScrollView(_scroll);
 
-        return lightsRoot;
-    }
+        EditorGUILayout.Space(4);
+        ER2BakeDocs.Paragraph(
+            "<b>The LOD texture baker is a component: <i>Prop LOD Baker</i>.</b>");
 
-    private string previous_path = null;
-    private void GenerateTexture(string path = "")
-    {
-        if (previous_path == null)
-            previous_path = Application.dataPath;
+        ER2BakeDocs.Paragraph(
+            "Add it to the prop root (Add Component ▸ ER2/LOD/Prop LOD Baker), then press " +
+            "<b>Auto Setup (scan children)</b>: it creates one section per distinct LOD material " +
+            "(<i>FarLodShader</i> / <i>CorvoTreeBillboard</i>) found in the children.");
 
-        // Check if there's an existing icon and use its folder path
-        Sprite existingIcon = null;
-        Vehicle veh = iconizedModel.GetComponent<Vehicle>();
-        ItemObject item = iconizedModel.GetComponent<ItemObject>();
+        ER2BakeDocs.Paragraph(
+            "Each section keeps its own framing (size, distance, aperture, shift, brightness, tree/top-view flags). " +
+            "On a prefab variant, Auto Setup overrides only the <b>material</b> reference and leaves framing inherited.");
 
-        if (veh != null && veh.icon != null)
-            existingIcon = veh.icon;
-        else if (item != null && item.icon != null)
-            existingIcon = item.icon;
+        ER2BakeDocs.Paragraph(
+            "<b>Override texture</b> bakes over the material's <i>_BaseMap</i> PNG in place (keeps GUID/import settings). " +
+            "<b>New material + texture</b> saves a new atlas, builds a LOD material and re-points the child renderers. " +
+            "<b>Override ALL textures</b> re-bakes every section at once.");
 
-        if (existingIcon != null)
-        {
-            string existingPath = AssetDatabase.GetAssetPath(existingIcon);
-            string fullPath = Application.dataPath.Substring(0, Application.dataPath.Length - 6) + existingPath;
-            string directory = Path.GetDirectoryName(fullPath);
-            if (!string.IsNullOrEmpty(directory))
-                previous_path = directory;
-        }
+        ER2BakeDocs.Paragraph(
+            "Use <b>Preview last LOD</b> / <b>Reset LOD</b> to check the billboard against the full mesh in the Scene view.");
 
-        string fileName = null;
-        if (string.IsNullOrEmpty(path))
-        {
-            fileName = iconizedModel.name + "_tex_ICON.png";
-            path = EditorUtility.SaveFilePanel(
-                "Save texture as PNG",
-                previous_path,//"",
-                fileName,
-                "png");
-        }
-        if (string.IsNullOrEmpty(fileName))
-            fileName = Path.GetFileName(path);
+        EditorGUILayout.Space(6);
+        ER2BakeDocs.AddComponentButton<PropLODBaker>("Add Prop LOD Baker to selection");
 
-        if (path == null || path.Length < 3)
-        {
-            Debug.Log("Canceled.");
-            return;
-        }
-        previous_path = path;
-
-
-        objectCopy = Instantiate(iconizedModel);
-        objectCopy.transform.position = new Vector3(0, 0, 9000);
-        objectCopy.transform.eulerAngles = Vector3.zero;
-
-
-        List<Light> activeLights = new List<Light>();
-        foreach (Light l in GameObject.FindObjectsByType<Light>(FindObjectsSortMode.None))
-        {
-            if (l.enabled && l.gameObject.activeSelf)
-            {
-                activeLights.Add(l);
-                l.enabled = false;
-            }
-        }
-        Component volumeGUI = null;
-        var volumeType = GetVolumeType();
-        if (volumeType != null)
-        {
-            var found = UnityEngine.Object.FindObjectsByType(volumeType, FindObjectsSortMode.None);
-            if (found != null && found.Length > 0)
-                volumeGUI = (Component)found[0];
-
-            if (volumeGUI)
-            {
-                if (!volumeGUI.gameObject.activeSelf)
-                    volumeGUI = null;
-                else
-                    volumeGUI.gameObject.SetActive(false);
-            }
-        }
-
-
-        // Create a new texture
-        Texture2D texture = new Texture2D(TEX_SIZE, TEX_SIZE);
-        //Texture2D up_texture = new Texture2D(sub_tex_size, sub_tex_size);
-
-        GameObject lights = CreateLightGo();
-
-        // Take screenshots from different views
-        SetLODsEnabled(objectCopy, 0);
-        TakeScreenshot(objectCopy, texture, "Front");
-        //TakeScreenshot(camera, objectCopy, renderTexture, up_texture, Vector3.up, "Top");
-        SetLODsEnabled(objectCopy, -1);
-
-
-        if (path.Length != 0)
-        {
-            var pngData = texture.EncodeToPNG();
-            if (pngData != null)
-            {
-                File.WriteAllBytes(path, pngData);
-                AssetDatabase.Refresh();
-            }
-        }
-
-        //re enable stuff
-        foreach (Light l in activeLights)
-            l.enabled = true;
-        if (volumeGUI)
-            volumeGUI.gameObject.SetActive(true);
-
-        // Cleanup
-        DestroyImmediate(texture);
-        DestroyImmediate(lights);
-
-
-        //save and mark as sprite
-        string assetPath = GetLocalAssetPath(path);
-        Texture2D assetTexture = (Texture2D)AssetDatabase.LoadAssetAtPath(assetPath, typeof(Texture2D));
-        TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-        if (importer != null)
-        {
-            importer.textureType = TextureImporterType.Sprite;
-            AssetDatabase.ImportAsset(assetPath);
-            Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
-
-            //apply icon and mark dirty
-            if (iconizedModel.GetComponent<Vehicle>())
-            {
-                iconizedModel.GetComponent<Vehicle>().icon = sprite;
-                EditorUtility.SetDirty(iconizedModel);
-            }
-            if (iconizedModel.GetComponent<ItemObject>())
-            {
-                iconizedModel.GetComponent<ItemObject>().icon = sprite;
-                EditorUtility.SetDirty(iconizedModel);
-            }
-            //Debug.Log(sprite, iconizedModel);
-        }
-
-
-        Selection.activeObject = assetTexture;
-        EditorGUIUtility.PingObject(assetTexture);
-
-
-        DestroyImmediate(objectCopy);
-        Debug.Log("Texture generation complete (" + fileName + "). Click here to view in explorer", assetTexture);
-    }
-    private void TakeScreenshot(GameObject model, Texture2D texture, string viewName)
-    {
-        bool isVehicle = model.GetComponentInParent<Vehicle>();
-        bool isWeapon = model.GetComponentInParent<GenericGun>();
-        float camMultiplier;
-        if (isVehicle)
-            camMultiplier = 3;
-        else if (isWeapon)
-        {
-            if (model.GetComponentInParent<GenericGun>().weaponPose == WeaponPose.pistol)
-                camMultiplier = .11f;
-            else
-                camMultiplier = .4f;
-        }
-        else
-            camMultiplier = .08f;
-
-
-        // Set up the camera for taking screenshots
-        Camera camera = new GameObject("EditorCamera").AddComponent<Camera>();
-        camera.orthographic = true;
-        camera.orthographicSize = aperture * camMultiplier;
-        camera.farClipPlane = 300;
-        camera.nearClipPlane = .2f;
-        camera.backgroundColor = Color.clear;
-        camera.clearFlags = CameraClearFlags.SolidColor;
-
-        // Set the camera's position and rotation
-        if (isVehicle)
-        {
-            camera.transform.position = model.transform.position + (Vector3.forward + Vector3.left * .5f + Vector3.up * .3f) * objectSize;
-            camera.transform.LookAt(model.transform.position);
-            camera.transform.position -= new Vector3(0, -.6f, 0);
-            camera.transform.position -= camera.transform.forward * 20;
-        }
-        else if (isWeapon)
-        {
-            camera.transform.position = model.transform.position + (Vector3.forward + Vector3.right) * objectSize;
-            camera.transform.LookAt(model.transform.position);
-            camera.transform.Rotate(Vector3.forward, -40);
-            if (model.GetComponentInParent<GenericGun>().weaponPose == WeaponPose.pistol)
-                camera.transform.position -= new Vector3(0, 0, -0.05f);
-            else
-                camera.transform.position -= new Vector3(0, 0, -.2f);
-        }
-        else
-        {
-            camera.transform.position = model.transform.position + (Vector3.forward + Vector3.right + Vector3.up) * objectSize;
-            camera.transform.LookAt(model.transform.position);
-        }
-        camera.transform.position -= camera.transform.right * shiftCenter.x +
-            camera.transform.up * shiftCenter.y +
-            camera.transform.forward * shiftCenter.z;
-
-        //set up render texture
-        RenderTexture renderTexture = RenderTexture.GetTemporary(TEX_SIZE, TEX_SIZE, 24);
-
-        // Render the model to the render texture
-        camera.targetTexture = renderTexture;
-        camera.Render();
-
-        // Read the pixels from the render texture and apply them to the texture
-        RenderTexture.active = renderTexture;
-        texture.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
-        if (!allowAlpha)
-            RemoveAlphaValue(texture);
-        texture.Apply();
-
-        // Save the texture as a PNG file
-        //byte[] bytes = texture.EncodeToPNG();
-        //string filename = $"{viewName}_UV.png";
-        //System.IO.File.WriteAllBytes(filename, bytes);
-
-        RenderTexture.ReleaseTemporary(renderTexture);
-        DestroyImmediate(camera.gameObject);
-    }
-
-    public static void RemoveAlphaValue(Texture2D _texture, float threeshold = 0)
-    {
-        // Get the width and height of the texture.
-        int width = _texture.width;
-        int height = _texture.height;
-
-        // Iterate over all the pixels in the texture.
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                // Get the pixel color.
-                Color color = _texture.GetPixel(x, y);
-
-                // If the alpha value is not 0, set it to 1.
-                if (color.a > threeshold)
-                    color.a = 1;
-
-                // Set the pixel color.
-                _texture.SetPixel(x, y, color);
-            }
-        }
-    }
-
-    private void SetLODsEnabled(GameObject model, int lodValue)
-    {
-        foreach (LODGroup lod in model.GetComponentsInChildren<LODGroup>())
-        {
-            lod.ForceLOD(lodValue);
-        }
-    }
-
-    private Texture2D GenerateCompositeTexture(Texture2D frontTexture, Texture2D backTexture, Texture2D rightTexture, Texture2D leftTexture/*, Texture2D topTexture*/)
-    {
-        // Create a new texture for the composite image
-        int sub_tex_size = TEX_SIZE / 2;
-        Texture2D combinedTexture = new Texture2D(TEX_SIZE, TEX_SIZE);
-
-        // Combine textures
-        combinedTexture.SetPixels32(0, 0, sub_tex_size, sub_tex_size, frontTexture.GetPixels32());
-        combinedTexture.SetPixels32(sub_tex_size, 0, sub_tex_size, sub_tex_size, backTexture.GetPixels32());
-        combinedTexture.SetPixels32(0, sub_tex_size, sub_tex_size, sub_tex_size, rightTexture.GetPixels32());
-        combinedTexture.SetPixels32(sub_tex_size, sub_tex_size, sub_tex_size, sub_tex_size, leftTexture.GetPixels32());
-
-        combinedTexture.Apply();
-        return combinedTexture;
-    }
-
-    public static string GetLocalAssetPath(string globalPath)
-    {
-        int charStart = globalPath.IndexOf("Assets");
-        return globalPath.Substring(charStart);
-    }
-
-    private static System.Type _cachedVolumeType;
-    private static bool _volumeTypeChecked;
-
-    private static System.Type GetVolumeType()
-    {
-        if (_volumeTypeChecked) return _cachedVolumeType;
-        _volumeTypeChecked = true;
-
-        foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
-        {
-            var t = asm.GetType("UnityEngine.Rendering.Volume");
-            if (t != null) { _cachedVolumeType = t; break; }
-        }
-        return _cachedVolumeType;
+        EditorGUILayout.EndScrollView();
     }
 }
 #endif
