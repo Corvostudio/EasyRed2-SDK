@@ -219,6 +219,12 @@ public partial class GenericGun : Weapon
     [Tooltip("Name of the Animation clip played specifically on the LAST shot (used by Luger toggle-lock open and similar). Leave empty if not used.")]
     public string fire_anim_lastBullet;
 
+
+    [Header("⏺ TPS Weapon Action Animation")]
+
+    [Tooltip("Optional TPS bolt/action animation component. Replaces direct Animation.Play(\"bolt_anim\") when assigned. Legacy Animation on this GameObject is still used as fallback.")]
+    public GenericGunActionAnimation tpsBoltActionAnimation;
+
     #endregion
 
 
