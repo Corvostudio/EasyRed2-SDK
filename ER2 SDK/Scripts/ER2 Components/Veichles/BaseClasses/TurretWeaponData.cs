@@ -51,8 +51,9 @@ public partial class TurretWeaponData : ScriptableObject
     public AudioClip fireSound_distance_tail;
 
     [Header("Ballistics / cycle")]
-    [Tooltip("Enable / disable recoil when firing")]
-    public bool isRecoilless = false;
+    [Tooltip("Recoil intensity when firing")]
+    [Range(0.0f, 5.0f)]
+    public float recoilIntensity = 1;
 
     [Tooltip("Rounds per minute (on each gun)")]
     [Range(1, 2000)]

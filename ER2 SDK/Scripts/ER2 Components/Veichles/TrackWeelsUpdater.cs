@@ -11,7 +11,7 @@ public partial class TrackWeelsUpdater : MonoBehaviour
     public Renderer rightTrack;
 
     [Tooltip("The vertical UV direction and speed of the track sliding effect. If the tank is rotated in the standard ER2 rotation, it should be '-1'")]
-    [Range(-5f, 5f)]
+    [Range(-20f, 20f)]
     public float trackSpeedMultiplier = -1;
 
     [Tooltip("The horizontal UV direction and speed of the track sliding effect. If the tank is rotated in the standard ER2 rotation, it should be '0'")]

@@ -187,7 +187,23 @@ public partial class TurretWeapon
 
 
     [Tooltip("Enable / disable recoil when firing")]
-    public bool isRecoilless = false;
+    [HideInInspector, SerializeField] bool isRecoilless = false;// deprecated — kept only so old .assets keep deserializing; folded into recoilIntensity above
+    [Tooltip("Recoil intensity when firing")]
+    [Range(0.0f, 5.0f)]
+    public float recoilIntensity = -1;
+    public void OnBeforeSerialize() { }
+    public void OnAfterDeserialize()
+    {
+        if (recoilIntensity < 0f)                     // legacy asset (key absent on disk -> -1) or brand-new (-> 1)
+            recoilIntensity = isRecoilless ? 0f : 1f;
+    }
+#if UNITY_EDITOR
+    void OnValidate()                                 // same fix in edit mode so the slider never shows -1
+    {
+        if (recoilIntensity < 0f)
+            recoilIntensity = isRecoilless ? 0f : 1f;
+    }
+#endif
 
     [Tooltip("Rounds per minute")]
     [Range(1, 2000)]
@@ -220,6 +236,9 @@ public partial class TurretWeapon
     /// </summary>
     public void ApplyData()
     {
+        if (recoilIntensity < 0f)                     // migrate inline-authored weapons (no data asset)
+            recoilIntensity = isRecoilless ? 0f : 1f;
+
         if (data == null || !Application.isPlaying)
             return;
 
@@ -238,7 +257,7 @@ public partial class TurretWeapon
         fireSound_distance_loop = data.fireSound_distance_loop;
         fireSound_distance_tail = data.fireSound_distance_tail;
 
-        isRecoilless = data.isRecoilless;
+        recoilIntensity = data.recoilIntensity;
         roundPerMinute = data.roundPerMinute;
         reloadWhenFiring = data.reloadWhenFiring;
         reloadTime = data.reloadTime;
