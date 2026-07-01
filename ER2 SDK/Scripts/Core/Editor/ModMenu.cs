@@ -682,6 +682,9 @@ public class ModMenu : EditorWindow
     private static void FinalizeWeaponAnimations(GenericGun asset, string bundleName)
     {
         FixAnimation(asset.fpsAnimations.fps_putaway, WrapMode.ClampForever, bundleName, asset,true);
+        FixAnimation(asset.fpsAnimations.fps_unequip, WrapMode.ClampForever, bundleName, asset,true);
+        FixAnimation(asset.fpsAnimations.fps_fire, WrapMode.ClampForever, bundleName, asset,true);
+        FixAnimation(asset.fpsAnimations.fps_fire_no_ammos, WrapMode.ClampForever, bundleName, asset, true);
         FixAnimation(asset.fpsAnimations.fps_reload_full, WrapMode.ClampForever, bundleName, asset,false);
         FixAnimation(asset.fpsAnimations.fps_reload_half, WrapMode.ClampForever, bundleName, asset, false);
         FixAnimation(asset.fpsAnimations.fps_bolt_action, WrapMode.ClampForever, bundleName, asset, false);
