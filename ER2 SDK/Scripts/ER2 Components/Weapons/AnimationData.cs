@@ -34,10 +34,10 @@ public partial class AnimationData
     [Tooltip("[Optional] Animation name for un-equipping the weapon. If empty it will use the fps_putaway equip animation but in reverse.")]
     public string fps_unequip;
 
-    [Tooltip("[Optional] Animation to play on fps rig when firing a gun. Generally used for bolt action guns firing pin.")]
+    /*[Tooltip("[Optional] Animation to play on fps rig when firing a gun. Generally used for bolt action guns firing pin.")]
     public string fps_fire;
     [Tooltip("[Optional] Animation to play on fps rig when firing a gun (when out of bullets). Generally used for bolt action guns firing pin.")]
-    public string fps_fire_no_ammos;
+    public string fps_fire_no_ammos;*/
 
     [Tooltip("Animation name for a full reload (empty weapon).")]
     public string fps_reload_full;

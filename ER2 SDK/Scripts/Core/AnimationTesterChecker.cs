@@ -135,8 +135,8 @@ public static class AnimationTesterTool
             MaybePromptStripSpinPosFromClip(weapClone, clip, anim.transform, "equip");
 
         AddAnimation(weapClone.fpsAnimations.fps_unequip, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_fire, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_fire_no_ammos, anim);
+        //AddAnimation(weapClone.fpsAnimations.fps_fire, anim);
+        //AddAnimation(weapClone.fpsAnimations.fps_fire_no_ammos, anim);
         AddAnimation(weapClone.fpsAnimations.fps_reload_full, anim);
         AddAnimation(weapClone.fpsAnimations.fps_reload_half, anim);
         AddAnimation(weapClone.fpsAnimations.fps_bolt_action, anim);

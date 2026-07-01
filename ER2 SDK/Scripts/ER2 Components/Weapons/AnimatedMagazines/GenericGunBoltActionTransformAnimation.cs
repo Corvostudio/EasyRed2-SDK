@@ -17,11 +17,13 @@ public partial class GenericGunBoltActionTransformAnimation : GenericGunActionAn
 
     [Header("Firing pin")]
 
-    [Tooltip("Firing-pin / striker mesh. On every shot it snaps to the captured 'fired' pose. Its rest pose is simply its authored transform, restored when the bolt is cycled (ResetPose runs at the start of Play/PlayReload). Capture the fired pose with the button in the inspector. Leave empty to disable.")]
+    [Tooltip("Firing-pin / striker mesh. On trigger pull it lerps to the captured 'fired' pose; when the bolt is cycled or the weapon is reloaded it lerps back to the captured 'cocked' pose (after a short delay, to line up with the bolt opening). Capture both poses with the buttons below. Leave empty to disable.")]
     public Transform percussor;
 
-    // Fired pose the pin snaps to on each shot (local space).
-    [HideInInspector] [SerializeField] private bool hasPercussorFiredPose;
+    // Captured poses (local space). Set via the inspector buttons.
+    [HideInInspector] [SerializeField] private Vector3 percussorCockedLocalPosition;
+    [HideInInspector] [SerializeField] private Quaternion percussorCockedLocalRotation = Quaternion.identity;
+
     [HideInInspector] [SerializeField] private Vector3 percussorFiredLocalPosition;
     [HideInInspector] [SerializeField] private Quaternion percussorFiredLocalRotation = Quaternion.identity;
 
@@ -30,10 +32,8 @@ public partial class GenericGunBoltActionTransformAnimation : GenericGunActionAn
     [System.NonSerialized] private TransformPose[] slideDefaults;
     [System.NonSerialized] private Coroutine routine;
 
-    // Rest pose is captured automatically from the pin's authored transform.
-    [System.NonSerialized] private bool percussorRestCached;
-    [System.NonSerialized] private Vector3 percussorRestRuntimePos;
-    [System.NonSerialized] private Quaternion percussorRestRuntimeRot = Quaternion.identity;
+    // Firing-pin runtime state.
+    [System.NonSerialized] private Coroutine pinRoutine;
 
 
     private struct TransformPose
