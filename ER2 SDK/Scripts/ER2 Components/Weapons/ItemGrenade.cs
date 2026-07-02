@@ -28,7 +28,7 @@ public partial class ItemGrenade : ItemObject
     [Range(1, 1000)]
     public float explosionDamage = 200;
     [Tooltip("Penetration of explosion (in mm)")]
-    [Range(1, 800)]
+    [Range(0, 800)]
     public float explosionMaxPenetration = 1;
     [Tooltip("Explosion radius")]
     [Range(.1f, 40)]

@@ -380,7 +380,8 @@ public class TurretWeaponDrawer : PropertyDrawer
             if (hasData)
             {
                 // keep the prefab clean: strip everything the asset now provides
-                ClearDataBackedFields(property);
+                if (!Application.isPlaying)
+                    ClearDataBackedFields(property);
 
                 Rect info = new Rect(position.x, y, position.width, EditorGUIUtility.singleLineHeight * 2f);
                 EditorGUI.HelpBox(info,
