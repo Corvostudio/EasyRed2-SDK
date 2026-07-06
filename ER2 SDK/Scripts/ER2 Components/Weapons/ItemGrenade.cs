@@ -8,6 +8,8 @@ public partial class ItemGrenade : ItemObject
     [Header("Configuration")]
     [Tooltip("Grenade throw animation in FPS (Check String Tables document)")]
     public string FPSthrowAnimation = "throw_grenade_1";
+    public string recycledAnimationsId = "";
+
     [Tooltip("Grenade type")]
     public GrenadeType grenadeType = GrenadeType.infantryGrenate;
     [Tooltip("Fuse type")]
