@@ -1,6 +1,8 @@
 ﻿// FireSelectorHandler.cs
 using System.Collections;
 using UnityEngine;
+using MoonSharp.Interpreter.Tree;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -32,6 +34,36 @@ public partial class FireSelectorHandler : MonoBehaviour
     [Header("Animation")]
     [Range(0.05f, 0.5f)]
     public float transitionDuration = 0.18f;
+
+
+    public void EditorSnapToState(int stateIndex)
+    {
+        if (levers == null) return;
+        stateIndex = Mathf.Clamp(stateIndex, 0, stateCount - 1);
+        foreach (var lever in levers)
+        {
+            if (lever.leverTransform == null) continue;
+            if (lever.poses == null || stateIndex >= lever.poses.Length) continue;
+            lever.leverTransform.localPosition = lever.poses[stateIndex].localPosition;
+            lever.leverTransform.localRotation = Quaternion.Euler(lever.poses[stateIndex].localRotation);
+        }
+    }
+
+    public void SyncPoseArrays()
+    {
+        if (levers == null) return;
+        foreach (var lever in levers)
+        {
+            int current = lever.poses != null ? lever.poses.Length : 0;
+            if (current == stateCount) continue;
+            var newPoses = new LeverPose[stateCount];
+            for (int i = 0; i < stateCount; i++)
+                newPoses[i] = (i < current && lever.poses[i] != null)
+                              ? lever.poses[i]
+                              : new LeverPose();
+            lever.poses = newPoses;
+        }
+    }
 }
 
 #if UNITY_EDITOR
