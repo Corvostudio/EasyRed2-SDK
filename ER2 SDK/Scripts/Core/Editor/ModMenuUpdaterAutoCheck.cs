@@ -164,8 +164,7 @@ public static class ModMenuUpdaterAutoCheck
         if (levelProp == null) return;
 
         // Unity ha cambiato nome a questa property tra versioni; proviamo entrambi.
-        var pipelineProp = levelProp.FindPropertyRelative("m_RenderPipeline")
-                          ?? levelProp.FindPropertyRelative("renderPipeline");
+        var pipelineProp = levelProp.FindPropertyRelative("customRenderPipeline");
 
         if (pipelineProp != null)
             pipelineProp.objectReferenceValue = asset;

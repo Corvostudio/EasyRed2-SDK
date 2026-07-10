@@ -738,7 +738,7 @@ public class ModTemplates : MonoBehaviour
 
         foreach (UnityEngine.Object selected in Selection.objects)
         {
-            foreach (Collision coll in ((GameObject)selected).GetComponentsInChildren<Collision>())
+            foreach (Collider coll in ((GameObject)selected).GetComponentsInChildren<Collider>())
             {
                 if (!coll.gameObject.GetComponent<BuildingImpact>())
                     coll.gameObject.AddComponent<BuildingImpact>();
