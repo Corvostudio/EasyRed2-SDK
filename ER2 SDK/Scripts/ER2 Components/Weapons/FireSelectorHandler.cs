@@ -1,7 +1,6 @@
 ﻿// FireSelectorHandler.cs
 using System.Collections;
 using UnityEngine;
-using MoonSharp.Interpreter.Tree;
 
 #if UNITY_EDITOR
 using UnityEditor;
