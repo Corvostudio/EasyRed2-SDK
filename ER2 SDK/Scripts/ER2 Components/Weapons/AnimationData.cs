@@ -60,6 +60,7 @@ public partial class AnimationData
 
     [Header("Chamber-loaded weapons")]
 
+    public bool discard_bullet_on_chamber_open = false;
     [Tooltip("Animation name for opening the weapon chamber.")]
     public string fps_chamber_open;
     [Tooltip("Sound played when opening the chamber.")]
