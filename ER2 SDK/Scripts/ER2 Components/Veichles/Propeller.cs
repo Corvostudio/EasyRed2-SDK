@@ -7,6 +7,9 @@ public partial class Propeller : MonoBehaviour
     [Tooltip("Defines the propeller mesh blur effect when moving slow and fast")]
     public Transform propeller_slow, propeller_fast;
 
+    [Tooltip("Propeller tip mesh, always visible, never hidden")]
+    public Transform propeller_tip;
+
     [Tooltip("The connected Plane to the propeller")]
     public MovableVehicle connectedPlane;
 
