@@ -14,6 +14,9 @@ public partial class TurretGun : Turret
     [Tooltip("Weapons configured on this vehicle")]
     public TurretWeapon[] weapons = new TurretWeapon[0];
 
+    [Tooltip("Optional 'fire everything' slot: indices of the weapons above fired together as one extra selection at the end of the weapon cycle (e.g. 0,1 = MGs + cannons, leaving rockets out). Needs at least 2 valid indices to appear. Mainly meant for planes.")]
+    public byte[] combinedFireWeapons = new byte[0];
+
 
     [Tooltip("Connected animation (firing)")]
     public Animation connectedAim = null;//ANIM
@@ -549,4 +552,4 @@ public class TurretWeaponDrawer : PropertyDrawer
         }
     }
 }
-#endif
+#endif
