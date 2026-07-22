@@ -19,8 +19,8 @@ public partial class PathfindingIgnore : MonoBehaviour
                 AddNewVersion();
                 EditorUtility.SetDirty(gameObject);
                 DestroyImmediate(this);
-                return;
             }
+            return;
         }
 #endif
         AddNewVersion();
