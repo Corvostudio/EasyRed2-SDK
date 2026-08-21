@@ -35,6 +35,8 @@ public partial class Turret : MonoBehaviour
     public Transform scopePosition;
     [Tooltip("Sprites of the scope when aiming")]
     public string scopeSprite_id="tank_scope_2";
+    [Tooltip("If enabled and the assigned Tank Scope Data (scopeSprite_id) defines a FOV > 0, that FOV is used when aiming instead of this turret's scopeFOV.")]
+    public bool useScopeDataFOV = false;
 
     [Tooltip("Rotation speed of the turret")]
     [Range(0, 100)]
