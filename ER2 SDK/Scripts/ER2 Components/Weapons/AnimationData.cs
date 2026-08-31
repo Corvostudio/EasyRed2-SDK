@@ -111,6 +111,19 @@ public partial class AnimationData
     public ParticleSystem barrell_heat_fx;
 
 
+    [Header("Bipod (optional)")]
+
+    [Tooltip("[Optional] One-shot FPS animation played when the bipod deploys (left hand performs the deploy, then ends holding the weapon by the stock). While deployed the rig stays parked on the LAST frame of this animation. Empty = legacy behavior (no hand animation).")]
+    public string fps_bipod_deploy;
+    [Tooltip("Sound played when the bipod deploys.")]
+    public AudioClip bipod_deploy_sound;
+
+    [Tooltip("[Optional] One-shot FPS animation played when the bipod undeploys. If empty, fps_bipod_deploy is played in reverse.")]
+    public string fps_bipod_undeploy;
+    [Tooltip("Sound played when the bipod undeploys.")]
+    public AudioClip bipod_undeploy_sound;
+
+
     [System.Serializable]
     public struct MultiAmmoChamberingAnimation
     {
