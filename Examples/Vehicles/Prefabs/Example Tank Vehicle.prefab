@@ -8923,7 +8923,7 @@ MonoBehaviour:
   lookPosition: {fileID: 9145028535706977340}
   scopeFOV: 25
   scopePosition: {fileID: 5179897981815905377}
-  scopeSprite_id: tank_scope_2
+  scopeSprite_id: tank_scope_cross
   rotationSpeed: 8
   independentLookRotation: 0
   isAA: 0
