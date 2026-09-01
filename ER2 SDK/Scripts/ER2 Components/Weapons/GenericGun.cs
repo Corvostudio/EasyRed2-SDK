@@ -195,6 +195,8 @@ public partial class GenericGun : Weapon
 
     [Tooltip("List of attachment slots this weapon supports (scope, bipod, bayonet...). Each entry defines the attachment id and the transform where it gets parented.")]
     public SupportedAttachment[] supportedAttachments;
+    [Tooltip("[Optional] Animation override sets activated by installed attachments. The first entry whose attachment is installed wins. Designed for weapons whose whole animation set changes with an attachment (e.g. MG42 resting on its bipod).")]
+    public AttachmentAnimationOverride[] attachmentAnimationOverrides = new AttachmentAnimationOverride[0];
 
     [Tooltip("Optional built-in scope (a scope that's part of the weapon and not a separate attachment, e.g. a sniper variant with a permanently mounted scope).")]
     public GameObject integratedScope = null;

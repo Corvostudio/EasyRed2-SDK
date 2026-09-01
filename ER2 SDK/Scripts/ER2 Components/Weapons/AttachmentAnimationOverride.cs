@@ -26,9 +26,3 @@ public class AttachmentAnimationOverride
     //nota: gli override per-MAGAZINE (es. MG42+bipode con drum) vivono nell'AmmoBeltsFPSManager
     //(FPSMagManager.bipodOverrides), accanto agli altri dati per-magazine dell'arma
 }
-
-public partial class GenericGun
-{
-    [Tooltip("[Optional] Animation override sets activated by installed attachments. The first entry whose attachment is installed wins. Designed for weapons whose whole animation set changes with an attachment (e.g. MG42 resting on its bipod).")]
-    public AttachmentAnimationOverride[] attachmentAnimationOverrides = new AttachmentAnimationOverride[0];
-}
