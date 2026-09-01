@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 
 
-[CustomEditor(typeof(GenericGun))]
+[CustomEditor(typeof(GenericGun), true)]//true: vale anche per i derivati (AutomaticGun, AutomaticGunWithAmmoBelt...)
 public partial class GenericGunEditor : Editor
 {
     public override void OnInspectorGUI()

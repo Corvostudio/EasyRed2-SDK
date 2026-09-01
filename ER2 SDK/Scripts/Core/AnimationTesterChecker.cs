@@ -10,7 +10,7 @@ public class AnimationTesterChecker : MonoBehaviour
     public GenericGun attached_weapon;
 }
 
-public static class AnimationTesterTool
+public static partial class AnimationTesterTool
 {
     private const string CenterSpineRelativePath = "ROOT/RIGROOT_BJ/CenterSpine2_BJ";
     private static readonly HashSet<string> alreadyAdded = new HashSet<string>();
@@ -120,9 +120,8 @@ public static class AnimationTesterTool
         if (!string.IsNullOrEmpty(recycleId))
             weapClone.gameObject.name = recycleId;
 
-        // Spawna TUTTI i magazine compatibili sulla magazinePosition
-        if (weapClone.magazinePosition != null && !string.IsNullOrEmpty(weapClone.magazineSocket))
-            SpawnMatchingMagazines(weapClone);
+        // Spawna i magazine compatibili e gli attachment che cambiano le animazioni (bipode...)
+        SpawnCompatibleMagazinesAndAttachments(weapClone);
 
         // Animazioni
         Animation anim = animRoot.transform.Find("ROOT").GetComponent<Animation>();
@@ -134,21 +133,10 @@ public static class AnimationTesterTool
         foreach (var clip in equipClips)
             MaybePromptStripSpinPosFromClip(weapClone, clip, anim.transform, "equip");
 
-        AddAnimation(weapClone.fpsAnimations.fps_unequip, anim);
-        //AddAnimation(weapClone.fpsAnimations.fps_fire, anim);
-        //AddAnimation(weapClone.fpsAnimations.fps_fire_no_ammos, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_reload_full, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_reload_half, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_bolt_action, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_chamber_open, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_chamber_open_noAmmo, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_chamber, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_chamber_close, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_chamber_close_noAmmo, anim);
-        AddAnimation(weapClone.fpsAnimations.fps_change_barrell, anim);
-
-        foreach (var multianim in weapClone.fpsAnimations.multi_ammo_chambering)
-            AddAnimation(multianim.anim_id, anim);
+        //tutte le altre animazioni che l'arma puo' riprodurre: set base, override attivati dagli attachment
+        //(bipode e simili, varianti "deployed" comprese), override per-magazine del belt manager e dei magazine
+        foreach (string anim_id in CollectWeaponAnimationIds(weapClone))
+            AddAnimation(anim_id, anim);
 
         // Lock: tutto NotEditable, poi sblocca CenterSpine2_BJ + figli (per animare),
         // poi rilocka l'arma (figlia di CenterSpine) e gli SkinnedMeshRenderer
@@ -167,30 +155,186 @@ public static class AnimationTesterTool
         Selection.activeGameObject = weapClone.gameObject;
     }
 
+    /// <summary>
+    /// Hook implementato dal gioco (file partial fuori dall'SDK) per aggiungere le sorgenti di animazioni
+    /// che l'SDK non conosce. Senza quella parte la chiamata viene rimossa dal compilatore.
+    /// </summary>
+    static partial void CollectGameSpecificAnimationIds(GenericGun weapon, List<string> ids);
+
+    /// <summary>
+    /// Ogni animazione che l'arma puo' riprodurre: AnimationData base, override attivati da un attachment
+    /// installato (es. bipode, varianti "deployed" comprese), override per-magazine ospitati nel belt manager
+    /// e override dei magazine compatibili. I nomi duplicati vengono scartati.
+    /// </summary>
+    public static List<string> CollectWeaponAnimationIds(GenericGun weapon)
+    {
+        var ids = new List<string>();
+        if (weapon == null) return ids;
+
+        //set base dell'arma
+        AddAnimationDataIds(weapon.fpsAnimations, ids);
+
+        //override attivati da un attachment installato (bipode e simili)
+        if (weapon.attachmentAnimationOverrides != null)
+        {
+            foreach (AttachmentAnimationOverride attachment_over in weapon.attachmentAnimationOverrides)
+            {
+                if (attachment_over == null) continue;
+
+                AddAnimationDataIds(attachment_over.animations, ids);
+                AddAnimationId(attachment_over.fps_change_barrell_deployed, ids);
+                if (attachment_over.deployedReloadAnimations != null)
+                {
+                    AddAnimationId(attachment_over.deployedReloadAnimations.override_anim_reload_half, ids);
+                    AddAnimationId(attachment_over.deployedReloadAnimations.override_anim_reload_full, ids);
+                }
+            }
+        }
+
+        //override per-magazine ospitati nel belt manager (ricariche standard e set bipode)
+        AmmoBeltsFPSManager beltManager = weapon.GetComponent<AmmoBeltsFPSManager>();
+        if (beltManager != null && beltManager.compatibleMagazines != null)
+        {
+            foreach (FPSMagManager fps_mag in beltManager.compatibleMagazines)
+            {
+                if (fps_mag == null) continue;
+
+                AddAnimationId(fps_mag.override_reload_anim_partial, ids);
+                AddAnimationId(fps_mag.override_reload_anim_full, ids);
+
+                BipodMagazineOverride bipod_over = fps_mag.bipodOverrides;
+                if (bipod_over != null)
+                {
+                    AddAnimationId(bipod_over.override_reload_anim_partial, ids);
+                    AddAnimationId(bipod_over.override_reload_anim_full, ids);
+                    AddAnimationId(bipod_over.override_reload_anim_partial_deployed, ids);
+                    AddAnimationId(bipod_over.override_reload_anim_full_deployed, ids);
+                    AddAnimationId(bipod_over.override_putaway_anim, ids);
+                    AddAnimationId(bipod_over.override_unequip_anim, ids);
+                    AddAnimationId(bipod_over.override_change_barrell_anim, ids);
+                    AddAnimationId(bipod_over.override_change_barrell_anim_deployed, ids);
+                }
+            }
+        }
+
+        //magazine compatibili (gia' montati da SpawnCompatibleMagazinesAndAttachments): i loro override
+        foreach (Magazine mag in weapon.GetComponentsInChildren<Magazine>(true))
+        {
+            if (mag == null) continue;
+
+            AddAnimationId(mag.override_anim_reload_half, ids);
+            AddAnimationId(mag.override_anim_reload_full, ids);
+        }
+
+        //sorgenti specifiche del gioco (non presenti nell'SDK): no-op se questa parte non e' inclusa
+        CollectGameSpecificAnimationIds(weapon, ids);
+        return ids;
+    }
+
+    private static void AddAnimationDataIds(AnimationData data, List<string> ids)
+    {
+        if (data == null) return;
+
+        AddAnimationId(data.fps_putaway, ids);
+        AddAnimationId(data.fps_unequip, ids);
+        AddAnimationId(data.fps_reload_full, ids);
+        AddAnimationId(data.fps_reload_half, ids);
+        AddAnimationId(data.fps_bolt_action, ids);
+        AddAnimationId(data.fps_chamber_open, ids);
+        AddAnimationId(data.fps_chamber_open_noAmmo, ids);
+        AddAnimationId(data.fps_chamber, ids);
+        AddAnimationId(data.fps_chamber_close, ids);
+        AddAnimationId(data.fps_chamber_close_noAmmo, ids);
+        AddAnimationId(data.fps_change_barrell, ids);
+        AddAnimationId(data.fps_bipod_deploy, ids);
+        AddAnimationId(data.fps_bipod_undeploy, ids);
+
+        if (data.multi_ammo_chambering != null)
+        {
+            foreach (var multianim in data.multi_ammo_chambering)
+                AddAnimationId(multianim.anim_id, ids);
+        }
+    }
+
+    private static void AddAnimationId(string anim_id, List<string> ids)
+    {
+        if (!string.IsNullOrEmpty(anim_id) && !ids.Contains(anim_id))
+            ids.Add(anim_id);
+    }
+
     private static void SetHideFlagsRecursive(Transform t, HideFlags flags)
     {
         t.gameObject.hideFlags = flags;
         foreach (Transform child in t) SetHideFlagsRecursive(child, flags);
     }
 
-    private static void SpawnMatchingMagazines(GenericGun weapon)
+    /// <summary>
+    /// Mette sull'arma di test tutto cio' che serve ad animare: i magazine compatibili (per socket) e gli
+    /// attachment che portano un override di animazioni (es. il bipode), cosi' le clip si animano sul modello
+    /// reale invece che su un'arma spoglia. Un solo scan dei prefab del progetto.
+    /// </summary>
+    private static void SpawnCompatibleMagazinesAndAttachments(GenericGun weapon)
     {
+        bool wantsMagazines = weapon.magazinePosition != null && !string.IsNullOrEmpty(weapon.magazineSocket);
+
         string[] guids = AssetDatabase.FindAssets("t:Prefab");
         foreach (string guid in guids)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (prefab == null) continue;
-            Magazine mag = prefab.GetComponent<Magazine>();
-            if (mag == null) continue;
-            if (mag.socket != weapon.magazineSocket) continue;
 
-            GameObject inst = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            inst.transform.SetParent(weapon.magazinePosition, false);
-            inst.transform.localPosition = Vector3.zero;
-            inst.transform.localRotation = Quaternion.identity;
-            inst.transform.localScale = Vector3.one;
+            //magazine compatibili -> magazinePosition
+            Magazine mag = prefab.GetComponent<Magazine>();
+            if (mag != null)
+            {
+                if (wantsMagazines && mag.socket == weapon.magazineSocket)
+                    SpawnOnTester(prefab, weapon.magazinePosition);
+                continue;
+            }
+
+            //attachment con override di animazioni -> la loro slot (serve vederli mentre si anima)
+            Attachment att = prefab.GetComponent<Attachment>();
+            if (att == null || string.IsNullOrEmpty(att.item_id)) continue;
+            if (!HasAnimationOverrideFor(weapon, att.item_id)) continue;
+
+            Transform slot = FindAttachmentSlot(weapon, att.item_id);
+            if (slot != null && slot.childCount == 0)
+                SpawnOnTester(prefab, slot);
         }
+    }
+
+    private static void SpawnOnTester(GameObject prefab, Transform parent)
+    {
+        GameObject inst = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        inst.transform.SetParent(parent, false);
+        inst.transform.localPosition = Vector3.zero;
+        inst.transform.localRotation = Quaternion.identity;
+        inst.transform.localScale = Vector3.one;
+    }
+
+    private static bool HasAnimationOverrideFor(GenericGun weapon, string attachment_id)
+    {
+        if (weapon.attachmentAnimationOverrides == null) return false;
+
+        foreach (AttachmentAnimationOverride attachment_over in weapon.attachmentAnimationOverrides)
+        {
+            if (attachment_over != null && attachment_id.Equals(attachment_over.attachment_id))
+                return true;
+        }
+        return false;
+    }
+
+    private static Transform FindAttachmentSlot(GenericGun weapon, string attachment_id)
+    {
+        if (weapon.supportedAttachments == null) return null;
+
+        foreach (SupportedAttachment slot in weapon.supportedAttachments)
+        {
+            if (slot != null && attachment_id.Equals(slot.attachment_id))
+                return slot.attachmentPos;
+        }
+        return null;
     }
 
     /// <summary>
