@@ -37,3 +37,17 @@ public partial class Magazine : ItemObject //, IAmmo
     public AudioClip reload_full_sound = null;
 }
 
+
+[System.Serializable]
+public class MagazineOverrideAnimation
+{
+    public string gun_id;
+    [Range(0, 1)]
+    public float swap_mag_time_perc_half = 0;
+    public string override_anim_reload_half = "";
+    public AudioClip reload_half_sound = null;
+    [Range(0, 1)]
+    public float swap_mag_time_perc_full = 0;
+    public string override_anim_reload_full = "";
+    public AudioClip reload_full_sound = null;
+}
