@@ -9,7 +9,7 @@ public partial class AttachmentBipod : Attachment
     [Tooltip("Physical hinge point of the bipod: while deployed, the weapon (and the soldier view) pivots around this node. If null, the attachment root transform is used.")]
     public Transform pivotPoint;
 
-    [Tooltip("Height above the support surface at which the pivotPoint rests while deployed (bipods are not all the same height). Requires pivotPoint: the view/rig is softly pinned so the pivot sits exactly there.")]
+    [Tooltip("Height above the support surface at which the pivot (pivotPoint, or this attachment root if unset) rests while deployed (bipods are not all the same height). The FPS view/rig is softly pinned so the pivot sits exactly there.")]
     public float deployedPivotHeight = .28f;
 
     [Tooltip("Maximum yaw rotation (degrees, per side) around the deployed bipod. The actual usable arc can be smaller: obstacles are checked when deploying.")]
