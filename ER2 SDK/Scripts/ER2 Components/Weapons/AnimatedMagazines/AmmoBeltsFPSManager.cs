@@ -22,41 +22,12 @@ public class FPSMagManager
     public string override_reload_anim_partial;
     public string override_reload_anim_full;
 
-    [Tooltip("[Optional] Animation overrides used with this magazine while a bipod attachment override is active on the weapon. Empty fields fall back to the attachment-level override, then to the weapon base.")]
-    public BipodMagazineOverride bipodOverrides;
 
     public void Show(bool show)
     {
         foreach (GameObject go in enableOnSetMag)
             go.SetActive(show);
     }
-}
-
-/// <summary>
-/// Per-magazine animation overrides active only while the weapon has a bipod attachment override active
-/// (see GenericGun.attachmentAnimationOverrides). Example: MG42 with bipod + drum magazine.
-/// </summary>
-[System.Serializable]
-public class BipodMagazineOverride
-{
-    [Header("Reload (bipod installed, weapon in hands)")]
-    public string override_reload_anim_partial;
-    public string override_reload_anim_full;
-
-    [Header("Reload while DEPLOYED (weapon resting on the bipod)")]
-    [Tooltip("If the needed field is empty, on reload the weapon simply lifts off the bipod (undeploy) and reloads with the non-deployed animation.")]
-    public string override_reload_anim_partial_deployed;
-    public string override_reload_anim_full_deployed;
-
-    [Header("Other per-magazine animations")]
-    [Tooltip("Equip / hold pose animation with this magazine installed (e.g. a drum changes the left hand grip).")]
-    public string override_putaway_anim;
-    [Tooltip("Unequip animation with this magazine installed.")]
-    public string override_unequip_anim;
-    [Tooltip("Barrel change animation with this magazine installed (not deployed).")]
-    public string override_change_barrell_anim;
-    [Tooltip("Barrel change while DEPLOYED with this magazine. Empty = the weapon lifts off the bipod to change the barrel.")]
-    public string override_change_barrell_anim_deployed;
 }
 
 #if UNITY_EDITOR

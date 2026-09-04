@@ -163,7 +163,7 @@ public static partial class AnimationTesterTool
 
     /// <summary>
     /// Ogni animazione che l'arma puo' riprodurre: AnimationData base, override attivati da un attachment
-    /// installato (es. bipode, varianti "deployed" comprese), override per-magazine ospitati nel belt manager
+    /// installato (es. bipode, varianti "deployed" comprese), override per-magazine del belt manager
     /// e override dei magazine compatibili. I nomi duplicati vengono scartati.
     /// </summary>
     public static List<string> CollectWeaponAnimationIds(GenericGun weapon)
@@ -181,17 +181,14 @@ public static partial class AnimationTesterTool
             {
                 if (attachment_over == null) continue;
 
-                AddAnimationDataIds(attachment_over.animations, ids);
-                AddAnimationId(attachment_over.fps_change_barrell_deployed, ids);
-                if (attachment_over.deployedReloadAnimations != null)
-                {
-                    AddAnimationId(attachment_over.deployedReloadAnimations.override_anim_reload_half, ids);
-                    AddAnimationId(attachment_over.deployedReloadAnimations.override_anim_reload_full, ids);
-                }
+                if (attachment_over.overrides == null) continue;
+                foreach (AnimationOverride anim_over in attachment_over.overrides)
+                    if (anim_over != null)
+                        AddAnimationId(anim_over.override_animation, ids);
             }
         }
 
-        //override per-magazine ospitati nel belt manager (ricariche standard e set bipode)
+        //override per-magazine ospitati nel belt manager
         AmmoBeltsFPSManager beltManager = weapon.GetComponent<AmmoBeltsFPSManager>();
         if (beltManager != null && beltManager.compatibleMagazines != null)
         {
@@ -201,19 +198,6 @@ public static partial class AnimationTesterTool
 
                 AddAnimationId(fps_mag.override_reload_anim_partial, ids);
                 AddAnimationId(fps_mag.override_reload_anim_full, ids);
-
-                BipodMagazineOverride bipod_over = fps_mag.bipodOverrides;
-                if (bipod_over != null)
-                {
-                    AddAnimationId(bipod_over.override_reload_anim_partial, ids);
-                    AddAnimationId(bipod_over.override_reload_anim_full, ids);
-                    AddAnimationId(bipod_over.override_reload_anim_partial_deployed, ids);
-                    AddAnimationId(bipod_over.override_reload_anim_full_deployed, ids);
-                    AddAnimationId(bipod_over.override_putaway_anim, ids);
-                    AddAnimationId(bipod_over.override_unequip_anim, ids);
-                    AddAnimationId(bipod_over.override_change_barrell_anim, ids);
-                    AddAnimationId(bipod_over.override_change_barrell_anim_deployed, ids);
-                }
             }
         }
 
