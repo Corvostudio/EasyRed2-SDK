@@ -21,7 +21,9 @@ public class FPSMagManager
     public GameObject[] individualBullets;
     public string override_reload_anim_partial;
     public string override_reload_anim_full;
-
+    [Tooltip("[Optional] Reload sounds used with this magazine (partial / full). Empty = the magazine own sound, then the weapon reload sound.")]
+    public AudioClip override_reload_sound_partial;
+    public AudioClip override_reload_sound_full;
 
     public void Show(bool show)
     {

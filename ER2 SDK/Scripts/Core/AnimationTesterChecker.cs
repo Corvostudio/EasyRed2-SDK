@@ -183,8 +183,11 @@ public static partial class AnimationTesterTool
 
                 if (attachment_over.overrides == null) continue;
                 foreach (AnimationOverride anim_over in attachment_over.overrides)
-                    if (anim_over != null)
-                        AddAnimationId(anim_over.override_animation, ids);
+                {
+                    if (anim_over == null) continue;
+                    AddAnimationId(anim_over.override_animation, ids);
+                    AddAnimationId(anim_over.override_animation_deployed, ids);
+                }
             }
         }
 

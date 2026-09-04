@@ -39,8 +39,21 @@ public class AnimationOverride
     [Tooltip("[Optional] Apply only while this magazine is installed (magazine item id). Empty = any magazine.")]
     public string magazine_id;
 
-    [Tooltip("Apply only while the weapon rests on the bipod. A reload or barrel change listed here is performed without leaving the bipod; when no entry matches, the weapon lifts off the bipod first.")]
-    public bool while_deployed;
+    [Tooltip("[Reload and barrel change only] Animation played instead while the weapon RESTS ON THE BIPOD. Empty = the weapon lifts off the bipod first and plays the animation above.")]
+    public string override_animation_deployed;
+    [Tooltip("[Optional] Sound for the deployed animation. Empty = the sound above, then the normal chain.")]
+    public AudioClip override_sound_deployed;
+
+    /// <summary>Animation / sound of the requested variant; the deployed sound falls back to the normal one.</summary>
+    public string Animation(bool deployed) { return deployed ? override_animation_deployed : override_animation; }
+    public AudioClip Sound(bool deployed) { return deployed && override_sound_deployed ? override_sound_deployed : override_sound; }
+
+    /// <summary>Slots that can be performed while resting on the bipod, and therefore carry a deployed variant.</summary>
+    public static bool HasDeployedVariant(string animationField)
+    {
+        return animationField == nameof(AnimationData.fps_reload_full) || animationField == nameof(AnimationData.fps_reload_half) ||
+               animationField == nameof(AnimationData.fps_change_barrell);
+    }
 
     /// <summary>Animation slots that can be replaced (fields of AnimationData).</summary>
     public static readonly string[] animationFields = new string[]
@@ -131,11 +144,15 @@ public class AttachmentAnimationOverrideDrawer : PropertyDrawer
 [CustomPropertyDrawer(typeof(AnimationOverride))]
 public class AnimationOverrideDrawer : PropertyDrawer
 {
-    private const int drawnLines = 5;
+    //ricarica e cambio canna hanno anche la variante da bipode appoggiato: due righe in piu'
+    private static int DrawnLines(SerializedProperty property)
+    {
+        return AnimationOverride.HasDeployedVariant(property.FindPropertyRelative("animation_field").stringValue) ? 6 : 4;
+    }
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        return (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * drawnLines +
+        return (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * DrawnLines(property) +
                EditorGUIUtility.standardVerticalSpacing;
     }
 
@@ -191,7 +208,11 @@ public class AnimationOverrideDrawer : PropertyDrawer
         line.y += step; EditorGUI.PropertyField(line, property.FindPropertyRelative("override_animation"));
         line.y += step; EditorGUI.PropertyField(line, property.FindPropertyRelative("override_sound"));
         line.y += step; EditorGUI.PropertyField(line, property.FindPropertyRelative("magazine_id"));
-        line.y += step; EditorGUI.PropertyField(line, property.FindPropertyRelative("while_deployed"));
+        if (AnimationOverride.HasDeployedVariant(field.stringValue))
+        {
+            line.y += step; EditorGUI.PropertyField(line, property.FindPropertyRelative("override_animation_deployed"), new GUIContent("Deployed animation"));
+            line.y += step; EditorGUI.PropertyField(line, property.FindPropertyRelative("override_sound_deployed"), new GUIContent("Deployed sound"));
+        }
 
         EditorGUI.EndProperty();
     }
