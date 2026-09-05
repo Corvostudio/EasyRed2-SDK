@@ -115,12 +115,12 @@ public partial class AnimationData
 
     [Tooltip("[Optional] One-shot FPS animation played when the bipod deploys (left hand performs the deploy, then ends holding the weapon by the stock). While deployed the rig stays parked on the LAST frame of this animation. Empty = legacy behavior (no hand animation).")]
     public string fps_bipod_deploy;
-    [Tooltip("Sound played when the bipod deploys.")]
+    [Tooltip("Sound played when the bipod deploys. If empty, the generic bipod sound is used.")]
     public AudioClip bipod_deploy_sound;
 
     [Tooltip("[Optional] One-shot FPS animation played when the bipod undeploys. If empty, fps_bipod_deploy is played in reverse.")]
     public string fps_bipod_undeploy;
-    [Tooltip("Sound played when the bipod undeploys.")]
+    [Tooltip("Sound played when the bipod undeploys. If empty, the generic bipod sound is used.")]
     public AudioClip bipod_undeploy_sound;
 
 

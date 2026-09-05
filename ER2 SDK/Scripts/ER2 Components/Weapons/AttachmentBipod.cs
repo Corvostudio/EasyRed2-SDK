@@ -12,13 +12,10 @@ public partial class AttachmentBipod : Attachment
     [Tooltip("Height above the support surface at which the pivot (pivotPoint, or this attachment root if unset) rests while deployed (bipods are not all the same height). The FPS view/rig is softly pinned so the pivot sits exactly there.")]
     public float deployedPivotHeight = .28f;
 
-    [Tooltip("Maximum yaw rotation (degrees, per side) around the deployed bipod. The actual usable arc can be smaller: obstacles are checked when deploying.")]
-    [Range(5, 80)]
-    public float maxYawRange = 30;
-
-    [Tooltip("Maximum pitch rotation (degrees, per side) while deployed. The actual usable arc can be smaller: obstacles (ground, ceilings, the support itself) are checked when deploying.")]
-    [Range(5, 60)]
-    public float maxPitchRange = 25;
+    //Nominal rotation arcs while deployed (degrees, per side), the same for every bipod: the usable arc is decided at
+    //deploy time by the obstacle sweep (barrel and weapon body against terrain, walls, ceilings, the support itself)
+    public const float genericYawRange = 30f;
+    public const float genericPitchRange = 25f;
 
     [Tooltip("[Optional] Middle swivel node (the bipod legs): while deployed it is counter-rotated so the legs stay planted while the weapon rotates around them. Must not be the pivotPoint itself, and should not be keyframed in the open/close animation.")]
     public Transform swivelPivot;
@@ -61,18 +58,18 @@ public partial class AttachmentBipod : Attachment
             radius = Vector3.Distance(p, parentGun.firePos.position);
 
         //yaw fan around world up
-        Vector3 yawFrom = Quaternion.AngleAxis(-maxYawRange, Vector3.up) * fwd;
+        Vector3 yawFrom = Quaternion.AngleAxis(-genericYawRange, Vector3.up) * fwd;
         UnityEditor.Handles.color = new Color(.3f, 1f, .3f, .9f);
-        UnityEditor.Handles.DrawWireArc(p, Vector3.up, yawFrom, maxYawRange * 2f, radius);
+        UnityEditor.Handles.DrawWireArc(p, Vector3.up, yawFrom, genericYawRange * 2f, radius);
         UnityEditor.Handles.DrawLine(p, p + yawFrom * radius);
-        UnityEditor.Handles.DrawLine(p, p + Quaternion.AngleAxis(maxYawRange, Vector3.up) * fwd * radius);
+        UnityEditor.Handles.DrawLine(p, p + Quaternion.AngleAxis(genericYawRange, Vector3.up) * fwd * radius);
 
         //pitch fan around the lateral axis (at center yaw)
-        Vector3 pitchFrom = Quaternion.AngleAxis(-maxPitchRange, right) * fwd;
+        Vector3 pitchFrom = Quaternion.AngleAxis(-genericPitchRange, right) * fwd;
         UnityEditor.Handles.color = new Color(1f, .4f, .3f, .9f);
-        UnityEditor.Handles.DrawWireArc(p, right, pitchFrom, maxPitchRange * 2f, radius);
+        UnityEditor.Handles.DrawWireArc(p, right, pitchFrom, genericPitchRange * 2f, radius);
         UnityEditor.Handles.DrawLine(p, p + pitchFrom * radius);
-        UnityEditor.Handles.DrawLine(p, p + Quaternion.AngleAxis(maxPitchRange, right) * fwd * radius);
+        UnityEditor.Handles.DrawLine(p, p + Quaternion.AngleAxis(genericPitchRange, right) * fwd * radius);
 
         //swivel node (counter-rotated legs)
         if (swivelPivot && swivelPivot != pivotPoint)
