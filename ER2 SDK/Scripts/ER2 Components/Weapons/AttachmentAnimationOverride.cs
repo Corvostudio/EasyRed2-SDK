@@ -44,6 +44,9 @@ public class AnimationOverride
     [Tooltip("[Optional] Sound for the deployed animation. Empty = the sound above, then the normal chain.")]
     public AudioClip override_sound_deployed;
 
+    [Tooltip("[Bolt action only, together with an animation above] Replaces the weapon canAimWhileUsingBolt while this row is active: on = the player keeps aiming down sights while the bolt cycles, off = the sights drop for the whole animation.")]
+    public bool override_can_aim_while_using_bolt;
+
     /// <summary>Animation / sound of the requested variant; the deployed sound falls back to the normal one.</summary>
     public string Animation(bool deployed) { return deployed ? override_animation_deployed : override_animation; }
     public AudioClip Sound(bool deployed) { return deployed && override_sound_deployed ? override_sound_deployed : override_sound; }
@@ -53,6 +56,12 @@ public class AnimationOverride
     {
         return animationField == nameof(AnimationData.fps_reload_full) || animationField == nameof(AnimationData.fps_reload_half) ||
                animationField == nameof(AnimationData.fps_change_barrell);
+    }
+
+    /// <summary>The bolt action row also decides whether the player can stay aimed while it plays.</summary>
+    public static bool HasBoltAimFlag(string animationField)
+    {
+        return animationField == nameof(AnimationData.fps_bolt_action);
     }
 
     /// <summary>Animation slots that can be replaced (fields of AnimationData).</summary>
@@ -144,10 +153,11 @@ public class AttachmentAnimationOverrideDrawer : PropertyDrawer
 [CustomPropertyDrawer(typeof(AnimationOverride))]
 public class AnimationOverrideDrawer : PropertyDrawer
 {
-    //ricarica e cambio canna hanno anche la variante da bipode appoggiato: due righe in piu'
+    //ricarica e cambio canna hanno anche la variante da bipode appoggiato: due righe in piu'; il bolt action il flag di mira
     private static int DrawnLines(SerializedProperty property)
     {
-        return AnimationOverride.HasDeployedVariant(property.FindPropertyRelative("animation_field").stringValue) ? 6 : 4;
+        string field = property.FindPropertyRelative("animation_field").stringValue;
+        return AnimationOverride.HasDeployedVariant(field) ? 6 : AnimationOverride.HasBoltAimFlag(field) ? 5 : 4;
     }
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -212,6 +222,10 @@ public class AnimationOverrideDrawer : PropertyDrawer
         {
             line.y += step; EditorGUI.PropertyField(line, property.FindPropertyRelative("override_animation_deployed"), new GUIContent("Deployed animation"));
             line.y += step; EditorGUI.PropertyField(line, property.FindPropertyRelative("override_sound_deployed"), new GUIContent("Deployed sound"));
+        }
+        if (AnimationOverride.HasBoltAimFlag(field.stringValue))
+        {
+            line.y += step; EditorGUI.PropertyField(line, property.FindPropertyRelative("override_can_aim_while_using_bolt"), new GUIContent("Can aim while using bolt"));
         }
 
         EditorGUI.EndProperty();
