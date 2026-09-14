@@ -4,7 +4,9 @@ using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 #endif
 
 // =====================================================================================
@@ -31,7 +33,7 @@ public class PropIconBaker : MonoBehaviour
     [Tooltip("Pans the camera to recenter the subject (the pivot is rarely the visual center). X = right, Y = up, Z = depth.")]
     public Vector3 shiftCenter = Vector3.zero;
 
-    [Tooltip("Keep transparency in the saved icon. Off = flatten every visible pixel to fully opaque.")]
+    [Tooltip("Keep semi-transparent pixels as they are. Off = every visible pixel becomes fully opaque. The background stays transparent either way.")]
     public bool allowAlpha = true;
 
     [Tooltip("Distance of the capture camera from the prop. Orthographic, so this only affects clip range / depth sorting and rarely needs changing.")]
@@ -86,7 +88,12 @@ public class PropIconBakerEditor : Editor
 
         EditorGUILayout.Space(6);
 
-        using (new EditorGUI.DisabledScope(!hasTarget))
+        // The prop is shot through a temporary copy, and a copy made in Play mode would start running its game logic.
+        bool playing = EditorApplication.isPlayingOrWillChangePlaymode;
+        if (playing)
+            EditorGUILayout.HelpBox("Exit Play mode to bake icons.", MessageType.Info);
+
+        using (new EditorGUI.DisabledScope(!hasTarget || playing))
         {
             // One-click: re-bake straight over the currently assigned icon, in place.
             using (new EditorGUI.DisabledScope(current == null))
@@ -170,9 +177,14 @@ public class PropIconBakerEditor : Editor
         var ti = AssetImporter.GetAtPath(rel) as TextureImporter;
         if (ti != null)
         {
+            // Same import as the existing icons. Alpha is always kept: Allow Alpha only decides what happens to
+            // semi-transparent pixels and the background is transparent either way, so importing without alpha
+            // would turn it into a black square. Setting the type from code does not switch mipmaps off like the
+            // inspector does, hence the explicit line.
             ti.textureType = TextureImporterType.Sprite;
-            ti.alphaSource = baker.allowAlpha ? TextureImporterAlphaSource.FromInput : TextureImporterAlphaSource.None;
-            ti.alphaIsTransparency = baker.allowAlpha;
+            ti.mipmapEnabled = false;
+            ti.alphaSource = TextureImporterAlphaSource.FromInput;
+            ti.alphaIsTransparency = true;
             ti.SaveAndReimport();
         }
 
@@ -200,58 +212,60 @@ public class PropIconBakerEditor : Editor
 
     // ---------------------------------------------------------------- capture pipeline
 
-    /// <summary>Isolates the prop, swaps the scene lighting for a neutral rig, forces LOD0,
-    /// shoots a single orthographic front frame and restores everything in a finally block.</summary>
+    /// <summary>Shoots a temporary copy of the prop in a private preview scene, lit only by a neutral rig,
+    /// at LOD0, with a single orthographic front frame. The original is never moved or modified, which is
+    /// what makes this work the same on a scene object, in Prefab Mode and on a prefab asset selected in the
+    /// Project window: Prefab Mode keeps the prefab in a preview scene of its own, and a camera living in the
+    /// open scene cannot see into it.</summary>
     static Texture2D Capture(PropIconBaker baker)
     {
-        var go = baker.gameObject;
-
-        Vector3 originalPos = go.transform.position;
-        Quaternion originalRot = go.transform.rotation;
-
-        var disabledLights = new List<Light>();
+        Scene scene = EditorSceneManager.NewPreviewScene();
         var disabledVolumes = new List<Volume>();
+        bool fog = RenderSettings.fog;
+        GameObject subject = null;
         GameObject rig = null;
-        Texture2D tex = null;
 
         try
         {
-            // Move far away (canonical, scene-independent) and face front.
-            go.transform.position = new Vector3(0, 1000, 1000);
-            go.transform.rotation = Quaternion.identity;
-
-            foreach (var l in Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
-                if (l.enabled && l.gameObject.activeSelf) { disabledLights.Add(l); l.enabled = false; }
-
+            // Lights of the open scene cannot reach a preview scene, but volumes and fog are global. Done before
+            // the copy exists, so a volume inside the prop can never switch the prop itself off.
             foreach (var v in Object.FindObjectsByType<Volume>(FindObjectsSortMode.None))
                 if (v.gameObject.activeSelf) { disabledVolumes.Add(v); v.gameObject.SetActive(false); }
+            RenderSettings.fog = false;
+
+            // Canonical pose (far away, facing front), whatever the original's parent or position.
+            subject = Object.Instantiate(baker.gameObject);
+            SceneManager.MoveGameObjectToScene(subject, scene);
+            subject.transform.SetPositionAndRotation(new Vector3(0, 1000, 1000), Quaternion.identity);
+            subject.SetActive(true);
+            foreach (var l in subject.GetComponentsInChildren<Light>(true))
+                l.enabled = false; // headlights and lamps of the prop must not light their own icon
+            SetLODs(subject, 0);
 
             rig = CreateLightRig(baker.exposure);
+            SceneManager.MoveGameObjectToScene(rig, scene);
 
-            SetLODs(go, 0);
-            tex = Shoot(baker);
+            return Shoot(baker, subject, scene);
         }
         finally
         {
-            SetLODs(go, -1);
             if (rig != null) Object.DestroyImmediate(rig);
+            if (subject != null) Object.DestroyImmediate(subject);
+            EditorSceneManager.ClosePreviewScene(scene);
+            RenderSettings.fog = fog;
             foreach (var v in disabledVolumes) if (v != null) v.gameObject.SetActive(true);
-            foreach (var l in disabledLights) if (l != null) l.enabled = true;
-            go.transform.SetPositionAndRotation(originalPos, originalRot);
         }
-        return tex;
     }
 
-    static Texture2D Shoot(PropIconBaker baker)
+    static Texture2D Shoot(PropIconBaker baker, GameObject subject, Scene scene)
     {
-        var go = baker.gameObject;
-        int size = Mathf.Max(4, baker.texSize);
+        int size = Mathf.Clamp(baker.texSize, 4, SystemInfo.maxTextureSize);
 
-        // Framing presets, identical to the old window. Detection is on this GameObject's own
-        // components (the baker sits on the prop root). If a weapon keeps its GenericGun on a
-        // child, switch this to GetComponentInChildren<GenericGun>(true).
-        bool isVehicle = go.GetComponent<Vehicle>() != null;
-        GenericGun gun = go.GetComponent<GenericGun>();
+        // Framing presets, identical to the old window. Detection is on the baker's own GameObject (the
+        // baker sits on the prop root). If a weapon keeps its GenericGun on a child, switch this to
+        // GetComponentInChildren<GenericGun>(true).
+        bool isVehicle = baker.GetComponent<Vehicle>() != null;
+        GenericGun gun = baker.GetComponent<GenericGun>();
         bool isWeapon = !isVehicle && gun != null;
         bool isPistol = isWeapon && gun.weaponPose == WeaponPose.pistol;
 
@@ -262,6 +276,13 @@ public class PropIconBakerEditor : Editor
 
         Camera camera = new GameObject("EditorCamera_IconBake").AddComponent<Camera>();
         camera.gameObject.hideFlags = HideFlags.HideAndDontSave;
+        SceneManager.MoveGameObjectToScene(camera.gameObject, scene);
+        camera.scene = scene; // renders only the copy and the rig
+        // Every URP asset of the project has Opaque Texture on, which makes URP draw an offscreen camera into
+        // an intermediate buffer; with HDR (the High and Medium assets) that buffer is B10G11R11 and has no
+        // alpha, so the background would come out opaque black depending on the quality level open in the
+        // editor. Nothing here needs HDR: no post processing runs on this camera and the PNG is 8 bit.
+        camera.allowHDR = false;
         camera.orthographic = true;
         camera.orthographicSize = baker.shotSize * camMultiplier;
         camera.farClipPlane = 300f;
@@ -269,7 +290,7 @@ public class PropIconBakerEditor : Editor
         camera.backgroundColor = Color.clear;
         camera.clearFlags = CameraClearFlags.SolidColor;
 
-        Vector3 center = go.transform.position;
+        Vector3 center = subject.transform.position;
         float dist = baker.objectSize;
 
         if (isVehicle)
@@ -298,18 +319,37 @@ public class PropIconBakerEditor : Editor
 
         var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
         RenderTexture rt = RenderTexture.GetTemporary(size, size, 24);
-        camera.targetTexture = rt;
-        camera.Render();
-
         RenderTexture prev = RenderTexture.active;
-        RenderTexture.active = rt;
-        tex.ReadPixels(new Rect(0, 0, size, size), 0, 0);
-        if (!baker.allowAlpha) ForceOpaque(tex);
-        tex.Apply();
-        RenderTexture.active = prev;
+        try
+        {
+            camera.targetTexture = rt;
+            camera.Render();
+            RenderTexture.active = rt;
+            tex.ReadPixels(new Rect(0, 0, size, size), 0, 0);
+        }
+        finally
+        {
+            // Even on an exception: the editor must not be left drawing into this texture.
+            RenderTexture.active = prev;
+            camera.targetTexture = null;
+            RenderTexture.ReleaseTemporary(rt);
+            Object.DestroyImmediate(camera.gameObject);
+        }
 
-        RenderTexture.ReleaseTemporary(rt);
-        Object.DestroyImmediate(camera.gameObject);
+        // Never hand back an empty frame: "Update icon" would write it over a good icon.
+        Color32[] px = tex.GetPixels32();
+        if (!HasVisiblePixels(px))
+        {
+            Object.DestroyImmediate(tex);
+            Debug.LogError("Nothing ended up in the frame, so no icon was written. Check Shot Size and Shift Center, and that the prop has visible renderers.", baker);
+            return null;
+        }
+        if (!baker.allowAlpha)
+        {
+            ForceOpaque(px);
+            tex.SetPixels32(px);
+        }
+        tex.Apply();
         return tex;
     }
 
@@ -343,13 +383,19 @@ public class PropIconBakerEditor : Editor
             g.ForceLOD(lod);
     }
 
-    /// <summary>Forces every visible pixel (alpha > 0) to fully opaque, leaving cut-out alpha = 0 as is.</summary>
-    static void ForceOpaque(Texture2D t)
+    /// <summary>True if at least one pixel is not fully transparent.</summary>
+    static bool HasVisiblePixels(Color32[] px)
     {
-        var px = t.GetPixels32();
+        for (int i = 0; i < px.Length; i++)
+            if (px[i].a > 0) return true;
+        return false;
+    }
+
+    /// <summary>Forces every visible pixel (alpha > 0) to fully opaque, leaving cut-out alpha = 0 as is.</summary>
+    static void ForceOpaque(Color32[] px)
+    {
         for (int i = 0; i < px.Length; i++)
             if (px[i].a > 0) px[i].a = 255;
-        t.SetPixels32(px);
     }
 
     // ---------------------------------------------------------------- paths
