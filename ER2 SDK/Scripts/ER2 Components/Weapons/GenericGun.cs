@@ -200,6 +200,10 @@ public partial class GenericGun : Weapon
 
     [Tooltip("Optional built-in scope (a scope that's part of the weapon and not a separate attachment, e.g. a sniper variant with a permanently mounted scope).")]
     public GameObject integratedScope = null;
+    [Tooltip("Optional built-in bipod: an AttachmentBipod that is part of this prefab, not an item. Always installed, cannot be removed, and the weapon never accepts other bipods. Deploy works as for a normal bipod (own Animation clip, or none if the weapon's fps_bipod_deploy animates its bones). Set its item_id to key an animation override set to it.")]
+    public AttachmentBipod integratedBipod = null;
+    [Tooltip("Optional built-in bayonet: an AttachmentBayonet that is part of this prefab, not an item. Always installed, cannot be removed, and the weapon never accepts other bayonets.")]
+    public AttachmentBayonet integratedBayonet = null;
 
 
     // ═════════════════════════════════════════════════════════════════════════
