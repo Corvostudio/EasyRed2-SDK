@@ -187,6 +187,8 @@ public partial class GenericGun : Weapon
     [Tooltip("GameObject of the iron sight in its DOWN / folded position. Auto-enabled when a scope is mounted.")]
     public GameObject sight_down;
 
+    public GameObject[] sight_ads_enlarged;
+    public GameObject[] sight_ads_realistic;
 
     // ═════════════════════════════════════════════════════════════════════════
     //  ATTACHMENTS & SCOPE
