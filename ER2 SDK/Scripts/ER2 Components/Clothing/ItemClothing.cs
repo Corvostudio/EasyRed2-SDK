@@ -26,7 +26,7 @@ public partial class ItemClothing : ItemObject, ISerializationCallbackReceiver
     [Range(0, 30)] public int extraInventorySpace = 0;
 
     [Header("⏺ Uniform Cover Modes  (uniforms only)")]
-    [Tooltip("How sleeves/hands render.\nIgnored if a Short-Sleeve mesh is assigned below — that takes over.")]
+    [Tooltip("How sleeves/hands render.\nWith a Short-Sleeve mesh assigned below, this is the unrolled look; rolled sleeves use 'Hands Mode With Short Sleeve'.")]
     public UniformSleeveCoverType forceHideHands = UniformSleeveCoverType.longSleeve;
     [Tooltip("How head and headgear render.")]
     public UniformHeadCoverType forceHideHead = UniformHeadCoverType.dontCoverHead;
