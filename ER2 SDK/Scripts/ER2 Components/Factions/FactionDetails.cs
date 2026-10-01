@@ -38,6 +38,8 @@ public partial class FactionDetails : ScriptableObject
     public string ordinance_pistol_id = "colt1911";
     public string autoTransport_uniform_id = "us_police_uniform_1";
     public string autoTransport_helmet_id = "us_infantry_helmet_1";
+    [Tooltip("Optional gear/vest of auto transport drivers. Empty = none.")]
+    public string autoTransport_gear_id = "";
 
 #if UNITY_EDITOR
     public void Init()
