@@ -32,8 +32,12 @@ public partial class ItemClothing : ItemObject, ISerializationCallbackReceiver
     public UniformHeadCoverType forceHideHead = UniformHeadCoverType.dontCoverHead;
     [Tooltip("Rank decal offset on the uniform. (0,0,0) = hidden.")]
     public Vector3 ranks_coords = new Vector3(.5f, 1.21f, .75f);
+    [Tooltip("Shoulders (the soldier's own left and right) that show the rank decal.")]
+    public UniformDecalSide ranks_side = UniformDecalSide.bothSides;
     [Tooltip("Battalion patch offset on the uniform. (0,0,0) = hidden.")]
     public Vector3 patch_coords = new Vector3(.5f, 0.2f, .8f);
+    [Tooltip("Shoulders (the soldier's own left and right) that show the battalion patch.")]
+    public UniformDecalSide patch_side = UniformDecalSide.bothSides;
 
     [Header("⏺ TPS Mesh — REQUIRED")]
     [Tooltip("Third-person high-poly mesh. Required.")]
@@ -304,6 +308,13 @@ public enum UniformHeadCoverType
     dontCoverHead = 0,
     coversHead = 1,
     coversHeadAndHeadgear = 2
+}
+public enum UniformDecalSide
+{
+    bothSides = 0,
+    rightOnly = 1,
+    leftOnly = 2,
+    hidden = 3
 }
 
 
