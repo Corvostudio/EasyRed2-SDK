@@ -13,4 +13,8 @@ public partial class AttachmentBayonet : Attachment
     public Vector3 mountedLocalRotation;
     [Tooltip("Seconds to move between the two poses. 0 = jumps straight to the other pose.")]
     public float foldSeconds = .35f;
+
+    [Header("Knife")]
+    [Tooltip("The bayonet can be taken in hand from the inventory and used as a knife. Off for bayonets without a handguard.")]
+    public bool holdable = true;
 }
