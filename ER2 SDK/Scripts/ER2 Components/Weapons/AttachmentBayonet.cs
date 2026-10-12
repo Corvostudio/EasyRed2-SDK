@@ -17,4 +17,8 @@ public partial class AttachmentBayonet : Attachment
     [Header("Knife")]
     [Tooltip("The bayonet can be taken in hand from the inventory and used as a knife. Off for bayonets without a handguard.")]
     public bool holdable = true;
+    [Tooltip("First person clips and sounds when held as a knife. The defaults are the knife's.")]
+    public MeleeMoveSet knifeMoveSet = new MeleeMoveSet();
+    [Tooltip("Third person override controller when held as a knife. Empty = CCV2_knife.")]
+    public string knifeTpsController = "";
 }
