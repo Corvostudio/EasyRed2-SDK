@@ -52,6 +52,116 @@ public partial class DestructibleBuildingPhasedEditor : Editor
 {
     private int phaseSlider = 0;
 
+    //---------------------------------------------------------------------------------------------------
+    // Destruction VFX: an orange handle of its own (never the look of the transform tool) and a test that
+    // spawns the effect in edit mode where the game would, runs it by hand and removes it.
+    //---------------------------------------------------------------------------------------------------
+    private static readonly Color vfxHandleColor = new Color(1f, .45f, 0f);
+    private static GameObject vfxTest;
+    private static ParticleSystem[] vfxTestParticles;
+    private static double vfxTestLastTime, vfxTestEndTime;
+
+    private static Vector3 VfxPositionHandle(Vector3 worldPos, Vector3 pivot)
+    {
+        float size = HandleUtility.GetHandleSize(worldPos);
+        Handles.color = new Color(vfxHandleColor.r, vfxHandleColor.g, vfxHandleColor.b, .6f);
+        Handles.DrawDottedLine(pivot, worldPos, 4f);//from the pivot of the object: tells the two handles apart
+        Handles.color = vfxHandleColor;
+        Handles.SphereHandleCap(0, worldPos, Quaternion.identity, size * .16f, EventType.Repaint);
+        Handles.Label(worldPos + Vector3.up * size * .4f, "Destruction VFX", EditorStyles.whiteBoldLabel);
+        Vector3 result = worldPos;
+        result += Handles.Slider(worldPos, Vector3.right, size * .75f, Handles.ArrowHandleCap, 0f) - worldPos;
+        result += Handles.Slider(worldPos, Vector3.up, size * .75f, Handles.ArrowHandleCap, 0f) - worldPos;
+        result += Handles.Slider(worldPos, Vector3.forward, size * .75f, Handles.ArrowHandleCap, 0f) - worldPos;
+        Handles.color = Color.white;
+        return result;
+    }
+
+    private void DrawVfxTest()
+    {
+        var b = (DestructibleBuildingPhased)target;
+        EditorGUILayout.LabelField("Destruction VFX", EditorStyles.boldLabel);
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            using (new EditorGUI.DisabledScope(targets.Length != 1 || string.IsNullOrEmpty(b.onPhaseChangeEffect)))
+                if (GUILayout.Button(vfxTest ? "Restart VFX" : "Test VFX in scene"))//while playing: stops and starts over
+                    StartVfxTest(b);
+            using (new EditorGUI.DisabledScope(!vfxTest))
+                if (GUILayout.Button("Stop", GUILayout.Width(60f)))
+                    StopVfxTest();
+        }
+        if (vfxTest)
+            EditorGUILayout.HelpBox("Playing where the game spawns it: Dst Vfx Position, with the rotation and scale of the object. It goes away by itself.", MessageType.Info);
+        else if (targets.Length == 1 && string.IsNullOrEmpty(b.onPhaseChangeEffect))
+            EditorGUILayout.HelpBox("No effect assigned: the orange VFX handle appears in the scene once On Phase Change Effect is set.", MessageType.None);
+        EditorGUILayout.Space();
+    }
+
+    private static void StartVfxTest(DestructibleBuildingPhased b)
+    {
+        StopVfxTest();
+        GameObject prefab = FindPrefab(b.onPhaseChangeEffect);
+        if (!prefab)
+        {
+            Debug.LogWarning($"Destruction VFX test: no prefab named '{b.onPhaseChangeEffect}' in the project", b);
+            return;
+        }
+        //as PlayPhaseChangeFX does in game
+        vfxTest = Object.Instantiate(prefab, b.transform.TransformPoint(b.dstVfxPosition), b.transform.rotation);
+        vfxTest.name = prefab.name + " (VFX test)";
+        vfxTest.transform.localScale = b.transform.localScale;
+        vfxTest.hideFlags = HideFlags.HideAndDontSave;
+        UnityEditor.SceneManagement.StageUtility.PlaceGameObjectInCurrentStage(vfxTest);//prefab mode too
+        vfxTestParticles = vfxTest.GetComponentsInChildren<ParticleSystem>(true);
+        float duration = 5f;
+        foreach (ParticleSystem ps in vfxTestParticles)
+        {
+            ps.Simulate(0f, false, true);//from the start, by hand: edit mode does not run them
+            duration = Mathf.Max(duration, ps.main.startDelay.constantMax + ps.main.duration + ps.main.startLifetime.constantMax);
+        }
+        vfxTestLastTime = EditorApplication.timeSinceStartup;
+        vfxTestEndTime = vfxTestLastTime + Mathf.Min(duration, 20f);
+        EditorApplication.update += UpdateVfxTest;
+        EditorApplication.playModeStateChanged += StopVfxTest;
+        AssemblyReloadEvents.beforeAssemblyReload += StopVfxTest;
+    }
+    private static void UpdateVfxTest()
+    {
+        if (!vfxTest || EditorApplication.timeSinceStartup >= vfxTestEndTime)
+        {
+            StopVfxTest();
+            return;
+        }
+        float dt = (float)(EditorApplication.timeSinceStartup - vfxTestLastTime);
+        vfxTestLastTime = EditorApplication.timeSinceStartup;
+        foreach (ParticleSystem ps in vfxTestParticles)
+            if (ps)
+                ps.Simulate(dt, false, false);
+        SceneView.RepaintAll();
+    }
+    private static void StopVfxTest(PlayModeStateChange change) { StopVfxTest(); }
+    private static void StopVfxTest()
+    {
+        EditorApplication.update -= UpdateVfxTest;
+        EditorApplication.playModeStateChanged -= StopVfxTest;
+        AssemblyReloadEvents.beforeAssemblyReload -= StopVfxTest;
+        if (vfxTest)
+            Object.DestroyImmediate(vfxTest);
+        vfxTest = null;
+        vfxTestParticles = null;
+        SceneView.RepaintAll();
+    }
+    private static GameObject FindPrefab(string name)
+    {
+        foreach (string guid in AssetDatabase.FindAssets(name + " t:prefab"))
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (System.IO.Path.GetFileNameWithoutExtension(path) == name)
+                return AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        }
+        return null;
+    }
+
     partial void ApplySetDestructionPhase(sbyte phase, bool keepLifevalue, bool apply_destruction_around, DestructibleBuildingPhased b, ref bool done);
 
     private void TestDestructionSimple(sbyte phase, DestructibleBuildingPhased b)
@@ -75,8 +185,8 @@ public partial class DestructibleBuildingPhasedEditor : Editor
         var first = (DestructibleBuildingPhased)target;
         if (first == null) return;
 
-        // La tua condizione originale
-        if (string.IsNullOrEmpty(first.onPhaseChangeEffect) && first.dstVfxPosition != Vector3.zero)
+        //no effect, nothing to place: and the VFX handle never sits on the transform tool of the object
+        if (string.IsNullOrEmpty(first.onPhaseChangeEffect))
             return;
 
         // Prendi tutti i DestructibleBuildingPhased selezionati (multi-edit) senza usare targets
@@ -91,7 +201,7 @@ public partial class DestructibleBuildingPhasedEditor : Editor
         Vector3 worldPos = first.transform.TransformPoint(first.dstVfxPosition);
 
         EditorGUI.BeginChangeCheck();
-        Vector3 newWorldPos = Handles.PositionHandle(worldPos, Quaternion.identity);
+        Vector3 newWorldPos = VfxPositionHandle(worldPos, first.transform.position);
         if (EditorGUI.EndChangeCheck())
         {
             Undo.RecordObjects(selected, "Move Target Position");
@@ -124,6 +234,7 @@ public partial class DestructibleBuildingPhasedEditor : Editor
         DrawDefaultInspector();
 
         EditorGUILayout.Space();
+        DrawVfxTest();
 
         // Trova un numero di fasi "comune" per evitare out-of-range se selezioni oggetti diversi
         int commonPhases = int.MaxValue;

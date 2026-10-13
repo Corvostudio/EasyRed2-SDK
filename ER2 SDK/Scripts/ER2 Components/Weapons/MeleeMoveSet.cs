@@ -9,7 +9,7 @@ using UnityEngine;
 public partial class MeleeMoveSet
 {
     [Tooltip("FPS hands set for sway and walk: a key of the FPS animation sets, for example anims_pistol.")]
-    public string fpsHandsSet = "anims_pistol";
+    public string fpsHandsSet = "anims_knife";
     [Tooltip("FPS clip played taking the item in hand, played backwards to put it away.")]
     public string fpsEquipAnim = "Melee_Bayonet_Equip";
     [Tooltip("FPS swing clips, used in turn. Empty = the baked melee of the hands set.")]

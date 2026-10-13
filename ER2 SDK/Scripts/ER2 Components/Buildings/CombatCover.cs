@@ -171,16 +171,6 @@ public class CombatCoverEditor : Editor
         Repaint();
     }
 
-    private void OnEnable()
-    {
-        Tools.hidden = true;
-    }
-
-    private void OnDisable()
-    {
-        Tools.hidden = false;
-    }
-
     public override void OnInspectorGUI()
     {
         EditorGUILayout.HelpBox(
