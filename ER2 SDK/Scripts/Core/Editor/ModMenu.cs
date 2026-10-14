@@ -439,6 +439,10 @@ public class ModMenu : EditorWindow
                         }
                         AddItemToXml(asset, ModPropType.uniforms, xmlParsingdata);
                     }
+                    else if (io is MeleeWeapon)
+                    {
+                        AddItemToXml(asset, ModPropType.melee, xmlParsingdata);
+                    }
                     else
                     {
                         AddItemToXml(asset, ModPropType.items, xmlParsingdata);

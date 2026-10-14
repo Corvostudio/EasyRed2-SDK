@@ -520,6 +520,7 @@ public class SteamworkUpload : MonoBehaviour
                 case ModPropType.attachment:
                 case ModPropType.ammo:
                 case ModPropType.items:
+                case ModPropType.melee:
                 case ModPropType.weapons: tags.Add("Weapons & Items"); break;
                 case ModPropType.buildings:
                 case ModPropType.props_huge:

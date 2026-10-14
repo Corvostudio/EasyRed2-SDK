@@ -441,7 +441,8 @@ public enum ModPropType
     factions,
     lut_texture,
     crosshair_texture,
-    props_huge
+    props_huge,
+    melee//MeleeWeapon (sword or similar): an item the weapon selectors offer
 }
 
 public enum ModVisibility
