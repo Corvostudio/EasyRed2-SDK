@@ -24,5 +24,9 @@ public partial class HandheldItem : ItemObject
 
         [Tooltip("Default to 1")]
         public float localScaleInHands = 1;//rescale in case of wrong scale
+        [Tooltip("Shift weapon local position when stowed on the back or holster (optional)")]
+        public Vector3 localPosOnBack = Vector3.zero;
+        [Tooltip("Weapon local rotation (euler) when stowed on the back or holster, for models that do not lie right at identity (optional)")]
+        public Vector3 localRotOnBack = Vector3.zero;
     }
 }

@@ -11,8 +11,10 @@ public partial class MeleeWeapon : HandheldItem
     [Header("Melee weapon")]
     [Tooltip("Damage of one hit. A bayonet does 250.")]
     public float damage = 250;
-    [Tooltip("Reach of the swing in metres. A bayonet reaches 0.73.")]
-    public float reach = 0.9f;
+    [Tooltip("Reach of the swing from the face, in metres. A bayonet held as a knife reaches 0.73, a sword a bit more.")]
+    public float reach = 0.73f;
+    [Tooltip("Shared move set. Assigned, the inline move set below is ignored.")]
+    public MeleeMoveSetData moveSetData;
     [Tooltip("First person clips and sounds. The defaults are the knife's.")]
     public MeleeMoveSet moveSet = new MeleeMoveSet();
 }

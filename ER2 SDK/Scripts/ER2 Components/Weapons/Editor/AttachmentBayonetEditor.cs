@@ -16,7 +16,12 @@ public class AttachmentBayonetEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        DrawDefaultInspector();
+        serializedObject.Update();
+        if (serializedObject.FindProperty("knifeMoveSetData").objectReferenceValue)//shared move set: the inline one stays hidden
+            DrawPropertiesExcluding(serializedObject, "knifeMoveSet");
+        else
+            DrawPropertiesExcluding(serializedObject);
+        serializedObject.ApplyModifiedProperties();
 
         AttachmentBayonet bayonet = (AttachmentBayonet)target;
         if (!bayonet.foldable || Application.isPlaying)

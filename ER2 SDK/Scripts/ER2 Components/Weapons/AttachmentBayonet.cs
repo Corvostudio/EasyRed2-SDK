@@ -17,6 +17,12 @@ public partial class AttachmentBayonet : Attachment
     [Header("Knife")]
     [Tooltip("The bayonet can be taken in hand from the inventory and used as a knife. Off for bayonets without a handguard.")]
     public bool holdable = true;
+    [Tooltip("Damage of a stab, mounted or held as a knife. 250 kills a soldier.")]
+    public float damage = 250;
+    [Tooltip("Reach of a stab held as a knife, from the face, in metres. Mounted, the blade on the rifle is what reaches.")]
+    public float reach = .73f;
+    [Tooltip("Shared move set when held as a knife. Assigned, the inline move set below is ignored.")]
+    public MeleeMoveSetData knifeMoveSetData;
     [Tooltip("First person clips and sounds when held as a knife. The defaults are the knife's.")]
     public MeleeMoveSet knifeMoveSet = new MeleeMoveSet();
     [Tooltip("Third person override controller when held as a knife. Empty = CCV2_knife.")]
