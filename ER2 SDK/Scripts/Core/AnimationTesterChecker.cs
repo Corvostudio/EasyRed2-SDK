@@ -325,8 +325,8 @@ public static partial class AnimationTesterTool
     }
 
     /// <summary>
-    /// Loads all AnimationClip assets matching <paramref name="anim_name"/>, ensures they
-    /// are legacy + ClampForever, and adds them to the Animation component. Returns the
+    /// Loads the .anim named exactly <paramref name="anim_name"/> (what the game loads from the bundle), ensures
+    /// it is legacy + ClampForever, and adds it to the Animation component. Returns the
     /// list of clips actually added (so callers can post-process the asset itself).
     /// </summary>
     private static List<AnimationClip> AddAnimation(string anim_name, Animation anim)
@@ -338,7 +338,9 @@ public static partial class AnimationTesterTool
         foreach (string guid in assets)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (path.EndsWith(".fbx")) continue;
+            //FindAssets matches by substring: keep only the .anim named like the id (M1903_BoltCycle must not pull in M1903_BoltCycle_UNERTL)
+            if (!path.EndsWith(".anim", System.StringComparison.OrdinalIgnoreCase)) continue;
+            if (!string.Equals(System.IO.Path.GetFileNameWithoutExtension(path), anim_name, System.StringComparison.OrdinalIgnoreCase)) continue;
             if (alreadyAdded.Contains(guid)) continue;
 
             AnimationClip temp = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
@@ -352,7 +354,9 @@ public static partial class AnimationTesterTool
             }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            anim.AddClip(temp, anim_name);
+            //under its own name: a legacy state is named after its clip, so AddClip with a different name (SVT40_ReloadPArtial
+            //stored in the asset vs SVT40_ReloadPartial id) adds a renamed COPY and the Animation window would edit that, not the asset
+            anim.AddClip(temp, temp.name);
             alreadyAdded.Add(guid);
             added.Add(temp);
         }

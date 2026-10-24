@@ -73,7 +73,6 @@ public class ModelImporterEditor:Editor
         singleImporter.SaveAndReimport();
     }
 
-    private static HashSet<string> alreadyAdded = new HashSet<string>();
     [MenuItem("Assets/ER2 TOOLS/Tools/Animation making/Set up FPS animator", false, 2004)]
     [MenuItem("GameObject/ER2 TOOLS/Animation making/Set up FPS animator", false, 2004)]
     public static void SetUpAnimationTesting()
@@ -92,39 +91,6 @@ public class ModelImporterEditor:Editor
         if (!weapon) return;
 
         AnimationTesterTool.ToggleAnimationTester(weapon);
-    }
-
-    private static void AddAnimation(string anim_name,Animation anim)
-    {
-        if (string.IsNullOrEmpty(anim_name))
-            return;
-
-        //Riporta path di assset che sto cercando
-        string[] assets = AssetDatabase.FindAssets(anim_name + " t:AnimationClip");
-        foreach (string guid in assets)
-        {
-            //fix as legacy
-            string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (!path.EndsWith(".fbx") && !alreadyAdded.Contains(guid))
-            {
-                //fix clips if necessary
-                AnimationClip temp = (AnimationClip)AssetDatabase.LoadAssetAtPath(path, typeof(AnimationClip));
-                if (temp.wrapMode != WrapMode.ClampForever || !temp.legacy)
-                {
-                    temp.wrapMode = WrapMode.ClampForever;
-                    temp.legacy = true;
-                    UnityEditor.EditorUtility.SetDirty(temp);
-                }
-
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-
-                //actually adds
-                anim.AddClip(temp, anim_name);
-                alreadyAdded.Add(guid);
-                //Debug.Log(temp+": "+ anim.GetClipCount(), anim);
-            }
-        }
     }
 
 }
