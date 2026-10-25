@@ -20,6 +20,8 @@ public partial class MeleeMoveSet
     public string[] swingSounds = { "SwingSharp1H_1", "SwingSharp1H_2" };
     [Tooltip("FPS loop while sprinting with the item in hands. Empty = the procedural sprint pose.")]
     public string fpsSprintAnim = "Melee_Sprint";
+    [Range(0, 1)] [Tooltip("Where the equip clip restarts when the sprint ends, as a fraction of its length.")]
+    public float sprintEndEquipStart = .5f;
     [Tooltip("FPS block (aim button): into the stance, held on its last frame; out of it, back to the hold pose; the recoil of a parried hit.")]
     public string fpsBlockInAnim = "Melee_Block_In";
     public string fpsBlockOutAnim = "Melee_Block_Out";
