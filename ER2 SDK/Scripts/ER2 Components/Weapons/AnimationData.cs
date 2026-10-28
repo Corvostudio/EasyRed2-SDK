@@ -95,6 +95,9 @@ public partial class AnimationData
     [Tooltip("This group of objects will be hidden during single bullet reload when the ammo is empty. It will be activated as soon as at least 1 bullet is loaded.")]
     public GameObject[] nonEmptyStaticMeshes;
 
+    [Tooltip("One mesh per round in the magazine, in filling order: the first N stay active with N rounds loaded (one less when a round sits in the chamber of a gun that bolts before firing). Refreshed when a reload starts, after every round or clip inserted, when the bolt closes and at every bolt cycle. Keep these objects out of the clips' active-state curves, or the animation overrides them.")]
+    public GameObject[] loadedBulletMeshes = new GameObject[0];
+
 
     [Header("Extra animations / Overheat")]
 
