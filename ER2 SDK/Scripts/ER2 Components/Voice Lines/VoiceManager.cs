@@ -122,75 +122,8 @@ public partial class VoiceManager : MonoBehaviour
                     break;
                 }
 
-                string path = AssetDatabase.GetAssetPath(clip);
-                if (string.IsNullOrEmpty(path))
-                    continue;
-
-                AudioImporter importer = AssetImporter.GetAtPath(path) as AudioImporter;
-                if (importer == null)
-                    continue;
-
-                bool changed = false;
-
-                if (!importer.forceToMono)
-                {
-                    importer.forceToMono = true;
-                    changed = true;
-                }
-
-                if (!importer.loadInBackground)
-                {
-                    importer.loadInBackground = true;
-                    changed = true;
-                }
-
-                AudioImporterSampleSettings settings = importer.defaultSampleSettings;
-
-#if UNITY_2022_3_OR_NEWER
-                if (settings.preloadAudioData)
-                {
-                    settings.preloadAudioData = false;
-                    changed = true;
-                }
-#endif
-
-                if (settings.loadType != AudioClipLoadType.CompressedInMemory)
-                {
-                    settings.loadType = AudioClipLoadType.CompressedInMemory;
-                    changed = true;
-                }
-
-                if (settings.compressionFormat != AudioCompressionFormat.Vorbis)
-                {
-                    settings.compressionFormat = AudioCompressionFormat.Vorbis;
-                    changed = true;
-                }
-
-                float V_QLT = .35f;
-                if (!Mathf.Approximately(settings.quality, V_QLT))
-                {
-                    settings.quality = V_QLT;
-                    changed = true;
-                }
-
-                if (settings.sampleRateSetting != AudioSampleRateSetting.OverrideSampleRate)
-                {
-                    settings.sampleRateSetting = AudioSampleRateSetting.OverrideSampleRate;
-                    changed = true;
-                }
-
-                if (settings.sampleRateOverride != 44100)
-                {
-                    settings.sampleRateOverride = 44100;
-                    changed = true;
-                }
-
-                if (changed)
-                {
-                    importer.defaultSampleSettings = settings;
-                    importer.SaveAndReimport();
+                if (OptimizeImportSettings(clip))
                     changedCount++;
-                }
             }
         }
         finally
@@ -200,6 +133,83 @@ public partial class VoiceManager : MonoBehaviour
         }
 
         Debug.Log($"Optimized {changedCount} unique voice clips on {name}.");
+    }
+
+    /// <summary>
+    /// Impostazioni di import ottimizzate per i suoni di gioco: mono, caricamento in background e solo al primo uso, compresso in
+    /// memoria, Vorbis a qualita' .35, 44100 Hz. Reimporta la clip solo se qualcosa cambia, e in quel caso torna true
+    /// </summary>
+    public static bool OptimizeImportSettings(AudioClip clip)
+    {
+        string path = AssetDatabase.GetAssetPath(clip);
+        if (string.IsNullOrEmpty(path))
+            return false;
+
+        AudioImporter importer = AssetImporter.GetAtPath(path) as AudioImporter;
+        if (importer == null)
+            return false;
+
+        bool changed = false;
+
+        if (!importer.forceToMono)
+        {
+            importer.forceToMono = true;
+            changed = true;
+        }
+
+        if (!importer.loadInBackground)
+        {
+            importer.loadInBackground = true;
+            changed = true;
+        }
+
+        AudioImporterSampleSettings settings = importer.defaultSampleSettings;
+
+#if UNITY_2022_3_OR_NEWER
+        if (settings.preloadAudioData)
+        {
+            settings.preloadAudioData = false;
+            changed = true;
+        }
+#endif
+
+        if (settings.loadType != AudioClipLoadType.CompressedInMemory)
+        {
+            settings.loadType = AudioClipLoadType.CompressedInMemory;
+            changed = true;
+        }
+
+        if (settings.compressionFormat != AudioCompressionFormat.Vorbis)
+        {
+            settings.compressionFormat = AudioCompressionFormat.Vorbis;
+            changed = true;
+        }
+
+        float V_QLT = .35f;
+        if (!Mathf.Approximately(settings.quality, V_QLT))
+        {
+            settings.quality = V_QLT;
+            changed = true;
+        }
+
+        if (settings.sampleRateSetting != AudioSampleRateSetting.OverrideSampleRate)
+        {
+            settings.sampleRateSetting = AudioSampleRateSetting.OverrideSampleRate;
+            changed = true;
+        }
+
+        if (settings.sampleRateOverride != 44100)
+        {
+            settings.sampleRateOverride = 44100;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            importer.defaultSampleSettings = settings;
+            importer.SaveAndReimport();
+        }
+        return changed;
     }
 
 
