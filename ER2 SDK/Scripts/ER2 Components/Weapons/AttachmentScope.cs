@@ -6,10 +6,12 @@ using UnityEditor;
 
 public partial class AttachmentScope : Attachment
 {
+    [Tooltip("Where the camera sits while aiming through this scope.")]
     public Transform aimPos;
+    [Tooltip("Field of view while aiming through this scope, in degrees. Lower = more zoom.")]
     [Range(20, 65)]
     public float aimingFOV = 30;
-    [Tooltip("Increased AI night vision when using this scope")]
+    [Tooltip("Minimum night vision of an AI using this scope: 0 = as dark as the night is, 1 = he sees as by day.")]
     [Range(0, 1)]
     public float minimumNightVision = 0;
 

@@ -10,23 +10,26 @@ using UnityEditor;
 public partial class ShowMapIcon : MonoBehaviour
 {
     [Header("Icon")]
+    [Tooltip("Icon shown on the map and, with Show On GUI, over the object on screen.")]
     public Sprite icon;
 
+    [Tooltip("Size of the icon drawn on screen.")]
     [Range(3, 300)]
     public int drawSize = 20;
 
     [Header("GUI (optional)")]
-    [Tooltip("If enabled, this icon can also be drawn on GUI (screen-space) at runtime.")]
+    [Tooltip("Also draw the icon on screen, over the object.")]
     public bool showOnGUI = true;
 
-    [Tooltip("World-space offset from the object pivot used for GUI/world positioning.")]
+    [Tooltip("Position of the on-screen icon, local to this object.")]
     public Vector3 guiWorldOffset = new Vector3(0f, 1.5f, 0f);
 
-    [Tooltip("Maximum distance in world units. Past this distance the icon should be fully faded out / not drawn.")]
+    [Tooltip("Distance, in metres, at which the on-screen icon has fully faded out.")]
     [Min(0.01f)]
     public float maxDistance = 35f;
 
     [Header("Editor Debug")]
+    [Tooltip("Draw the position of the on-screen icon in the scene view when the object is selected.")]
     public bool debugDrawInEditor = true;
 
 

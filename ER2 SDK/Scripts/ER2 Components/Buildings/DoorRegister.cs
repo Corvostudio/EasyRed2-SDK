@@ -8,7 +8,7 @@ using UnityEditor;
 
 public partial class DoorRegister : MapPropIndexable //MapPropIndexable
 {
-    [Tooltip("Defines all the doors the player can interact. NOTE: Press \"Refresh door register\" after you inserted all the doors for the building")]
+    [Tooltip("Legacy: the Destructible Manager collects the doors from its children by itself and removes this component.")]
     public InteragibleDoor[] registeredDoors;
 
 }

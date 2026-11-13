@@ -4,7 +4,7 @@ using UnityEngine;
 
 public partial class ItemObject : Interagible
 {
-    [Tooltip("Defines kg weight of the object for the inventory")]
+    [Tooltip("Weight of the item in the inventory, in kg.")]
     [Range(0, 100)]
     public float mass = 3.0f;
 
@@ -13,7 +13,7 @@ public partial class ItemObject : Interagible
     public string item_id = "Unknown_id";
 
 
-    [Tooltip("Icon image for the item")]
+    [Tooltip("Icon of the item.")]
     public Sprite icon;
 
 

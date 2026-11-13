@@ -16,16 +16,16 @@ public partial class FlapRotator : MonoBehaviour
         roll = 1,
         yaw = 2
     }
-    [Tooltip("Flap Axis.")]
+    [Tooltip("Which control moves this flap: Pitch (elevator), Roll (aileron) or Yaw (rudder).")]
     public AxisDirection axisDirection = 0;
 
-    [Tooltip("The axis which the flap rotates around. 0=Roll, 1=Pitch, 2=Yaw")]
+    [Tooltip("Local axis the flap turns around: 0 = X, 1 = Y, 2 = Z.")]
     [Range(0, 2)]
     public byte axisFlap = 0;
-    [Tooltip("Multiplier of flap rotation")]
+    [Tooltip("Flap angle per unit of turn rate, with simplified controls (negative to invert). With realistic controls only its sign counts.")]
     [Range(-90, 90)]
     public float rotationMultiplier = 45;
-    [Tooltip("Minimum and maximum flap rotation angle")]
+    [Tooltip("Maximum deflection of the flap, in degrees to each side.")]
     [Range(0, 90)]
     public float rotationClamp = 45;
 

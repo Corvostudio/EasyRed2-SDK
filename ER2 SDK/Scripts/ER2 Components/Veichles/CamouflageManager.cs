@@ -12,7 +12,7 @@ using UnityEditor.SceneManagement;
 public partial class CamouflageManager : MonoBehaviour
 {
     [Range(0f, 10f)]
-    [Tooltip("Basic camo scale (measure on camo 1, then all camos will adapt to this scale.")]
+    [Tooltip("Base scale of the camo pattern on this vehicle. Tune it on the first camo: the others follow.")]
     public float camoUvScale = 1;
 
     [Header("Meshes to apply camos")]
@@ -35,7 +35,7 @@ public partial class CamouflageManager : MonoBehaviour
 
 
         [Range(0f, 10f)]
-        [Tooltip("Possibly use the global one.")]
+        [Tooltip("Extra scale of this camo on this vehicle, on top of Camo Uv Scale and of the preset's own scale. 1 = none.")]
         public float finalRescale = 1;
 
 #if UNITY_EDITOR

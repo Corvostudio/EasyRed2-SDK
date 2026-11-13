@@ -5,13 +5,11 @@ using UnityEngine;
 [System.Serializable]
 public partial class Inventory
 {
-    [Tooltip("Defines the number of primary weapons present inside the vehicles")]
-    [Range(0, 100)]
+    [HideInInspector]//deprecated: not read by the game
     public int maxPrimary = 1;//Soldati aggiornano questo valore aumentandolo per esempio se hanno delle borse porta armi
-    [Tooltip("Defines the number of secondary weapons present inside the vehicles")]
-    [Range(0, 100)]
+    [HideInInspector]//deprecated: not read by the game
     public int maxSecondary = 1;//Soldati aggiornano questo valore basato anche sulle fondine che hanno
-    [Tooltip("Defines the max weight carriable by the vehicle")]
+    [Tooltip("Maximum total weight of the items this inventory can hold.")]
     [Range(1, 10000)]
     public int maxWeight = 30;//Soldati aggiornano questo valore basato anche sulle borse che hanno
 

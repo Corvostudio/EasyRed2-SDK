@@ -67,7 +67,7 @@ public partial class VoiceManager : MonoBehaviour
     public AudioClip[] getOutTankDestroyed;
 
     [Header("Radio Request")]
-    [Tooltip("The audioClips of the radio numbers to give to the radio. You must add 10 ordered numbers. From 0 to 9. (MANDATORY)")]
+    [Tooltip("Spoken digits for radio coordinates: 10 clips in order, from 0 to 9. Required.")]
     public AudioClip[] numbers;
     public AudioClip[] artillerySupportAt;
     public AudioClip[] tankSupportRequest;

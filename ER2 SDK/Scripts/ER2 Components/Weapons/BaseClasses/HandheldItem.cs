@@ -6,27 +6,27 @@ using UnityEngine;
 
 public partial class HandheldItem : ItemObject
 {
-    [Tooltip("IK Target transform for left hand position on the forward handle")]
+    [Tooltip("IK target of the left hand on the item (the fore grip of a weapon).")]
     public Transform leftHandHoldPosition;
-    [Tooltip("TPS anim data")]
+    [Tooltip("Third-person settings: animator controller, left hand IK and placement in the hands and on the back.")]
     public HandHeldAnims tpsAnims = new HandHeldAnims();
 
 
     [System.Serializable]
     public partial class HandHeldAnims
     {
-        [Tooltip("Character controller for TPS anim")]
+        [Tooltip("Third-person animator controller used while holding this item (e.g. CCV2_rifle).")]
         public string userController = "CCV2_rifle";
-        [Tooltip("Enable/disable left hand IK when sprinting")]
+        [Tooltip("Keep the left hand on its IK target while sprinting.")]
         public bool IKWhenSprinting = true;
-        [Tooltip("Shift weapon local position on right hand. NOTICE: This should be used only for small adjustments!! (optional)")]
+        [Tooltip("Offset of the item in the right hand. For small adjustments only.")]
         public Vector3 localPosInHands = Vector3.zero;
 
-        [Tooltip("Default to 1")]
+        [Tooltip("Scale of the item in the hands. 1 = unchanged.")]
         public float localScaleInHands = 1;//rescale in case of wrong scale
-        [Tooltip("Shift weapon local position when stowed on the back or holster (optional)")]
+        [Tooltip("Offset of the item when stowed on the back or in the holster.")]
         public Vector3 localPosOnBack = Vector3.zero;
-        [Tooltip("Weapon local rotation (euler) when stowed on the back or holster, for models that do not lie right at identity (optional)")]
+        [Tooltip("Rotation (euler angles) of the item when stowed on the back or in the holster.")]
         public Vector3 localRotOnBack = Vector3.zero;
     }
 }

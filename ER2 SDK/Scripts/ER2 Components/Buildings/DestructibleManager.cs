@@ -19,7 +19,7 @@ using UnityEditor.Experimental.SceneManagement;
 
 public partial class DestructibleManager : MapPropIndexable// MapPropIndexable
 {
-    [Tooltip("All the individual parts of the building that can recieve damage. Requires DestructableBuilding components")]
+    [Tooltip("Parts of the building that can take damage. Collected automatically from the children.")]
     public DestructableBuilding[] destructibleParts = new DestructableBuilding[0];
 
     //props management

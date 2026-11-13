@@ -13,7 +13,7 @@ public partial class Propeller : MonoBehaviour
     [Tooltip("The connected Plane to the propeller")]
     public MovableVehicle connectedPlane;
 
-    [Tooltip("Propeller rotation axis")]
+    [Tooltip("Local axis the propeller spins around.")]
     public Vector3 rotationAxis = new Vector3(0, 1, 0);
 
 }

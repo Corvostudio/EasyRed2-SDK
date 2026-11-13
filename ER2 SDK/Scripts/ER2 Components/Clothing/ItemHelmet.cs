@@ -7,11 +7,11 @@ using UnityEditor;
 
 public partial class ItemHelmet : ItemObject, ImpactSpecifier
 {
-    [Tooltip("Component that defines protection data when wearing item")]
+    [Tooltip("Protection given by this headgear. Only Penetration Protection changes the damage taken.")]
     public ProtectionData protectionData;
-    [Tooltip("Camuflage value of the clothing. Ranges from 0 (minimum) to 35 (maximum). NOTE: the overall camouflage of a soldier is recieved by summing this value with each piece of clothing/gear in use")]
+    [Tooltip("Camouflage: 0 = none, 35 = max. Reduces detection range.")]
     [Range(0, 35)]
     public int camoIndex = 15;
-    [Tooltip("Defines the impact fx type to play")]
+    [Tooltip("Material of the headgear: sets the effect and sound of a hit on it.")]
     public ImpactType headgearImpactFX = ImpactType.metal;
 }

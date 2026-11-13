@@ -6,6 +6,7 @@ using UnityEngine;
 [ExecuteInEditMode]
 public partial class InteragibleDoorAdditionalInteractor : Interagible
 {
+    [Tooltip("Door operated from this object. If empty it is taken from the parents.")]
     public InteragibleDoor connectedDoor;
 
 #if UNITY_EDITOR

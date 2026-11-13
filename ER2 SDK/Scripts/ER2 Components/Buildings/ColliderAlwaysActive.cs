@@ -4,7 +4,7 @@ using UnityEngine;
 
 public partial class ColliderAlwaysActive : MonoBehaviour
 {
-    [Header("This script will make the connected collider\nalways active at any distance, and wil increase\nthe despawn distace of this props.\nMake sure to use this if really necessary\nas it has big impact on the performance.\n")]
+    [Tooltip("Keeps this collider active at any distance and makes the prop spawn up to 4 km away. Heavy on performance: use only where needed.")]
     public ColliderAlwaysActiveType rendAndCollDistance = ColliderAlwaysActiveType.upTo4km;
     public enum ColliderAlwaysActiveType 
     {

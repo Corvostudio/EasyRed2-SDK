@@ -158,7 +158,7 @@ public sealed class RoadSignUvBakerEditor : Editor
             }
 
             if (target.targetRenderer == null)
-                EditorGUILayout.HelpBox("Assegna il Renderer della faccia del cartello.", MessageType.Warning);
+                EditorGUILayout.HelpBox("Assign the Renderer of the sign face.", MessageType.Warning);
 
             EditorGUILayout.EndVertical();
         }

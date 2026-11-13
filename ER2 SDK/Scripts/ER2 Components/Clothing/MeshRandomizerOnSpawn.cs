@@ -6,7 +6,9 @@ using static MeshRandomizerOnSpawn;
 
 public class MeshRandomizerOnSpawn : MonoBehaviour
 {
+    [Tooltip("Mesh filters that get a random mesh when the object spawns.")]
     public MeshFilter[] meshes;
+    [Tooltip("Alternatives: one is picked at random and its meshes go, in order, to the Meshes above.")]
     public RandomMeshData[] randomAlternatives;
 
     // Start is called before the first frame update

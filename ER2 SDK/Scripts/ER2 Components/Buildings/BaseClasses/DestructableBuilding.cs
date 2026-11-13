@@ -5,31 +5,32 @@ using UnityEngine;
 
 public partial class DestructableBuilding : MonoBehaviour, Damagable
 {
-    [Tooltip("Set full life of the destructible building part")]
+    [Tooltip("Life of this part. It is destroyed when the life reaches zero.")]
     [Range(0, 5000)]
     public float life = 100;
 
-    [Tooltip("Defines minimum bullet penetration value to damage this part")]
+    [Header("Damage")]
+    [Tooltip("Projectiles damage this part only if their armour penetration, in mm, is higher than this.")]
     [Range(0, 200)]
     public float minBulletPenetration = 0;
-    [Tooltip("Defines the damage multiplier for the damage applied by the bullet")]
+    [Tooltip("Multiplier of the damage from projectiles.")]
     [Range(0, 5)]
     public float bulletDamageMultiplier = 1;
-    [Tooltip("Defines the damage multiplier for the damage applied by fire")]
+    [Tooltip("Multiplier of the damage from fire.")]
     [Range(0, 5)]
     public float fireDamageMultiplier = 1;
-    [Tooltip("Defines the damage multiplier for the damage applied by explosion force")]
+    [Tooltip("Multiplier of the damage from explosions.")]
     [Range(0, 5)]
     public float explosionDamageMultiplier = 1;
-    [Tooltip("Defines the damage multiplier for the damage applied by vehicle collision")]
+    [Tooltip("Multiplier of the damage from vehicle collisions.")]
     [Range(0, 5)]
     public float vehicleCollisionMultiplier = 1;
 
-    [Header("Instantiate prop effect (Particle, animation..) when the phase changes")]
-    public Vector3 dstVfxPosition = Vector3.zero;
-
-    [Tooltip("This effect is spawned from it's ID when the phase changes. Particle effects will be deleted after particle animation is complete.")]
+    [Header("Phase change effect")]
+    [Tooltip("Prefab name of the effect spawned when the part changes phase or is destroyed. Empty = none.")]
     public string onPhaseChangeEffect = "";
-    [Tooltip("Name of the bundle that contains the particle effect prefab")]
+    [Tooltip("Bundle the effect is loaded from.")]
     public string fxBundle = "er2fxs";
+    [Tooltip("Local position where the effect is spawned.")]
+    public Vector3 dstVfxPosition = Vector3.zero;
 }

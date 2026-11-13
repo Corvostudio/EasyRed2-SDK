@@ -6,7 +6,7 @@ public partial class VehViewPort : MonoBehaviour
 {
     [Tooltip("Position of the camera on the view port")]
     public Transform camPos;
-    [Tooltip("Shift position left/right on the camera when looking aroung")]
+    [Tooltip("How far the camera slides sideways, in metres, when the player looks fully left or right.")]
     [Range(-.4f, .4f)]
     public float camShiftOnRotate = .1f;
 

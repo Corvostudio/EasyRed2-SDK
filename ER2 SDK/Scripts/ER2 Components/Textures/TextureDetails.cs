@@ -11,7 +11,9 @@ public partial class TextureDetails : ScriptableObject
     [HideInInspector]
     public string bundleName = "";
 
+    [Tooltip("Texture provided by the mod.")]
     public Texture texture;
+    [Tooltip("What the texture is: LUT = colour grading table, Crosshair = custom crosshair.")]
     public TextureType textureType = TextureType.LUT;
 
     public enum TextureType { LUT,Crosshair};

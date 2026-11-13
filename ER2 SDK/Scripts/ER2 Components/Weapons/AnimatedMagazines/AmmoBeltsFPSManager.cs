@@ -10,16 +10,22 @@ using UnityEngine.SceneManagement;
 
 public partial class AmmoBeltsFPSManager : MonoBehaviour
 {
+    [Tooltip("Belts or magazines this weapon shows in first person: one entry each.")]
     public FPSMagManager[] compatibleMagazines;
 }
 
 [System.Serializable]
 public class FPSMagManager
 {
+    [Tooltip("ID of the magazine this entry is for.")]
     public string mag_id;
+    [Tooltip("Objects shown while this magazine is installed.")]
     public GameObject[] enableOnSetMag;
+    [Tooltip("Rounds of the belt, hidden one by one as the ammo runs out (element 0 is the last one left).")]
     public GameObject[] individualBullets;
+    [Tooltip("Partial reload animation used with this magazine (optional).")]
     public string override_reload_anim_partial;
+    [Tooltip("Full reload animation used with this magazine (optional).")]
     public string override_reload_anim_full;
     [Tooltip("[Optional] Reload sounds used with this magazine (partial / full). Empty = the magazine own sound, then the weapon reload sound.")]
     public AudioClip override_reload_sound_partial;

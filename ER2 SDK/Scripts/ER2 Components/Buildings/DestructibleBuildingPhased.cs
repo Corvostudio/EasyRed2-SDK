@@ -8,7 +8,7 @@ using UnityEditor;
 
 public partial class DestructibleBuildingPhased : DestructableBuilding
 {
-    [Tooltip("Defines all the possible integrity levels (status) of the buildings; First level must be intact, last must be fully destroyed.")]
+    [Tooltip("Phases of the part, from intact (first) to destroyed (last). The life is split evenly among them.")]
     public BuildingStatus[] statusPhases = new BuildingStatus[0];
     private sbyte phase = 0;
 
@@ -40,7 +40,7 @@ public partial class DestructibleBuildingPhased : DestructableBuilding
 [System.Serializable]
 public struct BuildingStatus
 {
-    [Tooltip("The models that should be enabled in the hierachy when the building is set to this status.")]
+    [Tooltip("Objects enabled while the part is in this phase.")]
     public GameObject[] destructionLevel_objects;
 }
 
@@ -247,7 +247,7 @@ public partial class DestructibleBuildingPhasedEditor : Editor
 
         if (commonPhases <= 0)
         {
-            EditorGUILayout.HelpBox("Nessuna fase disponibile (statusPhases vuoto su uno o più oggetti selezionati).", MessageType.Info);
+            EditorGUILayout.HelpBox("No phases available: Status Phases is empty on one or more of the selected objects.", MessageType.Info);
             return;
         }
 

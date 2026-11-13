@@ -11,20 +11,20 @@ using UnityEditor;
 [RequireComponent(typeof(WheelCollider))]
 public partial class WheelColliderUpdater : MonoBehaviour
 {
-    [Tooltip("Defines steering angle for the wheel")]
+    [Tooltip("Steering angle of this wheel at full input, in degrees. 0 = the wheel does not steer; a negative value steers the opposite way.")]
     [Range(-70, 70)]
     public float steer_angle = 0;
 
-    [Tooltip("When the wheel collider rotatates and steer, apply the same rotation and steering to this set of wheel meshes")]
+    [Tooltip("Wheel meshes that follow this wheel collider: they spin and steer with it.")]
     public Transform[] wheelsTransform;
-    [Tooltip("When the wheel collider rotatates, apply the same rotation to this set of wheel meshes, but not the steering")]
+    [Tooltip("Wheel meshes that only spin with this wheel collider, without steering.")]
     public Transform[] wheelsTransform_syncOnlyRot;
 
-    [Tooltip("If this vehicle has skinned tracks, makes that the damper of the wheel deform the track")]
+    [Tooltip("Optional bone of a skinned track: it moves up and down with the suspension of this wheel.")]
     public Transform connectedBone;
 
 
-    [Tooltip("Defines in which side the wheel collider is")]
+    [Tooltip("Side of the vehicle this wheel collider is on.")]
     public WheelColliderSide side = WheelColliderSide.Left;
 
 

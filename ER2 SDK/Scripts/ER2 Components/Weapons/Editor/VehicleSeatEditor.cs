@@ -150,8 +150,8 @@ public partial class VehicleSeatEditor : Editor
         }
 
         EditorGUILayout.HelpBox(
-            "Preview editor-only: istanzia il prefab esistente del placement-checker delle mani e lo aggancia " +
-            "agli IK di questa seat. Si pulisce da solo in Play / cambio scena / ricompilazione.",
+            "Editor-only preview: spawns the hands placement checker prefab and attaches it " +
+            "to the IK targets of this seat. It removes itself on Play, scene change or recompile.",
             MessageType.None);
     }
 
@@ -190,10 +190,10 @@ public partial class VehicleSeatEditor : Editor
         {
             EditorUtility.DisplayDialog(
                 "Hands IK Tester",
-                "Nessun prefab di placement-checker delle mani trovato nel progetto.\n\n" +
-                "Assicurati che esista il prefab delle mani (root con un componente " +
+                "No hands placement checker prefab found in the project.\n\n" +
+                "Make sure the hands prefab exists (root with a " +
                 "HandsPlacementCheckerSteeringWheel / HandsPlacementCheckerPlaneSteer / HandsPlacementChecker " +
-                "e i transform Left/Right hand assegnati).",
+                "component and the Left/Right hand transforms assigned).",
                 "OK");
             return;
         }
@@ -207,7 +207,7 @@ public partial class VehicleSeatEditor : Editor
             Object.DestroyImmediate(inst);
             EditorUtility.DisplayDialog(
                 "Hands IK Tester",
-                "Il prefab trovato non ha i transform Left/Right hand assegnati sul suo componente checker.",
+                "The prefab found has no Left/Right hand transforms assigned on its checker component.",
                 "OK");
             return;
         }

@@ -9,22 +9,22 @@ using UnityEditor;
 
 public partial class VehicleDamagablePart : Interagible, ImpactSpecifier
 {
-    [Tooltip("Defines impact effect type")]
+    [Tooltip("Surface type of this part: it picks the effect and the sound of the hits.")]
     public ImpactType impactType=ImpactType.metal;
 
-    [Tooltip("Defines thickness of the armor in mm")]
+    [Tooltip("Armour thickness, in mm.")]
     [Range(0, 250)]
     public float armorThickness = 70;//in mm
 
-    [Tooltip("Allows angled armor to be considered as higher thickness")]
+    [Tooltip("Sloped hits count as thicker armour (thickness / cosine of the impact angle). HE shells ignore the angle.")]
     public bool considerAngledArmor = true;
-    [Tooltip("Allows bullets to ricochet")]
+    [Tooltip("Shots can ricochet off this part.")]
     public bool canRicochet = true;
 
-    [Tooltip("Allows to damage unit when collide with something")]
+    [Tooltip("Soldiers touched by this part while the vehicle moves faster than 1 m/s are damaged (run over).")]
     public bool damagePlayerOnCollision = true;
 
-    [Tooltip("When something collides with this, this vehicle get damages (only for static vehicles)")]
+    [Tooltip("Static vehicles only: a vehicle ramming this part at more than 4 m/s damages the hull.")]
     public bool damageHullOnGettingRammed = true;
 
 }

@@ -9,28 +9,26 @@ using UnityEditor;
 
 public partial class InteragibleDoor : Interagible
 {
-    [Header("Door Settings")]
-    [Tooltip("Door moving parts")]
+    [Tooltip("Moving parts of the door: one entry per leaf.")]
     public DoorPivot[] doors;
 }
 
 [System.Serializable]
 public class DoorPivot
 {
-    [Header("Door's hinge Settings")]
-    [Tooltip("Define the hinge position for the door")]
+    [Tooltip("Transform rotated to open and close the leaf (its hinge).")]
     public Transform pivot;
-    [Tooltip("Define how much the pivot has to rotate along the x axis when the door is closed")]
+    [Tooltip("Local X rotation of the pivot with the door closed, in degrees.")]
     public int closedRotX = 0;
-    [Tooltip("Define how much the pivot has to rotate along the y axis when the door is closed")]
+    [Tooltip("Local Y rotation of the pivot with the door closed, in degrees.")]
     public int closedRotY = 0;
-    [Tooltip("Define how much the pivot has to rotate along the z axis when the door is closed")]
+    [Tooltip("Local Z rotation of the pivot with the door closed, in degrees.")]
     public int closedRotZ = 0;
-    [Tooltip("Define how much the pivot has to rotate along the x axis when the door is open")]
+    [Tooltip("Local X rotation of the pivot with the door open, in degrees.")]
     public int openRotX = 0;
-    [Tooltip("Define how much the pivot has to rotate along the y axis when the door is open")]
+    [Tooltip("Local Y rotation of the pivot with the door open, in degrees.")]
     public int openRotY = 0;
-    [Tooltip("Define how much the pivot has to rotate along the z axis when the door is open")]
+    [Tooltip("Local Z rotation of the pivot with the door open, in degrees.")]
     public int openRotZ = 0;
 }
 

@@ -5,35 +5,35 @@ using UnityEngine;
 
 public partial class Magazine : ItemObject //, IAmmo
 {
-    [Tooltip("Is magazine using tracer bullets?")]
+    [Tooltip("The magazine is loaded with tracer rounds.")]
     public bool use_tracer = false;
 
     [Header("Magazine ammo settings")]
-    [Tooltip("Defines type of ammo that can be load")]
+    [Tooltip("ID of the ammo this magazine holds.")]
     public string compatibleAmmo = "ammo_792mm";
-    [Tooltip("Defines the platform that can host the magazine")]
+    [Tooltip("Socket ID: the magazine fits the weapons with the same Magazine Socket.")]
     public string socket;
-    [Tooltip("Bullet capacity of the magazine")]
+    [Tooltip("Rounds the magazine holds.")]
     [Range(0, 2500)]
     public int capacity = 30;
     //[Tooltip("Bullet inside the magazine on initialize")]
     //[Range(0, 2500)] public int ammoInside = 30;
 
-    [Header("Optional override animation in case base weapon can fit alternative magazines")]
+    [Header("Reload override (optional)")]
     //customize change magazine aniamtions
-    [Tooltip("Percent time relative to animation lenght were partial magazine is swapped with the new one. 0=Auto")]
+    [Tooltip("Point of the partial reload animation (magazine not empty), 0-1 of its length, where the magazine is swapped. 0 = default.")]
     [Range(0, 1)]
     public float swap_mag_time_perc_half = 0;
-    [Tooltip("Name of partial reload animation for this magazine from the bundle (optional)")]
+    [Tooltip("Partial reload animation used with this magazine. Empty = the one of the weapon.")]
     public string override_anim_reload_half = "";
-    [Tooltip("Override partial reload sound effect depending by the type of magazine (optional)")]
+    [Tooltip("Partial reload sound used with this magazine (optional).")]
     public AudioClip reload_half_sound = null;
-    [Tooltip("Percent time relative to animation lenght were empty magazine is swapped with the new one. 0=Auto")]
+    [Tooltip("Point of the full reload animation (magazine empty), 0-1 of its length, where the magazine is swapped. 0 = default.")]
     [Range(0, 1)]
     public float swap_mag_time_perc_full = 0;
-    [Tooltip("Name of full reload animation for this magazine from the bundle (optional)")]
+    [Tooltip("Full reload animation used with this magazine. Empty = the one of the weapon.")]
     public string override_anim_reload_full = "";
-    [Tooltip("Override full reload sound effect depending by the type of magazine (optional)")]
+    [Tooltip("Full reload sound used with this magazine (optional).")]
     public AudioClip reload_full_sound = null;
 }
 

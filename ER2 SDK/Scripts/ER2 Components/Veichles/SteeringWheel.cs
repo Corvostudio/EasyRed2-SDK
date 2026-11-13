@@ -9,11 +9,11 @@ public partial class SteeringWheel : MonoBehaviour
     public MovableVehicle connectedVeh;
 
 
-    [Tooltip("Axis where to rotate the steering wheel around")]
+    [Tooltip("Local axis the steering wheel turns around: 0 = X, 1 = Y, 2 = Z.")]
     [Range(0, 2)]
     public byte axis = 0;
 
-    [Tooltip("Multiplier of rotation of the steering wheel")]
+    [Tooltip("Degrees the steering wheel turns at full steering input (negative to invert).")]
     [Range(-90, 90)]
     public float rotationMultiplier = 45;
 

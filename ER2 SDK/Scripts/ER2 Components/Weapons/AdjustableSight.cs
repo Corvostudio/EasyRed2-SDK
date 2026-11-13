@@ -7,22 +7,26 @@ using UnityEditor;
 public partial class AdjustableSight : MonoBehaviour
 {
     [Header("Position")]
+    [Tooltip("Local position of the sight at the lowest zeroing.")]
     [FormerlySerializedAs("at100MetersShiftPos")]
     public Vector3 minPos;
+    [Tooltip("Local position of the sight at the highest zeroing (see Maximise At).")]
     [FormerlySerializedAs("at500MetersShiftPos")]
     public Vector3 maxPos;
 
     [Header("Rotation")]
+    [Tooltip("Local rotation (euler angles) of the sight at the lowest zeroing.")]
     [FormerlySerializedAs("at100MetersShiftRot")]
     public Vector3 minRot;
+    [Tooltip("Local rotation (euler angles) of the sight at the highest zeroing.")]
     [FormerlySerializedAs("at500MetersShiftRot")]
     public Vector3 maxRot;
 
-    [Tooltip("At which level of zeroing the adjustable sight should maximise its position/rotation? If 0, uses the max zeroing level.")]
+    [Tooltip("Zeroing step at which the sight reaches its max position and rotation. 0 = the last step.")]
     [Range(0, 20)]
     public int maximiseAt = 0;
 
-    [Tooltip("Also adjust another sight when adjusting this one")]
+    [Tooltip("Another sight adjusted together with this one (optional).")]
     public AdjustableSight connected_sight = null;
 
 #if UNITY_EDITOR

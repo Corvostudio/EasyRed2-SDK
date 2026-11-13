@@ -11,26 +11,25 @@ using UnityEditor.SceneManagement;
 
 public partial class TurretGun : Turret
 {
-    [Tooltip("Weapons configured on this vehicle")]
+    [Header("Weapons")]
+    [Tooltip("Weapons mounted on this turret, in the order the gunner cycles through them.")]
     public TurretWeapon[] weapons = new TurretWeapon[0];
-
-    [Tooltip("Optional 'fire everything' slot: indices of the weapons above fired together as one extra selection at the end of the weapon cycle (e.g. 0,1 = MGs + cannons, leaving rockets out). Needs at least 2 valid indices to appear. Mainly meant for planes.")]
+    [Tooltip("Optional: indices of the weapons above fired together, as one extra selection at the end of the weapon cycle. Needs at least 2 valid indices.")]
     public byte[] combinedFireWeapons = new byte[0];
 
-
-    [Tooltip("Connected animation (firing)")]
+    [Header("Animations")]
+    [Tooltip("Legacy Animation played at every shot (barrel recoil). Empty = the one on this object. Slow-firing weapons only, unless Force Anim At Low Rate is on.")]
     public Animation connectedAim = null;//ANIM
-    [Tooltip("Connected animation (reloading)")]
+    [Tooltip("Legacy Animation played when the weapon reloads.")]
     public Animation connectedReloadAnim = null;//ANIM
-    [Tooltip("Normally previous animation doesn't work when gun fires at low rate. With this you can force it.")]
+    [Tooltip("The firing animation plays only on slow-firing weapons (over 2.5 s between shots). Enable to play it at any rate of fire.")]
     public bool forceAnimAtLowRate = false;
-
-    [Tooltip("Units seated on seats to animate when shooting the gun (Very optional)")]
+    [Tooltip("Optional: seats whose soldier handles a shell while the gun reloads.")]
     public AnimatedSeat[] animateSeats = new AnimatedSeat[0];
     [System.Serializable]
     public struct AnimatedSeat
     {
-        [Tooltip("Vehicle seat to animate the soldier on")]
+        [Tooltip("Seat of the soldier to animate.")]
         public VehicleSeat animatedSeat;
         //public float reloadAnimLenght;
 
@@ -41,16 +40,17 @@ public partial class TurretGun : Turret
     public class AnimatedSeatData
     {
         public enum OnAnimation { Nothing, LeftHandAmmoReload, RightHandAmmoReload }
+        [Tooltip("Position of the shell in the soldier's hand, in the local space of the hand bone.")]
         public Vector3 localHandPos = new Vector3(0.08f, -0.1094f, -0.0128f);
-        [Tooltip("What to do on fire animation")]
+        [Tooltip("Which hand carries the shell during the reload. Nothing = no shell is shown.")]
         public OnAnimation onAimation = OnAnimation.Nothing;
-        [Tooltip("Spawn shell to reload after delay")]
+        [Tooltip("Seconds after the reload starts before the shell appears in the hand.")]
         [Range(0, 10f)]
         public float spawnItemDelay = 2.45f;
-        [Tooltip("Insert shell after delay")]
+        [Tooltip("Seconds after the reload starts when the shell leaves the hand and goes into the gun.")]
         [Range(0, 20f)]
         public float insertItemDelay = 3.9f;
-        [Tooltip("ID of the shell to spawn")]
+        [Tooltip("Prefab name of the shell shown in the hand, loaded from the er2vehicles bundle.")]
         public string shellPropID = "ShellAnimProp_75";
     }
 
@@ -150,47 +150,48 @@ public partial class TurretGun : Turret
 [System.Serializable]
 public partial class TurretWeapon
 {
-    [Tooltip("Optional shared weapon definition. When assigned, ammo/RPM/reload/dispersion/tracer/fire-FX/sounds are taken from this asset at runtime, and they are hidden + cleared on the prefab to keep builds light.")]
+    [Tooltip("Optional shared weapon definition: when assigned, ammo, recoil, rate of fire, reload, dispersion, tracers, fire FX and sounds come from this asset.")]
     public TurretWeaponData data;
-
-    [Tooltip("Ammo type of the weapon")]
+    [Tooltip("Ammo types this weapon can load.")]
     public TurretWeaponBullet[] ammos = new TurretWeaponBullet[1];
-    [Tooltip("Fire FX when shooting the gun")]
+
+    [Header("Fire FX")]
+    [Tooltip("Prefab name of the effect spawned at the muzzle at every shot.")]
     public string fireFx_id = "gunFireFX";
-    [Tooltip("Fire FX when shooting the gun continuously (normally flamethrowers)")]
+    [Tooltip("Optional prefab name of a muzzle effect that stays on while firing (flamethrowers).")]
     public string fireFxContinuous_id = null;
-    [Tooltip("Bundle that contains the FXs")]
+    [Tooltip("Bundle the two effects above are loaded from.")]
     public string fireFx_bundle = "er2fxs";
 
     //[Tooltip("Transform position and direction to spawn the bullet from")]
     [HideInInspector]public Transform firePos;
-    [Tooltip("If this weapon has multiple barrels, you can configure multiple fire positions")]
+
+    [Header("Mounting")]
+    [Tooltip("Muzzle transforms: where the shots leave from and in which direction. One per barrel.")]
     public Transform[] firePosMulti;
+
+    [Header("Sounds")]
     [Tooltip("Volume of fire sound")]
     public float fireSoundVolume = .5f;
-
-
-
-    [Header("Correlated prefabs")]
-    [Tooltip("Assign only if you don't need the cycle sound effect")]
+    [Tooltip("Shot sound heard from close by. For weapons that do not use the start / loop / tail sounds below.")]
     public AudioClip fireSound;
-    [Tooltip("Assign only if you need the cycle sound effect like Flamethrower")]
+    [Tooltip("Continuous-fire weapons (flamethrowers, fast MGs): played once when firing starts, heard from close by.")]
     public AudioClip fireSound_start;
-    [Tooltip("Assign only if you need the cycle sound effect like Flamethrower")]
+    [Tooltip("Continuous-fire weapons: loop played while firing, heard from close by.")]
     public AudioClip fireSound_loop;
-    [Tooltip("Assign only if you need the cycle sound effect like Flamethrower")]
+    [Tooltip("Continuous-fire weapons: played once when firing stops, heard from close by.")]
     public AudioClip fireSound_tail;
-    [Tooltip("Fire sound used at distance")]
+    [Tooltip("Shot sound heard from far away. If empty, the close one is used.")]
     public AudioClip fireSound_distance;
-    [Tooltip("Fire sound used at distance Loop")]
+    [Tooltip("Continuous-fire weapons: loop played while firing, heard from far away.")]
     public AudioClip fireSound_distance_loop;
-    [Tooltip("Fire sound used at distance Tail")]
+    [Tooltip("Continuous-fire weapons: played once when firing stops, heard from far away.")]
     public AudioClip fireSound_distance_tail;
 
-
-
-    [Tooltip("Enable / disable recoil when firing")]
+    [Tooltip("Recoil of the vehicle at every shot: 0 = none, 1 = normal. On planes it is reduced to a quarter.")]
     [HideInInspector, SerializeField] bool isRecoilless = false;// deprecated — kept only so old .assets keep deserializing; folded into recoilIntensity above
+
+    [Header("Ballistics and cycle")]
     [Tooltip("Recoil intensity when firing")]
     [Range(0.0f, 5.0f)]
     public float recoilIntensity = -1;
@@ -208,28 +209,26 @@ public partial class TurretWeapon
     }
 #endif
 
-    [Tooltip("Rounds per minute")]
+    [Tooltip("Rate of fire of each barrel, in rounds per minute.")]
     [Range(1, 2000)]
     public int roundPerMinute = 300;
-    [Tooltip("reload before firing (like a mortar), else reload after firing")]
+    [Tooltip("On: the round is loaded when the gunner fires (mortars). Off: the weapon reloads by itself after firing.")]
     public bool reloadWhenFiring = false;//se true carica un colpo quando inizia a sparare. Altriemnti ricaricalo prima
-    [Tooltip("Reload time duration")]
+    [Tooltip("Reload time, in seconds.")]
     [Range(0.1f, 200)]
     public float reloadTime = 5;
-    [Tooltip("Dispersion angle of the bullet")]
+    [Tooltip("Spread of the shots, in degrees.")]
     [Range(0, 25)]
     public float dispersionAngle = .1f;
-    [Tooltip("Show tracer every X shots. 0 means always use normal bullet FXs.")]
+    [Tooltip("Show a tracer every this many shots. 0 = use the normal effect of the bullet.")]
     [Range(0, 40)]
     public byte specifiedTracersRatio;//0: use normal tracer behaviour; >0: show a tracer every X shots
-
-    [Tooltip("ID of the base game sound. Not available in modding SDK yet.")]
+    [Tooltip("ID of a base game reload sound. Empty = default (tank_reload_loop for slow-firing weapons, tank_mg_reload for the others).")]
     public string reload_sound = "";
-    [Tooltip("Prevent aim down sight while reloading")]
+    [Tooltip("The gunner cannot use the sight while this weapon reloads.")]
     public bool preventAimWhenReloading = false;
-    [Tooltip("ID of the base game animation. Not available in modding SDK yet.")]
+    [Tooltip("Optional animation driven by this weapon (ammo belt, moving parts): it is told about every shot and every reload.")]
     public TurretWeaponAnimation onFireAnimation = null;
-
 
     /// <summary>
     /// If a TurretWeaponData asset is assigned, copy its values onto this instance.
@@ -273,11 +272,10 @@ public partial class TurretWeapon
 [System.Serializable]
 public partial struct TurretWeaponBullet
 {
-    [Header("bullet data ID or magazine ID (setted up as individual item in the bundle)")]
+    [Tooltip("ID of the bullet data, or of the magazine, as registered in the game items.")]
     public string bullet_id;
     //public string bullet_tracer_id;//empty when has no tracer!
-    [Header("START AMMO:")]
-    [Tooltip("Start ammo count")]
+    [Tooltip("Rounds of this type the weapon starts with.")]
     [Range(0, 2500)]
     public int start_ammo_count;// = 25;
 }
@@ -310,7 +308,7 @@ public class TurretWeaponDrawer : PropertyDrawer
         "fireSoundVolume",
         "fireSound", "fireSound_start", "fireSound_loop", "fireSound_tail",
         "fireSound_distance", "fireSound_distance_loop", "fireSound_distance_tail",
-        "isRecoilless", "roundPerMinute", "reloadWhenFiring",
+        "recoilIntensity", "roundPerMinute", "reloadWhenFiring",
         "reloadTime", "dispersionAngle", "specifiedTracersRatio",
     };
 
@@ -388,7 +386,7 @@ public class TurretWeaponDrawer : PropertyDrawer
 
                 Rect info = new Rect(position.x, y, position.width, EditorGUIUtility.singleLineHeight * 2f);
                 EditorGUI.HelpBox(info,
-                    "Ammo, RPM, reload, dispersion, tracer, fire FX and sounds come from the assigned data asset. " +
+                    "Ammo, recoil, RPM, reload, dispersion, tracer, fire FX and sounds come from the assigned data asset. " +
                     "Remove the asset to edit them inline again.", MessageType.Info);
                 y += EditorGUIUtility.singleLineHeight * 2f + Pad;
             }

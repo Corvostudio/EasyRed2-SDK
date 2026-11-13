@@ -10,7 +10,7 @@ public partial class AmmoItem : ItemObjectStackable
     [Header("Shooted bullet data")]
     [Tooltip("Ballistic bullet data. Read the documentation to use an existing caliber type, or to create a new one.")]
     public string caliber_type = "792mm";
-    [Tooltip("Extracted catrdrige model. Currently supports 'ExtractedBullet' or 'ExtractedBulletSmall'")]
+    [Tooltip("Model of the ejected case: ExtractedBullet or ExtractedBulletSmall.")]
     public string empty_casing_id = "ExtractedBullet";//or ExtractedBulletSmall
 
     /*[Header("Custom Ammo Data (Optional if not using caliber_type from game)")]

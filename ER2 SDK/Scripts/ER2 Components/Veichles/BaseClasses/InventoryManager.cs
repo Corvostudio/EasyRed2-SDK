@@ -3,7 +3,7 @@ using UnityEngine;
 
 public partial class InventoryManager : MonoBehaviour
 {
-    [Tooltip("The distance from which the player can open the inventory from")]
+    [Tooltip("Distance, in metres, from which the player can open this inventory.")]
     [Range(0, 15)]
     public float inventoryInteractionDistance = 2.3f;
     public Inventory inventory;

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public partial class RepairStation : MonoBehaviour
 {
+    [Tooltip("Radius, in metres, within which vehicles are repaired and rearmed.")]
     [Range(0.1f, 15)]
     public float radius = 1.5f;
 

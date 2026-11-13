@@ -6,7 +6,7 @@ public partial class PlaneSteer : MonoBehaviour
     [Tooltip("Defines the plane connected to this steer control bar")]
     public VehiclePlane connectedPlane;
 
-    [Tooltip("The multiplier rotation of the steer bar on plane turn")]
+    [Tooltip("Stick tilt per unit of turn rate, with simplified controls (negative to invert). Not used with realistic controls.")]
     [Range(-2, 2)]
     public float rotationMultiplier = .05f;
 

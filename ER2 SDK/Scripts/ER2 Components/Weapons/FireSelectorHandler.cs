@@ -261,7 +261,7 @@ public class FireSelectorHandlerEditor : Editor
 
                     if (lever.poses == null || lever.poses.Length != sc)
                     {
-                        EditorGUILayout.HelpBox("Esegui 'Sync Pose Arrays' per aggiornare le pose.", MessageType.Warning);
+                        EditorGUILayout.HelpBox("Run 'Sync Pose Arrays to State Count' to update the poses.", MessageType.Warning);
                     }
                     else
                     {

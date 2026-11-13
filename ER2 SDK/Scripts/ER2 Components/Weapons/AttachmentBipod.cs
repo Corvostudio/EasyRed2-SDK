@@ -9,7 +9,7 @@ public partial class AttachmentBipod : Attachment
     [Tooltip("Physical hinge point of the bipod: while deployed, the weapon (and the soldier view) pivots around this node. If null, the attachment root transform is used.")]
     public Transform pivotPoint;
 
-    [Tooltip("Height above the support surface at which the pivot (pivotPoint, or this attachment root if unset) rests while deployed (bipods are not all the same height). The FPS view/rig is softly pinned so the pivot sits exactly there.")]
+    [Tooltip("Height above the support surface at which the pivot (Pivot Point, or this object if unset) rests while deployed.")]
     public float deployedPivotHeight = .28f;
 
     //Nominal rotation arcs while deployed (degrees, per side), the same for every bipod: the usable arc is decided at
@@ -17,7 +17,7 @@ public partial class AttachmentBipod : Attachment
     public const float genericYawRange = 30f;
     public const float genericPitchRange = 25f;
 
-    [Tooltip("[Optional] Middle swivel node (the bipod legs): while deployed it is counter-rotated so the legs stay planted while the weapon rotates around them. Must not be the pivotPoint itself, and should not be keyframed in the open/close animation.")]
+    [Tooltip("Optional: node of the legs, counter-rotated while deployed so they stay planted. Not the Pivot Point, and not keyframed in the open/close animation.")]
     public Transform swivelPivot;
 
 #if UNITY_EDITOR

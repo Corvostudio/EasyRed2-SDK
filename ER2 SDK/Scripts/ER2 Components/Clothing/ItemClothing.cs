@@ -18,11 +18,11 @@ public partial class ItemClothing : ItemObject, ISerializationCallbackReceiver
     [Tooltip("[Gears only] Allow to fire a flamethrower")]
     public bool isFuelTank = false;
 
-    [Tooltip("Damage reduction (penetration / fire / sliver). Damage is reduced by a random amount between 0 and the value.")]
+    [Tooltip("Protection given by this item. Only Penetration Protection changes the damage taken.")]
     public ProtectionData protectionData;
     [Tooltip("Camouflage: 0 = none, 35 = max. Reduces detection range.")]
     [Range(0, 35)] public int camoIndex = 15;
-    [Tooltip("Extra inventory slots granted to the wearer.")]
+    [Tooltip("Extra weight the wearer can carry, in kg.")]
     [Range(0, 30)] public int extraInventorySpace = 0;
 
     [Header("⏺ Uniform Cover Modes  (uniforms only)")]
@@ -71,13 +71,13 @@ public partial class ItemClothing : ItemObject, ISerializationCallbackReceiver
     [Range(0, 50)] public float shortSleeveThreshold = 23;
 
     [Header("⏺ [Uniforms only] FPS Mesh")]
-    [Tooltip("First-person mesh. Only needed when 'type' is Gear (uniforms don't use an FPS mesh).")]
+    [Tooltip("First-person mesh of the arms. Required for uniforms, not used by gear.")]
     public Mesh fps_mesh;
     [Tooltip("Optional. If empty, falls back to TPS 'materials'.")]
     public Material[] materials_fps = new Material[0];
 
     [Space(4)]
-    [Tooltip("FPS mesh for the short-sleeve variant. Rarely used — only relevant for gear that swaps with sleeve mode.")]
+    [Tooltip("First-person mesh used with the short-sleeve variant. Empty = the FPS Mesh is kept.")]
     public Mesh fps_mesh_short_sleeve;
     [Tooltip("Optional. Fallback chain if empty:  materials_fps → materials_short → materials.")]
     public Material[] materials_short_fps = new Material[0];
@@ -282,13 +282,13 @@ public partial class ItemClothing : ItemObject, ISerializationCallbackReceiver
 [System.Serializable]
 public partial struct ProtectionData
 {
-    [Tooltip("Defines the maximum value of protection from penetration damage")]
+    [Tooltip("Uniforms and gear: percentage taken off the damage, except from explosions. Headgear: percent chance that a hit on it does only its base damage.")]
     [Range(0, 90)]
     public byte penetrationProtection;
-    [Tooltip("Defines the maximum value of protection from fire damage")]
+    [Tooltip("Not applied to the damage by the game: only shown in the description of headgear.")]
     [Range(0, 90)]
     public byte fireProtection;
-    [Tooltip("Defines the maximum value of protection from sliver damage")]
+    [Tooltip("Not applied to the damage by the game: only shown in the description of headgear.")]
     [Range(0, 90)]
     public byte sliverProtection;
 }

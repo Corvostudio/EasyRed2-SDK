@@ -5,53 +5,47 @@ using UnityEngine;
 public partial class VehiclePlane : MovableVehicle
 {
 
-    [Tooltip("Center of mass")]
+    [Header("Plane")]
+    [Tooltip("Fighter or bomber: it changes the AI (bombers cruise higher and need bombs in Bomb Bay), the map icon, and only fighters use aircraft repair stations.")]
+    public PlaneType planeType = PlaneType.Fighter;
+    [Tooltip("Centre of mass of the plane, in the local space of the prefab root (metres).")]
     public Vector3 centerOfMass = new Vector3(0, 1, 0);
-
-
-    [Tooltip("Angle of dive")]
-    [Range(0, 89)]
-    public float diveAlignAnge = 45;
-    [Tooltip("Time to reach max trust for the engine")]
-    [Range(0, 50)]
-    public float timeFromZeroToMaxThrust = 20;
-    [Tooltip("Force of the thrust on the plane")]
-    [Range(0, 5000)]
-    public float thrustForceMultiplier = 500;
-
-
-
-    //simplified flight model variables
-    [Tooltip("Max flyght height before stalling (at max speed)")]
-    [Range(0, 10000)]
-    public float maxFlyHeight = 3000;
-    [Tooltip("[0-1] Speed multiplier where the wing start producing lift force")]
-    [Range(0, 1)]
-    public float startLiftMult = .25f;
-    [Tooltip("[0-1] Speed multiplier where the wing produce maximum lift force")]
-    [Range(0, 1)]
-    public float endLiftMult = .4f;
-    /*[Tooltip("Minimum speed to lift the vehicle")]
-    [Range(0, 500)]
-    public float totalLiftVelocity = 20;
-    [Tooltip("Minimum speed to have good control of the vehicle")]
-    [Range(0, 500)]
-    public float maxControlSpeed = 35;*/
-
-    [Tooltip("Wheel collider of the wheels that can brake on the runway")]
+    [Tooltip("Wheel colliders of the landing gear. They brake when the throttle is at zero and are used to detect that the plane is on the ground.")]
     public WheelCollider[] brakingWheels;
-
     [Tooltip("Sound when crashing")]
     public AudioClip crashSound;
 
-    [Tooltip("Type of the plane. If set to bomber, adding bombs to it is important to make the AI working correctly.")]
-    public PlaneType planeType = PlaneType.Fighter;
+    [Header("Engine")]
+    [Tooltip("Engine power: the push at full throttle is 100 x this value newtons (less in thin air, see Max Fly Height).")]
+    [Range(0, 5000)]
+    public float thrustForceMultiplier = 500;
+    [Tooltip("Engine spool-up time. Seconds from zero to full thrust = this value x Thrust Force Multiplier / 600. Thrust drops twice as fast.")]
+    [Range(0, 50)]
+    public float timeFromZeroToMaxThrust = 20;
 
-    [Tooltip("Registered bombs for the plane")]
+    [Header("Flight model")]
+    [Tooltip("Altitude, in metres, of the thinnest air. Lift and thrust are full up to a third of it, then drop steadily to 30% at this height and above.")]
+    [Range(0, 10000)]
+    public float maxFlyHeight = 3000;
+    [Tooltip("Stall speed, as a fraction of Max Kmh Speed. Below it the wings give no lift on the runway and less lift in the air. Climbing raises it.")]
+    [Range(0, 1)]
+    public float startLiftMult = .25f;
+    [Tooltip("No longer affects lift. It only sets the impact speed above which the tail parts take damage, as a fraction of Max Kmh Speed.")]
+    [Range(0, 1)]
+    public float endLiftMult = .4f;
+
+    [Header("AI")]
+    [Tooltip("Dive angle, in degrees, of AI pilots attacking a ground target with bombs. Without bombs they dive at 12 degrees at most.")]
+    [Range(0, 89)]
+    public float diveAlignAnge = 45;
+
+    [Header("Bombs")]
+    [Tooltip("Bombs carried by the plane: one entry per bomb.")]
     public BombBay[] bombBay = new BombBay[0];
+    [Tooltip("Optional bomb bay doors animation: it opens at the first drop and closes two seconds after the last one.")]
     [SerializeField] private BombBayAnimator bombBayAnim;
 
-
+    [Header("Detachable parts")]
     [Tooltip("Left detachable wing")]
     public VehicleDamagableDetachablePart leftDetachableWing;
     [Tooltip("Right detachable wing")]
@@ -66,11 +60,11 @@ public partial class VehiclePlane : MovableVehicle
 [System.Serializable]
 public partial class BombBay
 {
-    [Tooltip("Delay before dropping the bombs one after another")]
+    [Tooltip("Seconds to wait after this bomb is dropped before the next one can be dropped.")]
     public float drop_delay = .3f;
-    [Tooltip("ID of the bomb prefab")]
+    [Tooltip("ID (prefab name) of the bomb, as registered in the game items.")]
     public string bomb_id = "PlaneBomb250";
-    [Tooltip("Parent transform where to spawn the bomb in at 0,0,0 pos and rot")]
+    [Tooltip("Empty transform where the bomb hangs: the bomb is spawned as its child, with its position and rotation.")]
     public Transform bomb_parent;
 }
 
@@ -83,6 +77,8 @@ public enum PlaneType
 [System.Serializable]
 public partial class BombBayAnimator
 {
+    [Tooltip("Legacy Animation component that holds the clip of the bomb bay doors.")]
     public Animation animationComponent;
+    [Tooltip("Name of the clip that opens the doors. It is played backward to close them.")]
     public string animationName;
 }

@@ -5,9 +5,9 @@ using UnityEngine;
 public partial class ItemObjectRecoverLife : ItemObjectStackable
 {
     [Header("Life recover properties")]
-    [Tooltip("How much life to restore")]
+    [Tooltip("Life restored when used. A soldier has 100.")]
     [Range(0, 100)]
     public int recoverLife = 20;
-    [Tooltip("Is this food or medicine?")]
+    [Tooltip("Food rather than medicine: eating it also counts for the food achievement.")]
     public bool isFood = false;
 }

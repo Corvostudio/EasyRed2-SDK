@@ -7,20 +7,19 @@ using UnityEditor;
 
 public partial class InternalVehiclePart : MonoBehaviour
 {
-    [Tooltip("Type of internal damagable module")]
+    [Tooltip("Which internal module this is (engine, fuel tank, tracks, wheel).")]
     public VehicleInternalPart part;
-
-    [Tooltip("Witdh of the module")]
+    [Tooltip("Width of the module.")]
     [Range(0.1f, 2f)]
     public float width = .5f;
     [Tooltip("Height of the module")]
     [Range(0.1f, 2f)]
     public float height = .5f;
 
-    [Header("Name of the destructiuon effects. Place a 'x' if this should have no effect.")]
-    [Tooltip("On explosion, override the FXs (optional)")]
+    [Header("Effects")]
+    [Tooltip("Prefab name of the effect played when this module is destroyed. Empty = default effect, x = no effect.")]
     public string overrideExplosionFX = "";
-    [Tooltip("On damage, override the FXs (optional)")]
+    [Tooltip("Prefab name of the smoke effect shown when this module is damaged. Empty = default effect, x = no effect.")]
     public string overrideSmokeFX = "";
 
     public Bounds GetBounds()

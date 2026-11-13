@@ -16,32 +16,31 @@ public partial class VehicleWithWheels : MovableVehicle
         ejectAll
     }
 
-    public Vector3 centerOfMass = new Vector3(0, 1, 0);
-
-    [Tooltip("attackVehicle: Attack objective, selfPropelledArtillery: Prioritize keeping distance and answering radio calls.")]
+    [Header("AI")]
+    [Tooltip("Attack Vehicle: advances on the objective. Self Propelled Artillery: keeps its distance and answers radio fire requests.")]
     public WheeledVehicleAi aiType = WheeledVehicleAi.attackVehicle;
+    [Tooltip("AI crew reaction to the enemy or to heavy damage: stay in, eject the passengers, or eject everyone. Any value but Nothing also marks the vehicle as a transport.")]
+    public OnEnemyEncounter onEnemyEncounter = OnEnemyEncounter.nothing;
     public enum WheeledVehicleAi { attackVehicle = 0, selfPropelledArtillery = 1 }
 
-    [Tooltip("Defines the maximum torque of the motor")]
+    [Header("Engine and wheels")]
+    [Tooltip("Motor torque sent to the wheels at full throttle.")]
     [Range(50, 5000)]
     public float maxMotorTorque = 800;
-    [Tooltip("Defines the acceleration speed of the vehicle")]
+    [Tooltip("How quickly the motor torque builds up: this value x 200 per second forward, x 30 per second in reverse.")]
     [Range(1, 200)]
     public float accelerationSpeed = 50;
-    [Tooltip("Defines the sound effect to play when the vehicle's crashes")]
+    [Tooltip("Wheel colliders on the left side of the vehicle (wheels or track rollers).")]
+    public WheelCollider[] leftTrack;
+    [Tooltip("Wheel colliders on the right side of the vehicle (wheels or track rollers).")]
+    public WheelCollider[] rightTrack;
+
+    [Header("Sounds")]
+    [Tooltip("Sound played when the vehicle crashes into something.")]
     public AudioClip crashSound;
 
-    [Tooltip("List of wheels on the right side of the vehicle")]
-    public WheelCollider[] rightTrack;
-    [Tooltip("List of wheels on the left side of the vehicle")]
-    public WheelCollider[] leftTrack;
-
-    //public GameObject onExplodeTurretJump;
-
-    [Tooltip("Action to perform when vehicle encounter the enemey")]
-    public OnEnemyEncounter onEnemyEncounter = OnEnemyEncounter.nothing;
-
-
+    [HideInInspector]//deprecated: not read by the game, the centre of mass is computed from the wheels
+    public Vector3 centerOfMass = new Vector3(0, 1, 0);
 
 }
 

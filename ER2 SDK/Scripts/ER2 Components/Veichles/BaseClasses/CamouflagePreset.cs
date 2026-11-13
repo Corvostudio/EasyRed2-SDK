@@ -8,13 +8,19 @@ public partial class CamouflagePreset : ScriptableObject
 {
     public string camoName;
 
+    [Tooltip("First month the camo can appear, in the Introduction Year.")]
     public MonthName introductionMonth = MonthName.january;
+    [Tooltip("First year the camo can appear (date of the mission).")]
     public int introductionYear=1900;
 
+    [Tooltip("Last month the camo can appear, in the Deprecation Year.")]
     public MonthName deprecationMonth = MonthName.december;
+    [Tooltip("Last year the camo can appear (date of the mission).")]
     public int deprecationYear = int.MaxValue;
 
+    [Tooltip("Where the camo appears, by map coordinates. Asia: east of longitude 60. West of it, by latitude: Africa below 37.5, Mediterranean 37.5 to 45, Europe above 45.")]
     public CamoRegion region = CamoRegion.Europe | CamoRegion.Mediterranean;
+    [Tooltip("No Snow: only on maps without snow. Only Snow: only on snowy maps. Allow Snow: both.")]
     public CamoSnowData snowData = CamoSnowData.NoSnow;
 
     [Range(0.1f, 10f)]
@@ -22,7 +28,7 @@ public partial class CamouflagePreset : ScriptableObject
     public float spawnWeight = 1f; // ADD THIS
 
     [Range(0f, 10f)]
-    [Tooltip("Relative scale compared to the global uv scale.")]
+    [Tooltip("Scale of this camo relative to the vehicle's Camo Uv Scale.")]
     public float relativeCamoUvScale = 1;
 
     public string faction_id = "";//set a faction to force randomization on a specific country

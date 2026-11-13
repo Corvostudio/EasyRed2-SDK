@@ -10,36 +10,42 @@ public partial class FactionDetails : ScriptableObject
     [HideInInspector]
     public string bundleName = "";
 
-    //public string faction_name;
-    [Header("Id name of the faction anthem audio clip")]
+    [Header("Flag and anthems")]
+    [Tooltip("Flag of the faction.")]
+    public Sprite flag;
+    [Tooltip("Name of the anthem audio clip: played at the end of a battle won by this faction.")]
     public string anthem_id;
+    [Tooltip("Optional: clip played instead when the player wins with this faction.")]
     public string anthem_id_win;
+    [Tooltip("Optional: clip played instead when the player loses with this faction.")]
     public string anthem_id_lose;
 
-    [Header("Faction flag")]
-    public Sprite flag;
-    [Header("Id names of the ViceManagers created")]
+    [Header("Soldiers")]
+    [Tooltip("Prefab names of the voice sets (Voice Manager) of the faction: one is picked at random.")]
     public string[] voices_id;
-    
-    [Header("Rank icons")]
+    [Tooltip("Rank icons, from the lowest rank to the highest.")]
     public Sprite[] ranks;
-    [Header("Rank & pathc shoulder coords")]
-    public Vector3 ranks_coords = new Vector3(.5f, 1.21f, .75f);
-    public Vector3 patch_coords = new Vector3(.5f, 0.2f, .8f);
-
-    [Header("Random names & surnames")]
+    [Tooltip("First names for the random names of the soldiers.")]
     public string[] names=new string[] { "Carlo" };
+    [Tooltip("Surnames for the random names of the soldiers.")]
     public string[] surnames = new string[] { "Rossi" };
-    [Header("Faces & hair ids")]
+    [Tooltip("IDs of the faces the soldiers of the faction can have.")]
     public string[] faces_id = new string[] { "face_caucasic_1", "face_caucasic_2", "face_caucasic_3", "face_asiatic_1", "face_asiatic_2", "face_soviet_1" };
-    //public string[] hairs_id = new string[] { "Hairs 1", "Hairs 2", "Hairs 3", "Hairs 4" };
 
-
+    [Header("Equipment")]
+    [Tooltip("ID of the pistol a surrendered soldier gets when he takes up arms again.")]
     public string ordinance_pistol_id = "colt1911";
+    [Tooltip("ID of the uniform of auto transport drivers.")]
     public string autoTransport_uniform_id = "us_police_uniform_1";
+    [Tooltip("ID of the headgear of auto transport drivers.")]
     public string autoTransport_helmet_id = "us_infantry_helmet_1";
     [Tooltip("Optional gear/vest of auto transport drivers. Empty = none.")]
     public string autoTransport_gear_id = "";
+
+    [HideInInspector]//deprecated: not read by the game, the uniform sets it (Item Clothing)
+    public Vector3 ranks_coords = new Vector3(.5f, 1.21f, .75f);
+    [HideInInspector]//deprecated: not read by the game, the uniform sets it (Item Clothing)
+    public Vector3 patch_coords = new Vector3(.5f, 0.2f, .8f);
 
 #if UNITY_EDITOR
     public void Init()

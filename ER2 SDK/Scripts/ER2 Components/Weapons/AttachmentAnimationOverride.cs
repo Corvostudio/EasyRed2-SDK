@@ -39,12 +39,12 @@ public class AnimationOverride
     [Tooltip("[Optional] Apply only while this magazine is installed (magazine item id). Empty = any magazine.")]
     public string magazine_id;
 
-    [Tooltip("[Reload and barrel change only] Animation played instead while the weapon RESTS ON THE BIPOD. Empty = the weapon lifts off the bipod first and plays the animation above.")]
+    [Tooltip("[Reload and barrel change only] Animation played instead while the weapon rests on the bipod. Empty = it lifts off the bipod and plays the one above.")]
     public string override_animation_deployed;
     [Tooltip("[Optional] Sound for the deployed animation. Empty = the sound above, then the normal chain.")]
     public AudioClip override_sound_deployed;
 
-    [Tooltip("[Bolt action only, together with an animation above] Replaces the weapon canAimWhileUsingBolt while this row is active: on = the player keeps aiming down sights while the bolt cycles, off = the sights drop for the whole animation.")]
+    [Tooltip("[Bolt action only, with an animation above] Replaces Can Aim While Using Bolt of the weapon while this row is active.")]
     public bool override_can_aim_while_using_bolt;
 
     /// <summary>Animation / sound of the requested variant; the deployed sound falls back to the normal one.</summary>

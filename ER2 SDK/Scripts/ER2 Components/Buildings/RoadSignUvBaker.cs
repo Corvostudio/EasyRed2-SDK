@@ -9,19 +9,19 @@ public sealed class RoadSignUvBaker : MonoBehaviour
     [Serializable]
     public sealed class SignTarget
     {
-        [Tooltip("Renderer della faccia del cartello (quello col materiale dell'atlante).")]
+        [Tooltip("Renderer of the sign face (the one with the atlas material).")]
         public Renderer targetRenderer;
 
-        [Tooltip("Cella su cui la UV è autorata in Blender. È il default del prefab, mai mutato a runtime.")]
+        [Tooltip("Atlas cell shown by default. The UVs of the face must be authored on cell 0.")]
         public int atlasSlotIndex = 0;
     }
 
     public RoadSignAtlasDefinition atlasDefinition;
 
-    [Tooltip("Applica all'OnEnable: gestisce il default e il reset delle istanze riusate dal pool.")]
+    [Tooltip("Apply the default cells when the object is enabled, also for instances reused from the pool.")]
     public bool applyOnEnable = true;
 
-    [Tooltip("L'inspector applica subito quando cambi un valore.")]
+    [Tooltip("The inspector applies a change as soon as a value is edited.")]
     public bool autoApplyInEditor = true;
 
     public List<SignTarget> targets = new List<SignTarget>();

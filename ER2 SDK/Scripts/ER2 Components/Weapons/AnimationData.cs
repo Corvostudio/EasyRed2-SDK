@@ -16,7 +16,7 @@ public partial class AnimationData
         GenericMG
     }
 
-    [Tooltip("Reuse animations from another weapon. At runtime the root GameObject of this gun is renamed to match the source weapon ID. The entire transform hierarchy must be identical to the source prefab (only the root name can differ, as it must always be unique).")]
+    [Tooltip("Reuse the animations of another weapon, by ID. The transform hierarchy must be identical to that prefab: only the root name can differ.")]
     public string recycledAnimationsWeaponId = "";//recycle animations from anothewr weapon
 
     [Tooltip("Select which default FPS animation set this weapon uses. Choose \"Use Custom\" to manually assign all animations.")]
@@ -60,6 +60,7 @@ public partial class AnimationData
 
     [Header("Chamber-loaded weapons")]
 
+    [Tooltip("Opening the chamber takes out the round that was chambered.")]
     public bool discard_bullet_on_chamber_open = false;
     [Tooltip("Animation name for opening the weapon chamber.")]
     public string fps_chamber_open;
@@ -95,7 +96,7 @@ public partial class AnimationData
     [Tooltip("This group of objects will be hidden during single bullet reload when the ammo is empty. It will be activated as soon as at least 1 bullet is loaded.")]
     public GameObject[] nonEmptyStaticMeshes;
 
-    [Tooltip("One mesh per round in the magazine, in filling order: the first N stay active with N rounds loaded (one less when a round sits in the chamber of a gun that bolts before firing). Refreshed when a reload starts, after every round or clip inserted, when the bolt closes and at every bolt cycle. Keep these objects out of the clips' active-state curves, or the animation overrides them.")]
+    [Tooltip("One mesh per round in the magazine, in filling order: the first N are shown with N rounds loaded. Keep them out of the active-state curves of the clips.")]
     public GameObject[] loadedBulletMeshes = new GameObject[0];
 
 
@@ -116,7 +117,7 @@ public partial class AnimationData
 
     [Header("Bipod (optional)")]
 
-    [Tooltip("[Optional] One-shot FPS animation played when the bipod deploys (left hand performs the deploy, then ends holding the weapon by the stock). While deployed the rig stays parked on the LAST frame of this animation. Empty = legacy behavior (no hand animation).")]
+    [Tooltip("Optional: FPS animation played once when the bipod deploys. While deployed the rig stays on its last frame. Empty = no hand animation.")]
     public string fps_bipod_deploy;
     [Tooltip("Sound played when the bipod deploys. If empty, the generic bipod sound is used.")]
     public AudioClip bipod_deploy_sound;

@@ -30,10 +30,10 @@ public partial class GenericGun : Weapon
     [Tooltip("Item id of the cartridge this weapon fires (e.g. 'ammo_792mm'). Used for top-loading into chamber and for default ammo if no magazine is installed.")]
     public string compatibleAmmo = "ammo_792mm";
 
-    [Tooltip("How many rounds fit inside the chamber/internal magazine. For weapons WITHOUT a detachable magazine (e.g. Kar98), this is the total capacity (e.g. 5). For weapons WITH a magazine, this is usually 1 (one chambered round).")]
+    [Tooltip("Rounds held by the weapon itself: the full capacity without a detachable magazine (e.g. 5 for the Kar98), usually 1 (the chambered round) with one.")]
     [Range(0, 250)][SerializeField] private int ammoSpace = 100;
 
-    [Tooltip("Magazine socket id. Empty string = this weapon does NOT use detachable magazines (loads bullets directly into chamber). Any other value = mag socket type (only mags with the same socket can be installed).")]
+    [Tooltip("Magazine socket ID: only magazines with the same socket fit. Empty = no detachable magazine, the rounds are loaded directly.")]
     public string magazineSocket = "";
 
     [Tooltip("Transform where the magazine is parented when installed.")]
@@ -187,7 +187,9 @@ public partial class GenericGun : Weapon
     [Tooltip("GameObject of the iron sight in its DOWN / folded position. Auto-enabled when a scope is mounted.")]
     public GameObject sight_down;
 
+    [Tooltip("Sight parts shown to the player when the enlarged sight picture is on (Sight ADS Mode setting).")]
     public GameObject[] sight_ads_enlarged;
+    [Tooltip("Sight parts shown otherwise: realistic sight picture, AI and other players.")]
     public GameObject[] sight_ads_realistic;
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -197,14 +199,14 @@ public partial class GenericGun : Weapon
 
     [Tooltip("List of attachment slots this weapon supports (scope, bipod, bayonet...). Each entry defines the attachment id and the transform where it gets parented.")]
     public SupportedAttachment[] supportedAttachments;
-    [Tooltip("[Optional] Animation override sets activated by installed attachments. The first entry whose attachment is installed wins. Designed for weapons whose whole animation set changes with an attachment (e.g. MG42 resting on its bipod).")]
+    [Tooltip("Optional: animation override sets activated by installed attachments (e.g. the MG42 on its bipod). The first entry whose attachment is installed wins.")]
     public AttachmentAnimationOverride[] attachmentAnimationOverrides = new AttachmentAnimationOverride[0];
 
     [Tooltip("Optional built-in scope (a scope that's part of the weapon and not a separate attachment, e.g. a sniper variant with a permanently mounted scope).")]
     public GameObject integratedScope = null;
-    [Tooltip("Optional built-in bipod: an AttachmentBipod that is part of this prefab, not an item. Always installed, cannot be removed, and the weapon never accepts other bipods. Deploy works as for a normal bipod (own Animation clip, or none if the weapon's fps_bipod_deploy animates its bones). Set its item_id to key an animation override set to it.")]
+    [Tooltip("Optional built-in bipod (an Attachment Bipod in this prefab): always installed, no other bipod fits. Its item ID can key an animation override set.")]
     public AttachmentBipod integratedBipod = null;
-    [Tooltip("Optional built-in bayonet: an AttachmentBayonet that is part of this prefab, not an item. Always installed, cannot be removed, and the weapon never accepts other bayonets.")]
+    [Tooltip("Optional built-in bayonet (an Attachment Bayonet in this prefab): always installed, cannot be removed, and no other bayonet fits.")]
     public AttachmentBayonet integratedBayonet = null;
 
 
@@ -230,7 +232,7 @@ public partial class GenericGun : Weapon
 
     [Header("⏺ TPS Weapon Action Animation")]
 
-    [Tooltip("Optional TPS bolt/action animation component. Replaces direct Animation.Play(\"bolt_anim\") when assigned. Legacy Animation on this GameObject is still used as fallback.")]
+    [Tooltip("Optional TPS bolt/action animation component. When assigned it replaces playing bolt_anim on the Animation of this object, which stays as fallback.")]
     public GenericGunActionAnimation tpsBoltActionAnimation;
 
     #endregion

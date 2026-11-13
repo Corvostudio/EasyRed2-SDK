@@ -7,51 +7,53 @@ using UnityEngine;
 
 public partial class Turret : MonoBehaviour
 {
-    [Tooltip("Max angle of rotation (left/right) of the turret. If 180, the turret can rotate 360")]
+    [Header("Traverse")]
+    [Tooltip("Pivot object of the turret's horizontal rotation (traverse).")]
+    public GameObject yAxis;
+    [Tooltip("How far the turret turns left and right from the centre, in degrees to each side. 180 = full 360 degree traverse.")]
     [Range(0, 180)]
     public int yAxisBond;
-    [Tooltip("Axis pivot for the Y rotation of the turret")]
-    public GameObject yAxis;
 
-    [Tooltip("Maximum angle of elevation of the gun on the turret")]
+    [Header("Elevation")]
+    [Tooltip("Pivot object of the gun's vertical rotation (elevation).")]
+    public GameObject xAxis;
+    [Tooltip("Maximum elevation of the gun, in degrees.")]
     [Range(-89, 90)]
     public int xAxisBond;
-    [Tooltip("Maximum value of depression of the gun of the turret")]
+    [Tooltip("Maximum depression of the gun, in degrees.")]
     [Range(-89, 90)]
     public int xAxisBondDown = 10;
-    [Tooltip("Pivot of elevation of the gun")]
-    public GameObject xAxis;
     [Tooltip("Angle of standard zeroing of the gun. if very high (over 45°) it will behave as mortar.")]
     [Range(0, 90)]
     public float zeroingAngle = 0;
 
-    [Tooltip("Look position of the camera")]
-    public Transform lookPosition;
+    [Header("Movement")]
+    [Tooltip("Traverse and elevation speed, in degrees per second. It drops by 40% when the vehicle's engine is destroyed.")]
+    [Range(0, 100)]
+    public float rotationSpeed = 8;
+    [Tooltip("Loop played while the turret is turning, heard up to 30 m.")]
+    public AudioClip turnSoundLoop_outside;
 
-    [Tooltip("FOV when aming")]
+    [Header("Camera and sight")]
+    [Tooltip("Where the first-person camera sits when the gunner is not aiming.")]
+    public Transform lookPosition;
+    [Tooltip("The camera turns on its own instead of following the turret. Useful for a turret mounted on another turret.")]
+    public bool independentLookRotation = false;//camera ruota indipendentemente da mg
+    [Tooltip("Where the camera sits while aiming.")]
+    public Transform scopePosition;
+    [Tooltip("Field of view while aiming, in degrees.")]
     [Range(15, 65)]
     public float scopeFOV = 25;
-    [Tooltip("Position of the camera when aiming")]
-    public Transform scopePosition;
-    [Tooltip("Sprites of the scope when aiming")]
+    [Tooltip("Name of the Tank Scope Data asset (in the er2gui bundle) drawn as the sight while aiming.")]
     public string scopeSprite_id="tank_scope_2";
     [Tooltip("If enabled and the assigned Tank Scope Data (scopeSprite_id) defines a FOV > 0, that FOV is used when aiming instead of this turret's scopeFOV.")]
     public bool useScopeDataFOV = false;
 
-    [Tooltip("Rotation speed of the turret")]
-    [Range(0, 100)]
-    public float rotationSpeed = 8;
-    [Tooltip("Camera rotates independently from the turret. Usefull if there is a turret parented to another turret")]
-    public bool independentLookRotation = false;//camera ruota indipendentemente da mg
-
-    [Tooltip("When true it will prioritize attacking planes with any of it's weapons. However for the case of bombers, it will prioritize them anyway if the gun has Time Fuse Flak ammos.")]
+    [Header("AI")]
+    [Tooltip("Anti-aircraft turret: the AI gunner attacks planes first. Other turrets attack planes only with time-fuse flak ammo.")]
     public bool isAA = false;//when isAA=true AI will target planes first, other later, when isAA=false AI will not target planes at all
-
-    [Tooltip("Increased night time AI visibility on this turret")]
+    [Tooltip("Minimum night vision of the AI gunner on this turret: 0 = as dark as the night is, 1 = he sees as by day.")]
     [Range(0, 1)] public float minimumNightVision = 0;
-
-    [Tooltip("Rotation turn sound")]
-    public AudioClip turnSoundLoop_outside;
 
     public static readonly byte MAX_TURRET_ROTATION = 180;
 

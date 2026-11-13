@@ -20,57 +20,52 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "TurretWeaponData", menuName = "Turret/Turret Weapon Data", order = 0)]
 public partial class TurretWeaponData : ScriptableObject
 {
-    [Tooltip("Ammo type of the weapon")]
+    [Header("Ammo")]
+    [Tooltip("Ammo types this weapon can load.")]
     public TurretWeaponBullet[] ammos = new TurretWeaponBullet[1];
 
     [Header("Fire FX")]
-    [Tooltip("Fire FX when shooting the gun")]
+    [Tooltip("Prefab name of the effect spawned at the muzzle at every shot.")]
     public string fireFx_id = "gunFireFX";
-    [Tooltip("Fire FX when shooting the gun continuously (normally flamethrowers)")]
+    [Tooltip("Optional prefab name of a muzzle effect that stays on while firing (flamethrowers).")]
     public string fireFxContinuous_id = null;
-    [Tooltip("Bundle that contains the FXs")]
+    [Tooltip("Bundle the two effects above are loaded from.")]
     public string fireFx_bundle = "er2fxs";
 
+    [Header("Sounds")]
     [Tooltip("Volume of fire sound")]
     public float fireSoundVolume = .5f;
-
-    [Header("Correlated prefabs")]
-    [Tooltip("Assign only if you don't need the cycle sound effect")]
+    [Tooltip("Shot sound heard from close by. For weapons that do not use the start / loop / tail sounds below.")]
     public AudioClip fireSound;
-    [Tooltip("Assign only if you need the cycle sound effect like Flamethrower")]
+    [Tooltip("Continuous-fire weapons (flamethrowers, fast MGs): played once when firing starts, heard from close by.")]
     public AudioClip fireSound_start;
-    [Tooltip("Assign only if you need the cycle sound effect like Flamethrower")]
+    [Tooltip("Continuous-fire weapons: loop played while firing, heard from close by.")]
     public AudioClip fireSound_loop;
-    [Tooltip("Assign only if you need the cycle sound effect like Flamethrower")]
+    [Tooltip("Continuous-fire weapons: played once when firing stops, heard from close by.")]
     public AudioClip fireSound_tail;
-    [Tooltip("Fire sound used at distance")]
+    [Tooltip("Shot sound heard from far away. If empty, the close one is used.")]
     public AudioClip fireSound_distance;
-    [Tooltip("Fire sound used at distance Loop")]
+    [Tooltip("Continuous-fire weapons: loop played while firing, heard from far away.")]
     public AudioClip fireSound_distance_loop;
-    [Tooltip("Fire sound used at distance Tail")]
+    [Tooltip("Continuous-fire weapons: played once when firing stops, heard from far away.")]
     public AudioClip fireSound_distance_tail;
 
-    [Header("Ballistics / cycle")]
-    [Tooltip("Recoil intensity when firing")]
+    [Header("Ballistics and cycle")]
+    [Tooltip("Recoil of the vehicle at every shot: 0 = none, 1 = normal. On planes it is reduced to a quarter.")]
     [Range(0.0f, 5.0f)]
     public float recoilIntensity = 1;
-
-    [Tooltip("Rounds per minute (on each gun)")]
+    [Tooltip("Rate of fire of each barrel, in rounds per minute.")]
     [Range(1, 2000)]
     public int roundPerMinute = 300;
-
-    [Tooltip("reload before firing (like a mortar), else reload after firing")]
+    [Tooltip("On: the round is loaded when the gunner fires (mortars). Off: the weapon reloads by itself after firing.")]
     public bool reloadWhenFiring = false;
-
-    [Tooltip("Reload time duration")]
+    [Tooltip("Reload time, in seconds.")]
     [Range(0.1f, 200)]
     public float reloadTime = 5;
-
-    [Tooltip("Dispersion angle of the bullet")]
+    [Tooltip("Spread of the shots, in degrees.")]
     [Range(0, 25)]
     public float dispersionAngle = .1f;
-
-    [Tooltip("Show tracer every X shots. 0 means always use normal bullet FXs.")]
+    [Tooltip("Show a tracer every this many shots. 0 = use the normal effect of the bullet.")]
     [Range(0, 40)]
     public byte specifiedTracersRatio;
 }

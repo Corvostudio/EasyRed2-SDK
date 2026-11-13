@@ -17,7 +17,7 @@ public partial class GenericGunBoltActionTransformAnimation : GenericGunActionAn
 
     [Header("Firing pin")]
 
-    [Tooltip("Firing-pin / striker mesh. On trigger pull it lerps to the captured 'fired' pose; when the bolt is cycled or the weapon is reloaded it lerps back to the captured 'cocked' pose (after a short delay, to line up with the bolt opening). Capture both poses with the buttons below. Leave empty to disable.")]
+    [Tooltip("Firing pin or striker: goes to the captured Fired pose on the shot, back to the Cocked pose when the bolt is cycled or the weapon reloaded. Empty = disabled.")]
     public Transform percussor;
 
     // Captured poses (local space). Set via the inspector buttons.

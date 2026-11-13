@@ -6,8 +6,9 @@ using UnityEngine;
 //Forza wheel braking ad inizio gioco
 public partial class WheelsBrakeSetter : MonoBehaviour
 {
-    [Header("Used normally for gliders: Wheels that brakes when the glider slows down")]
+    [Tooltip("Wheels that are braked when the game starts.")]
     public WheelCollider[] wheels;
+    [Tooltip("Brake torque applied to those wheels.")]
     public float brakePower = 300;
 
 }
