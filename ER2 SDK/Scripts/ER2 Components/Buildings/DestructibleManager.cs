@@ -43,6 +43,13 @@ public partial class DestructibleManager : MapPropIndexable// MapPropIndexable
         }
     }
 
+    //Added in the editor: the parts already on the prop go on the list at once. On a prefab picked in the Project window nothing else
+    //collects them (Awake does not run there), and a part the manager does not list is neither saved nor synced.
+    private void Reset()
+    {
+        destructibleParts = GetComponentsInChildren<DestructableBuilding>(true);
+    }
+
 
     public void CaptureRoadSignBakers()
     {

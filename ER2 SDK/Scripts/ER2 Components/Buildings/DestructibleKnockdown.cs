@@ -29,12 +29,15 @@ public partial class DestructibleKnockdown : DestructableBuilding
     private const float BOUNCE_TIME = .85f;//length of the bounce, as a share of the time of the fall: a third to rise, the rest to settle
 
     public const float FALL_END = 1 + BOUNCE_TIME;//when the prop is at rest, counted in times to reach the ground
+    private const int GROUND_SAMPLES = 4;//points along the prop where it can come to rest on the ground
 
-    /// <summary>Seconds this prop takes to reach the ground under a vehicle at that speed (0 = it falls by itself). Its size is the one of its LOD Group.</summary>
+    /// <summary>How long the prop is, in metres: the size of its LOD Group, as scaled. The reference size where it has none.</summary>
+    private float Size { get { return TryGetComponent(out LODGroup lod) ? lod.size * transform.lossyScale.y : REFERENCE_SIZE; } }
+
+    /// <summary>Seconds this prop takes to reach the ground under a vehicle at that speed (0 = it falls by itself).</summary>
     public float GroundTime(float speed)
     {
-        float size = TryGetComponent(out LODGroup lod) ? lod.size * transform.lossyScale.y : REFERENCE_SIZE;
-        return Mathf.Lerp(SELF_TIME, PUSHED_TIME, speed / FULL_PUSH) * Mathf.Sqrt(size / REFERENCE_SIZE);
+        return Mathf.Lerp(SELF_TIME, PUSHED_TIME, speed / FULL_PUSH) * Mathf.Sqrt(Size / REFERENCE_SIZE);
     }
 
     /// <summary>How far down the prop is (0 upright, 1 lying) along the fall: t counts the times to reach the ground, so 1 = it touches it and FALL_END = it is at rest.</summary>
@@ -53,6 +56,36 @@ public partial class DestructibleKnockdown : DestructableBuilding
         transform.rotation = Quaternion.AngleAxis(angle, Vector3.Cross(Vector3.up, direction)) * upright;
     }
 
+    /// <summary>
+    /// The angle that lays the prop on the ground toward a compass direction, however it leans and whatever the ground is like: it
+    /// goes down until a point of its length touches the terrain, taken as level where the scene has none. The foot counts as
+    /// standing on the ground. Found by halving: ten times get within a fifth of a degree. To be asked while the prop still stands.
+    /// </summary>
+    public float LyingAngle(float yaw)
+    {
+        Vector3 axis = Quaternion.Euler(0, yaw, 0) * Vector3.right, standing = transform.up * Size;
+        Terrain terrain = Terrain.activeTerrain;
+#if UNITY_EDITOR
+        if (UnityEditor.SceneManagement.PrefabStageUtility.GetPrefabStage(gameObject) != null)
+            terrain = null;//a prefab being edited sits in a scene of its own: the terrain of the scene left open behind is not under it
+#endif
+        float foot = terrain ? terrain.SampleHeight(transform.position) : 0, clear = 0, touching = 180;
+        for (int step = 0; step < 10; step++)
+        {
+            float angle = (clear + touching) / 2;
+            Vector3 turned = Quaternion.AngleAxis(angle, axis) * standing;
+            bool touches = false;
+            for (int i = 1; i <= GROUND_SAMPLES && !touches; i++)
+            {
+                Vector3 point = turned * i / GROUND_SAMPLES;
+                touches = point.y <= (terrain ? terrain.SampleHeight(transform.position + point) - foot : 0);
+            }
+            if (touches) touching = angle;
+            else clear = angle;
+        }
+        return touching;
+    }
+
     /// <summary>Knocks the prop down for real, where the game code is there to do it (the inspector test while playing).</summary>
     public bool KnockInGame(float yaw, float speed) { bool done = false; KnockInGame(yaw, speed, ref done); return done; }
     partial void KnockInGame(float yaw, float speed, ref bool done);
@@ -64,7 +97,7 @@ public class DestructibleKnockdownEditor : Editor
 {
     //Test: the prop goes down in the scene as it does in game, stays there a moment and stands back up. Nothing is saved.
     private const float holdTime = 2f;
-    private static float testYaw, testSpeedKmh = 20;
+    private static float testYaw, testSpeedKmh = 20, testAngle;
     private static DestructibleKnockdown tested;
     private static Quaternion testUpright;
     private static double testStart;
@@ -95,11 +128,29 @@ public class DestructibleKnockdownEditor : Editor
             : "Preview only: the prop stands back up after two seconds and nothing is saved. Drive into it in game to check the vehicle side.", MessageType.None);
     }
 
+    private static double refusedAt;//when a conversion was last refused: one notice for a whole selection
+
     //from a phased part (the trees so far) in one click: same life and damage settings, no phases and no destroyed version
     [MenuItem("CONTEXT/DestructibleBuildingPhased/Convert to Destructible Knockdown")]
     private static void ConvertPhased(MenuCommand command)
     {
         var phased = (DestructibleBuildingPhased)command.context;
+        if (!phased)
+            return;//gone with the prefab it came from, converted a moment ago in the same selection
+
+        //A part that comes from another prefab (this one is a variant of it, or an object made from it) is converted there, and this
+        //one follows. Converted here it would get a knockdown part of its own, and a second one when that prefab is converted too.
+        Object origin = PrefabUtility.GetCorrespondingObjectFromSource(phased);
+        if (origin)
+        {
+            while (PrefabUtility.GetCorrespondingObjectFromSource(origin))
+                origin = PrefabUtility.GetCorrespondingObjectFromSource(origin);
+            if (EditorApplication.timeSinceStartup - refusedAt > 1)
+                EditorUtility.DisplayDialog("Convert to Destructible Knockdown", "This part comes from the prefab '" + System.IO.Path.GetFileNameWithoutExtension(AssetDatabase.GetAssetPath(origin)) + "'.\n\nConvert that prefab: every prefab and object made from it follows. Nothing was changed here.", "OK");
+            refusedAt = EditorApplication.timeSinceStartup;
+            return;
+        }
+
         var knockdown = Undo.AddComponent<DestructibleKnockdown>(phased.gameObject);
         knockdown.life = phased.life;
         knockdown.minBulletPenetration = phased.minBulletPenetration;
@@ -110,13 +161,20 @@ public class DestructibleKnockdownEditor : Editor
         var manager = phased.GetComponentInParent<DestructibleManager>(true);
         string destroyedVersion = phased.onPhaseChangeEffect;
         bool prefabConverted = EditorUtility.IsPersistent(phased) || UnityEditor.SceneManagement.PrefabStageUtility.GetPrefabStage(phased.gameObject) != null;
-        Undo.DestroyObjectImmediate(phased);
         if (manager)
         {
+            //on the list of the manager the knockdown part takes the place of the phased one, so the other parts keep theirs and the
+            //states saved for each still match
             Undo.RecordObject(manager, "Convert to Destructible Knockdown");
-            manager.AcquireDestructibleParts();
+            var parts = new List<DestructableBuilding>(manager.destructibleParts);
+            parts.Remove(knockdown);
+            int slot = parts.IndexOf(phased);
+            if (slot >= 0) parts[slot] = knockdown;
+            else parts.Add(knockdown);
+            manager.destructibleParts = parts.ToArray();
             EditorUtility.SetDirty(manager);
         }
+        Undo.DestroyObjectImmediate(phased);
         if (destroyedVersion.Length > 0)
             OfferToTrash(destroyedVersion, prefabConverted);
     }
@@ -169,6 +227,7 @@ public class DestructibleKnockdownEditor : Editor
         StopTest();
         tested = prop;
         testUpright = prop.transform.rotation;
+        testAngle = prop.LyingAngle(testYaw);
         testStart = EditorApplication.timeSinceStartup;
         EditorApplication.update += UpdateTest;
         EditorApplication.playModeStateChanged += StopTest;
@@ -183,7 +242,7 @@ public class DestructibleKnockdownEditor : Editor
             StopTest();
             return;
         }
-        tested.Tilt(testUpright, testYaw, 90 * DestructibleKnockdown.FallAmount(time / groundTime));
+        tested.Tilt(testUpright, testYaw, testAngle * DestructibleKnockdown.FallAmount(time / groundTime));
         SceneView.RepaintAll();
     }
     private static void StopTest(PlayModeStateChange change) { StopTest(); }

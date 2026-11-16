@@ -33,4 +33,18 @@ public partial class DestructableBuilding : MonoBehaviour, Damagable
     public string fxBundle = "er2fxs";
     [Tooltip("Local position where the effect is spawned.")]
     public Vector3 dstVfxPosition = Vector3.zero;
+
+#if UNITY_EDITOR
+    //Added in the editor to a prop that already has its Destructible Manager: the part goes on the list of the manager at once. On a
+    //prefab picked in the Project window nothing else puts it there, and a part the manager does not list is neither saved nor synced.
+    private void Reset()
+    {
+        DestructibleManager manager = GetComponentInParent<DestructibleManager>(true);
+        if (!manager || System.Array.IndexOf(manager.destructibleParts, this) >= 0)
+            return;
+        Undo.RecordObject(manager, "Add destructible part");
+        ArrayUtility.Add(ref manager.destructibleParts, this);
+        EditorUtility.SetDirty(manager);
+    }
+#endif
 }
