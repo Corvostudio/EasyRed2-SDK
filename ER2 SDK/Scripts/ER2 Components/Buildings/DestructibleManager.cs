@@ -158,7 +158,7 @@ public class DestructibleManagerEditor : Editor
 
                     DrawMessage(new VMsg(
                         MessageType.Info,
-                        "Not a <b>DestructibleBuildingPhased</b>: slider not available for base DestructableBuilding.",
+                        part is DestructibleKnockdown ? "<b>DestructibleKnockdown</b>: test it from its own inspector." : "Not a <b>DestructibleBuildingPhased</b>: slider not available for base DestructableBuilding.",
                         part
                     ));
                     EditorGUILayout.Space(4);
@@ -368,7 +368,7 @@ public class DestructibleManagerEditor : Editor
             var phased = part as DestructibleBuildingPhased;
             if (phased == null)
             {
-                if (string.IsNullOrEmpty(part.onPhaseChangeEffect))
+                if (!(part is DestructibleKnockdown) && string.IsNullOrEmpty(part.onPhaseChangeEffect))
                     msgs.Add(new VMsg(MessageType.Info, $"[{i}] <b>{part.name}</b>: <b>onPhaseChangeEffect</b> is empty (often expected to be set).", part));
 
                 continue;
