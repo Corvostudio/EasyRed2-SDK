@@ -341,6 +341,11 @@ public class ModMenu : EditorWindow
                     Debug.LogError("Prefab '" + asset.name + "' contains a Light component. Is this intended?", light.gameObject);
                 }
 
+                //explosion effects: the sounds of their sound set go in the bundle of the mod, where the game loads them by name
+                foreach (ExplosionManager explosion in asset.GetComponentsInChildren<ExplosionManager>(true))
+                    if (explosion.soundSet)
+                        explosion.soundSet.SyncForMod(xmlParsingdata.bundleName);
+
                 //start adding to prefab map
                 if (asset.GetComponent<ItemObject>())
                 {
@@ -784,7 +789,8 @@ public class ModMenu : EditorWindow
         string path = ModUtils.GetExportedModPath(xmlParsingData.bundleName);
         //string path = EditorUtility.OpenFolderPanel("Select Directory", "", "");
         //BUILD BUNDLES+
-        List<AssetBundleBuild> bundles_to_build = new List<AssetBundleBuild> { found_bundles[index] };
+        //what is in the bundle is read again here: the scan above can add assets to it (animations, anthem, explosion sounds)
+        List<AssetBundleBuild> bundles_to_build = new List<AssetBundleBuild> { new AssetBundleBuild { assetBundleName = xmlParsingData.bundleName, assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(xmlParsingData.bundleName) } };
         //WINDOWS
         BuildSelectedBundles(BuildTarget.StandaloneWindows64, bundles_to_build, path, xmlParsingData.bundleName);
         //LINUX
